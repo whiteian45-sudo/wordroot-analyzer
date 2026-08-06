@@ -1,0 +1,6 @@
+# 启动脚本是 GBK+CRLF 编码（Windows cmd 按 GBK 解析），强制保留 CRLF，避免 git 换行转换破坏
+*.bat text eol=crlf
+*.py text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf

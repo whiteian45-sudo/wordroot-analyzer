@@ -1,0 +1,43 @@
+词根词缀分析器 —— 使用说明
+=================================
+
+【这是什么】
+一个本地小工具：输入一个英文单词，拆出它的前缀 / 词根 / 后缀，
+并解释每一部分的意思，还能看词源演变链、同源词。
+例如：
+  transport → trans-(横穿) + port-(搬运)
+  bicycle → bi-(两个) + cycle-(轮子)，cycle ← 希腊语 kyklos
+
+完全离线运行：启动本机服务，不联网、不上传任何数据。
+
+【怎么用】
+双击 start.bat，会自动：
+  1. 启动本地服务（Python）
+  2. 打开浏览器进入工具页
+输入单词按回车即可。关闭黑窗口即退出。
+
+【数据组成】
+  enhanced.json  13904 个常用考试词（音标/释义/词根分解/词源演变链/词源/例句）
+  ecdict.json    约 76 万个词的全量英汉词典（音标+中文释义，兜底）
+  index.html     主程序界面
+  server.py      本地服务脚本
+  data\          EPUB 源词表（重建 enhanced.json 用，可删除）
+
+查词逻辑：先查 enhanced.json（最全词条），查不到再查 ecdict.json（全量兜底），
+再查不到才用内置词根规则引擎拆解。
+
+【文件清单 - 必备】
+  start.bat      双击启动（必须）
+  server.py      本地服务（必须）
+  index.html     界面（必须）
+  enhanced.json  考试词数据（必须）
+  ecdict.json    全量词典（必须）
+
+【可删除】
+  wordroot*.html      旧单文件版本备份（已废弃）
+  import_enhanced.py  词表重建工具（想更新词表时留着用）
+  data\               EPUB 源文件（可整个删除）
+  说明.txt            本文件
+
+注意：如果双击 start.bat 后页面打不开，多半是 Python 没装好。
+确认已安装 Python 3，或手动运行 python server.py 看报错。

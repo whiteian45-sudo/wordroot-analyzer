@@ -1,0 +1,16 @@
+# 旧版备份文件（已合并进 index.html，不推送）
+index_pre_liquid.html
+index_pre_ui.html
+b1.js
+b2.js
+
+# 数据源中间文件（如有）
+data/
+
+# Windows 系统文件
+Thumbs.db
+Desktop.ini
+
+# 本地运行缓存
+*.pyc
+__pycache__/

@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词根词缀分析器</title>
+<style>
+  :root {
+    /* 液态玻璃色板 */
+    --glass-bg: #0a0c18;
+    --glass-card: rgba(255,255,255,0.07);
+    --glass-card-strong: rgba(255,255,255,0.10);
+    --glass-border: rgba(255,255,255,0.14);
+    --glass-border-hi: rgba(255,255,255,0.28);
+    --text: #f2f4ff;
+    --sub: rgba(242,244,255,0.55);
+    --accent: #6ea8ff;
+    --accent-soft: rgba(110,168,255,0.14);
+    --ok: #7ee2a8;
+    --gold: #ffd479;
+    --gold-soft: rgba(255,212,121,0.16);
+    --shadow: 0 12px 40px rgba(0,0,0,0.45);
+    --blur: blur(28px) saturate(150%);
+  }
+  * { box-sizing: border-box; }
+  html { height: 100%; }
+  body {
+    margin: 0; min-height: 100%;
+    background:
+      radial-gradient(900px 700px at 8% 0%, rgba(94,110,255,0.28), transparent 60%),
+      radial-gradient(800px 600px at 92% 8%, rgba(180,80,255,0.22), transparent 60%),
+      radial-gradient(900px 700px at 50% 110%, rgba(0,200,255,0.18), transparent 60%),
+      radial-gradient(600px 500px at 80% 60%, rgba(255,140,120,0.14), transparent 60%),
+      var(--glass-bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", "Microsoft YaHei", sans-serif;
+    display: flex; flex-direction: column; align-items: center; padding: 48px 16px 60px;
+  }
+  /* 顶部光晕装饰 */
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(500px 320px at 70% 12%, rgba(255,255,255,0.08), transparent 70%),
+      radial-gradient(400px 260px at 20% 85%, rgba(120,180,255,0.10), transparent 70%);
+    filter: blur(60px);
+  }
+  h1 {
+    font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: .3px;
+    background: linear-gradient(135deg, #fff, rgba(255,255,255,0.72));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle { color: var(--sub); font-size: 13px; margin-bottom: 28px; }
+  .search { width: 100%; max-width: 560px; display: flex; gap: 10px; position: relative; z-index: 1; }
+  .search input {
+    flex: 1; padding: 14px 20px; font-size: 16px; border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-card);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    color: var(--text); outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: border-color .2s, background .2s;
+  }
+  .search input::placeholder { color: rgba(242,244,255,0.35); }
+  .search input:focus { border-color: var(--glass-border-hi); background: var(--glass-card-strong); }
+  .search button {
+    padding: 0 26px; font-size: 15px; font-weight: 600; border: none; border-radius: 16px;
+    background: linear-gradient(135deg, #5c8dff, #7a5cff);
+    color: #fff; cursor: pointer; box-shadow: 0 6px 20px rgba(92,141,255,0.35);
+    transition: transform .15s, box-shadow .15s, filter .15s;
+  }
+  .search button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .search button:active { transform: translateY(0); }
+  .result { width: 100%; max-width: 560px; margin-top: 26px; display: none; position: relative; z-index: 1; }
+  .result.show { display: block; }
+  .card {
+    background: var(--glass-card);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px; padding: 22px 24px; margin-bottom: 16px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.09);
+  }
+  .word-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .word { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+  .badge {
+    font-size: 12px; padding: 4px 12px; border-radius: 30px;
+    background: var(--accent-soft); border: 1px solid rgba(110,168,255,0.25);
+    color: var(--accent); backdrop-filter: blur(8px);
+  }
+  .badge.enhanced { color: var(--ok); border-color: rgba(126,226,168,0.3); background: rgba(126,226,168,0.12); }
+  .breakdown { display: flex; align-items: stretch; gap: 6px; margin: 18px 0 4px; flex-wrap: wrap; }
+  .morph {
+    flex: 1 1 0; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    border-radius: 14px; padding: 9px 14px;
+    background: var(--glass-card-strong); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+  }
+  .morph b { font-size: 17px; letter-spacing: .5px; }
+  .morph .m { color: var(--sub); font-size: 12px; max-width: 130px; text-align: center; overflow-wrap: anywhere; }
+  .plus { color: var(--sub); font-size: 18px; align-self: center; padding-bottom: 0; }
+  .breakdown:has(> .morph:only-child) { justify-content: center; }
+  .breakdown:has(> .morph:only-child) .morph { flex: 0 1 auto; }
+  .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
+  .meaning .label { color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px; }
+  .eq { color: var(--accent); font-weight: 600; }
+  .cognates { margin-top: 14px; }
+  .cognates .tag {
+    display: inline-block; margin: 3px 6px 3px 0; padding: 4px 12px;
+    background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 18px;
+    font-size: 13px; color: var(--text); backdrop-filter: blur(8px);
+  }
+  .miss { color: var(--sub); font-size: 14px; line-height: 1.8; }
+  .ex {
+    margin-top: 7px; padding: 9px 12px; background: var(--glass-card);
+    border: 1px solid var(--glass-border); border-radius: 12px; font-size: 13px; color: var(--sub);
+  }
+  .ex-en { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; color: var(--text); line-height: 1.6; }
+  .ex-en-txt { flex: 1; }
+  .def-line { margin-top: 6px; }
+  .def-line:first-of-type { margin-top: 0; }
+  .ex-zh { font-size: 13px; color: var(--sub); line-height: 1.6; margin-top: 3px; }
+  .ex-tts { padding: 2px 8px; font-size: 12px; flex: none; margin-top: 1px; }
+  /* 词源演变链 */
+  .chain { margin-top: 14px; }
+  .chain-item { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .chain-item:last-child { border-bottom: none; }
+  .chain-morph { font-weight: 600; color: var(--accent); font-size: 14px; min-width: 70px; }
+  .chain-arrow { color: var(--sub); font-size: 13px; }
+  .chain-src { font-size: 13px; color: var(--text); }
+  .chain-src .lang { color: var(--ok); font-weight: 600; margin-right: 4px; }
+  .chain-src .w { font-style: italic; margin-right: 4px; }
+  .chain-src .note { color: var(--sub); font-size: 12px; }
+  .chain-nosrc { color: var(--sub); font-size: 13px; }
+  .chain-meaning { color: var(--sub); font-size: 12px; }
+  /* 同源词/同根词标签云 */
+  .cog {
+    display: inline-block; margin: 3px 6px 3px 0; padding: 4px 12px;
+    background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 18px;
+    font-size: 13px; color: var(--text); cursor: pointer; backdrop-filter: blur(8px);
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .cog:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .cog-row { margin: 5px 0; font-size: 13px; color: var(--sub); }
+  .cog-row .cog-lbl { color: var(--accent); font-weight: 600; }
+  /* 段落阅读模式 */
+  .para { line-height: 2.3; font-size: 16px; }
+  .ptok { display: inline-block; cursor: pointer; border-bottom: 1px dashed rgba(110,168,255,0.4); transition: color .15s; }
+  .ptok:hover { color: var(--accent); }
+  /* 右侧滑出面板 */
+  .panel-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99;
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .panel-mask.show { opacity: 1; pointer-events: auto; }
+  .panel {
+    position: fixed; top: 0; right: 0; height: 100vh; width: 420px; max-width: 92vw;
+    transform: translateX(105%); transition: transform .3s ease; z-index: 100;
+    background: rgba(12,14,28,0.9); backdrop-filter: blur(32px) saturate(150%);
+    -webkit-backdrop-filter: blur(32px) saturate(150%);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column;
+  }
+  .panel.open { transform: translateX(0); }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0;
+  }
+  .panel-title { font-weight: 700; font-size: 16px; }
+  .panel-close {
+    border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
+    border-radius: 20px; padding: 5px 14px; font-size: 13px; cursor: pointer; backdrop-filter: blur(8px);
+    transition: all .15s;
+  }
+  .panel-close:hover { color: var(--text); border-color: var(--glass-border-hi); }
+  .panel-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+  .panel-body .card { max-width: none; }
+  /* 收藏按钮 */
+  .fav-btn {
+    margin-left: auto; border: 1px solid var(--glass-border); background: var(--glass-card);
+    color: var(--sub); border-radius: 20px; padding: 5px 14px; font-size: 13px;
+    cursor: pointer; align-self: center; backdrop-filter: blur(8px);
+    transition: all .15s;
+  }
+  .fav-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .fav-btn.on { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+  /* 发音按钮 */
+  .tts-btn {
+    border: 1px solid var(--glass-border); background: var(--glass-card);
+    color: var(--sub); border-radius: 20px; padding: 5px 12px; font-size: 13px;
+    cursor: pointer; align-self: center; backdrop-filter: blur(8px);
+    transition: all .15s; line-height: 1;
+  }
+  .tts-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .tts-btn.playing { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); animation: tts-pulse 1s ease-in-out infinite; }
+  @keyframes tts-pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+  /* 疑似拼写错误提示 */
+  .spell-suggest {
+    margin: 4px 0 10px; padding: 8px 12px; font-size: 13px; color: var(--text);
+    border: 1px solid rgba(255, 200, 80, 0.35); border-radius: 10px;
+    background: rgba(255, 200, 80, 0.08); backdrop-filter: blur(6px);
+  }
+  .spell-suggest .cog { border-color: rgba(255,200,80,0.5); color: var(--gold); }
+  /* 发音工具条 */
+  .tts-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    width: 100%; max-width: 560px; margin-top: 12px; position: relative; z-index: 1;
+    font-size: 13px; color: var(--sub);
+  }
+  .tts-bar .tts-label { font-size: 12px; opacity: .8; }
+  .tts-eng {
+    border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
+    border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px);
+    transition: all .15s;
+  }
+  .tts-eng:hover { color: var(--accent); border-color: var(--accent); }
+  .tts-eng.active { color: #fff; border-color: rgba(110,168,255,0.5); background: linear-gradient(135deg, rgba(92,141,255,0.4), rgba(122,92,255,0.4)); }
+  .tts-bar select {
+    border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--text);
+    border-radius: 10px; padding: 4px 6px; font-size: 12px; backdrop-filter: blur(8px); cursor: pointer;
+  }
+  .tts-bar select option { background: #1a1e2e; }
+  .tts-hint { font-size: 11px; opacity: .65; }
+  /* 段落朗读按钮 */
+  .para-head { margin-bottom: 10px; }
+  /* Tab 导航 */
+  .tabs { display: flex; gap: 8px; width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
+  .tab {
+    flex: 1; padding: 10px 0; text-align: center; font-size: 14px; font-weight: 500;
+    border: 1px solid var(--glass-border); border-radius: 14px;
+    background: var(--glass-card); backdrop-filter: var(--blur);
+    color: var(--sub); cursor: pointer; transition: all .2s;
+  }
+  .tab:hover { color: var(--accent); border-color: var(--accent); }
+  .tab.active {
+    background: linear-gradient(135deg, rgba(92,141,255,0.35), rgba(122,92,255,0.35));
+    color: #fff; border-color: rgba(110,168,255,0.4); box-shadow: 0 4px 16px rgba(92,141,255,0.25);
+  }
+  .tip { color: var(--sub); font-size: 12px; margin-top: 16px; text-align: center; position: relative; z-index: 1; }
+  #history { width: 100%; max-width: 560px; margin-top: 22px; display: none; position: relative; z-index: 1; }
+  #history.show { display: block; }
+  #favlist { width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
+  .h-head { display: flex; align-items: center; gap: 8px; color: var(--sub); font-size: 13px; margin-bottom: 8px; }
+  .h-n { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 0 8px; font-size: 12px; }
+  .h-btn { border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub); border-radius: 8px; padding: 4px 12px; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px); transition: color .15s; }
+  .h-btn:hover { color: var(--text); }
+  .h-btn:disabled { opacity: .55; cursor: default; }
+  #h-clear { margin-left: auto; }
+  .h-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 13px; transition: background .15s; }
+  .h-item:hover { background: var(--glass-card); }
+  .h-w { font-weight: 600; color: var(--accent); min-width: 90px; }
+  .h-s { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
+  .h-t { color: var(--sub); font-size: 12px; flex-shrink: 0; }
+  .fav-rm { color: var(--sub); cursor: pointer; padding: 0 4px; font-size: 12px; }
+  .fav-rm:hover { color: var(--gold); }
+  /* 收藏列表里的词条容器也玻璃化 */
+  .favlist .h-item { border: 1px solid var(--glass-border); margin-bottom: 8px; background: var(--glass-card); backdrop-filter: blur(12px); }
+</style>
+</head>
+<body>
+
+<h1>词根词缀分析器</h1>
+<div class="subtitle">输入一个英文单词，拆出它的前缀 / 词根 / 后缀</div>
+
+<div class="search">
+  <input id="input" type="text" placeholder="输入单词，如 transport" autofocus spellcheck="false">
+  <button id="btn">分析</button>
+</div>
+
+<div id="load-tip" class="tip">正在加载词库…</div>
+
+<div class="tts-bar" id="tts-bar">
+  <span class="tts-label">发音</span>
+  <button class="tts-eng active" data-eng="builtin" title="浏览器自带，即点即播">内置</button>
+  <button class="tts-eng" data-eng="kokoro" title="Kokoro 高音质，需 TTS 服务在运行">Kokoro</button>
+  <select id="tts-voice" title="声音"></select>
+  <select id="tts-speed" title="语速">
+    <option value="0.75">慢</option>
+    <option value="1" selected>正常</option>
+    <option value="1.25">稍快</option>
+    <option value="1.5">快</option>
+  </select>
+  <span class="tts-hint" id="tts-hint"></span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="query">查询</button>
+  <button class="tab" data-tab="fav">收藏</button>
+</div>
+
+<div class="panel-mask" id="panel-mask"></div>
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <span class="panel-title" id="panel-title">详细</span>
+    <button class="panel-close" id="panel-close">✕ 关闭</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<div class="result" id="result"></div>
+<div id="history"></div>
+<div id="favlist" class="favlist" style="display:none"></div>
+
+<script id="core">
+/* ============================================================
+   数据区：内置词根词缀表（离线可用）
+   增强词表挂载点：{} 会被导入脚本替换为 JSON
+   ============================================================ */
+
+/* 前缀表：前缀 -> 含义 */
+const PREFIXES = {
+  "a": "不、无",
+  "ab": "离开、脱离",
+  "ad": "朝向、加强",
+  "ac": "朝向(ad的变体)",
+  "af": "朝向(ad的变体)",
+  "ag": "朝向(ad的变体)",
+  "al": "朝向(ad的变体)",
+  "an": "朝向(ad的变体)",
+  "ap": "朝向(ad的变体)",
+  "ar": "朝向(ad的变体)",
+  "as": "朝向(ad的变体)",
+  "at": "朝向(ad的变体)",
+  "ambi": "两者、周围",
+  "ante": "在…之前",
+  "anti": "反对、相反",
+  "astro": "星、天体",
+  "auto": "自己、自动",
+  "be": "使…、加以",
+  "bene": "好、善",
+  "bi": "二、双",
+  "circum": "环绕、周围",
+  "co": "共同(con的变体)",
+  "com": "共同、一起",
+  "con": "共同、一起",
+  "col": "共同(con的变体)",
+  "cor": "共同(con的变体)",
+  "contra": "相反、反对",
+  "counter": "反对、对应",
+  "de": "向下、去除",
+  "di": "二、分开",
+  "dif": "分开(dis的变体)",
+  "dis": "不、分离、否定",
+  "e": "出、向外(ex的变体)",
+  "ex": "出、向外、前任",
+  "ef": "出(exit前缀变体)",
+  "en": "使…、进入",
+  "em": "使…、进入",
+  "extra": "超出、外部",
+  "fore": "前、先",
+  "hetero": "异、不同",
+  "homo": "同、相同",
+  "hyper": "超过、过多",
+  "hypo": "在下、低于",
+  "il": "不、无(in的变体)",
+  "im": "不、无;向内(in的变体)",
+  "in": "不、无;向内",
+  "ir": "不、无(in的变体)",
+  "inter": "在…之间",
+  "intra": "在内、内部",
+  "intro": "向内",
+  "macro": "大、宏观",
+  "mal": "坏、恶",
+  "mega": "大、百万",
+  "meta": "变化、超越",
+  "micro": "小、微观",
+  "milli": "千分之一、毫",
+  "mini": "小",
+  "mis": "错误、坏",
+  "mono": "单一",
+  "multi": "多",
+  "neo": "新",
+  "non": "非、不",
+  "ob": "朝向、反对",
+  "oc": "朝向(ob的变体)",
+  "of": "朝向(ob的变体)",
+  "op": "朝向(ob的变体)",
+  "out": "超过、向外",
+  "over": "超过、过度、在…上",
+  "para": "旁边、辅助",
+  "per": "贯穿、完全",
+  "peri": "周围",
+  "poly": "多",
+  "post": "在…之后",
+  "pre": "在…之前",
+  "pro": "向前、支持、代替",
+  "proto": "原始、第一",
+  "pseudo": "假、伪",
+  "quadri": "四",
+  "quasi": "类似、准",
+  "re": "再、回、向后",
+  "retro": "向后、回溯",
+  "se": "分离、分开",
+  "semi": "半",
+  "sub": "下、次、副",
+  "suc": "下(sub的变体)",
+  "suf": "下(sub的变体)",
+  "sup": "下(sub的变体)",
+  "sus": "下(sub的变体)",
+  "super": "上、超、过度",
+  "sur": "上、超",
+  "sym": "共同、同时",
+  "syn": "共同、同时",
+  "tele": "远",
+  "trans": "横穿、跨越、变化",
+  "tri": "三",
+  "ultra": "极、超",
+  "un": "不、相反",
+  "under": "下、不足",
+  "uni": "一、单一",
+  "up": "向上",
+  "vice": "副、代理",
+  "with": "向后、相反"
+};
+
+/* 后缀表：后缀 -> 含义（含词性标注） */
+const SUFFIXES = {
+  "ation": "名词后缀，表行为、过程(为-tion的扩展)",
+  "ization": "名词后缀，表…化(为-ize+-ation)",
+  "isation": "名词后缀，表…化(为-ise+-ation，英式)",
+  "s": "复数/第三人称单数后缀",
+  "es": "复数/第三人称单数后缀(-s的扩展)",
+  "tion": "名词后缀，表行为、状态、结果",
+  "sion": "名词后缀，表行为、状态(为-tion的变体)",
+  "ion": "名词后缀，表行为、状态",
+  "ment": "名词后缀，表行为、结果",
+  "ness": "名词后缀，表性质、状态",
+  "ity": "名词后缀，表性质、状态",
+  "ty": "名词后缀，表性质",
+  "ance": "名词后缀，表性质、状态",
+  "ence": "名词后缀，表性质、状态",
+  "ancy": "名词后缀，表性质",
+  "ency": "名词后缀，表性质",
+  "er": "名词后缀，表人/物;比较级",
+  "or": "名词后缀，表人/物",
+  "ar": "名词后缀，表人/物",
+  "ist": "名词后缀，表人(…者)",
+  "ism": "名词后缀，表主义、学说",
+  "hood": "名词后缀，表时期、身份",
+  "ship": "名词后缀，表身份、状态",
+  "dom": "名词后缀，表领域、状态",
+  "age": "名词后缀，表集合、费用、行为",
+  "al": "形容词后缀，…的;名词后缀",
+  "ure": "名词后缀，表行为、结果",
+  "ery": "名词后缀，表地点、集合",
+  "ry": "名词后缀，表地点、集合",
+  "ess": "名词后缀，表女性",
+  "logy": "名词后缀，表学科、研究",
+  "ology": "名词后缀，表学科(带连接o)",
+  "graphy": "名词后缀，表写法、学科",
+  "scope": "名词后缀，表观察仪器",
+  "ate": "动词后缀，使…;形容词/名词",
+  "ify": "动词后缀，使…化",
+  "fy": "动词后缀，使…化",
+  "ize": "动词后缀，使…化",
+  "ise": "动词后缀，使…化(英式)",
+  "en": "动词后缀，使…",
+  "able": "形容词后缀，可…的",
+  "ible": "形容词后缀，可…的",
+  "ic": "形容词后缀，…的",
+  "ical": "形容词后缀，…的",
+  "ous": "形容词后缀，…的",
+  "ious": "形容词后缀，…的",
+  "ful": "形容词后缀，充满…的",
+  "less": "形容词后缀，无…的",
+  "ly": "副词/形容词后缀",
+  "y": "形容词后缀，…的",
+  "ish": "形容词后缀，…似的、略…的",
+  "ive": "形容词后缀，…性的",
+  "ant": "形容词/名词后缀，…的/…者",
+  "ent": "形容词/名词后缀，…的/…者",
+  "ary": "形容词/名词后缀，…的/…处所",
+  "ory": "形容词/名词后缀，…的/…处所",
+  "an": "形容词/名词后缀，…的/…地方的人",
+  "ian": "形容词/名词后缀，…的/…地方的人",
+  "osis": "名词后缀，表状态、疾病",
+  "i": "连接字母(拉丁语构词，连接词根)",
+  "ast": "名词后缀，表人",
+  "like": "形容词后缀，像…的",
+  "some": "形容词后缀，引起…的",
+  "ing": "现在分词/动名词后缀",
+  "ed": "过去分词后缀",
+  "e": "动词词尾，常为弱化尾音(如 produce→pro-duc-e)",
+  "est": "形容词最高级",
+  "ward": "副词后缀，向…方向",
+  "wards": "副词后缀，向…方向",
+  "ile": "形容词后缀，可…的(拉丁语)",
+  "ual": "形容词后缀，…的(拉丁语，带连接u)",
+  "uate": "动词后缀，使成为、进行(拉丁语)",
+  "itive": "形容词后缀，…性的(-ive的扩展)",
+  "ition": "名词后缀，表行为、过程(-tion的扩展)",
+  "ature": "名词后缀，表行为、结果",
+  "itude": "名词后缀，表状态、性质",
+  "id": "形容词后缀，…的(拉丁语)",
+  "ative": "形容词/名词后缀，…性的/…人",
+  "it": "名词后缀，表行为(拉丁语)",
+  "io": "名词后缀，表…(希腊/拉丁词尾)",
+  "us": "名词后缀，表…(拉丁阳性词尾)",
+  "is": "名词后缀，表…(希腊词尾)",
+  "atic": "形容词后缀，…的",
+  "tic": "形容词后缀，…的",
+  "ine": "形容词/名词后缀，…的(拉丁语)",
+  "wise": "副词后缀，在…方面"
+};
+
+/* 词根表：词根(含变体) -> [含义, [示例词]] */
+const ROOTS = {
+  "ag": ["做、行动、驱动", ["action", "agent", "agenda", "active"]],
+  "act": ["做、行动", ["action", "react", "active"]],
+  "ali": ["其他", ["alien", "alibi"]],
+  "alter": ["其他、改变", ["alternative", "alter"]],
+  "ambul": ["行走", ["ambulance", "amble"]],
+  "anim": ["心灵、生命", ["animal", "animate", "unanimous"]],
+  "ann": ["年", ["annual", "anniversary"]],
+  "enn": ["年(ann的变体)", ["centennial"]],
+  "anthrop": ["人、人类", ["anthropology", "misanthropy"]],
+  "aqua": ["水", ["aquarium", "aquatic"]],
+  "arch": ["统治者、首要", ["monarch", "anarchy", "architecture"]],
+  "astro": ["星", ["astronomy", "astronaut"]],
+  "aster": ["星", ["asteroid"]],
+  "aud": ["听", ["audience", "audio", "audit"]],
+  "audi": ["听", ["audition"]],
+  "bell": ["战争、好战", ["rebel", "belligerent"]],
+  "bene": ["好、善", ["benefit", "benevolent"]],
+  "bio": ["生命、生物", ["biology", "biography", "antibiotic"]],
+  "brev": ["短", ["abbreviate", "brevity"]],
+  "cap": ["头、首", ["capital", "captain", "cap"]],
+  "capt": ["拿、抓", ["capture", "captive"]],
+  "cept": ["拿、抓(capt的变体)", ["accept", "receive", "concept"]],
+  "ceiv": ["拿、抓(cept的变体)", ["receive", "conceive", "deceive"]],
+  "ceive": ["拿、抓(cept的拉丁尾变体)", ["receive", "conceive", "perceive"]],
+  "ced": ["走、让与", ["precede", "concede"]],
+  "cede": ["走、让与(ced的拉丁尾变体)", ["concede", "precede", "recede"]],
+  "ceed": ["走、进行(ced的变体)", ["proceed", "succeed"]],
+  "cess": ["走、进行(ced的变体)", ["process", "success", "excess"]],
+  "cent": ["百、百分之一", ["century", "percent", "centimeter"]],
+  "centr": ["中心", ["central", "concentrate"]],
+  "chron": ["时间", ["chronic", "synchronize", "chronology"]],
+  "cid": ["切、杀", ["decide", "insecticide"]],
+  "cis": ["切(cid的变体)", ["concise", "incision"]],
+  "cit": ["唤起、呼叫、激发", ["excite", "recite", "cite"]],
+  "civil": ["公民、文明", ["civil", "civilization"]],
+  "claim": ["呼喊、叫", ["claim", "proclaim"]],
+  "clam": ["呼喊(claim的变体)", ["exclaim"]],
+  "clud": ["关闭", ["include", "conclude", "exclude"]],
+  "clude": ["关闭(clud的拉丁尾变体)", ["include", "exclude", "conclude"]],
+  "clus": ["关闭(clud的变体)", ["conclusion", "exclusive"]],
+  "cogn": ["知道、认识", ["cognize", "recognize", "cognitive"]],
+  "cord": ["心、一致", ["cordial", "record", "accord"]],
+  "corp": ["身体、团体", ["corporate", "corporation", "corpse"]],
+  "cred": ["相信、信用", ["credit", "credible", "incredible"]],
+  "culp": ["罪、过错", ["culprit", "culpable"]],
+  "cur": ["关心、照料;跑", ["cure", "curious", "secure"]],
+  "curr": ["跑、流动", ["current", "currency"]],
+  "curs": ["跑(curr的变体)", ["cursor", "excursion"]],
+  "cours": ["跑、进行(curr的变体)", ["course", "intercourse"]],
+  "dem": ["人民", ["democracy", "demographic", "epidemic"]],
+  "cracy": ["统治、政体", ["democracy", "autocracy", "bureaucracy"]],
+  "derm": ["皮肤", ["dermatology", "hypodermic"]],
+  "dict": ["说、言", ["dictate", "dictionary", "predict", "verdict"]],
+  "dic": ["说(dict的变体)", ["indicate", "dedicate"]],
+  "dign": ["值得、尊严", ["dignity", "dignify", "indignation"]],
+  "doc": ["教、教导", ["doctor", "document", "doctrine"]],
+  "doct": ["教(doct的变体)", ["doctrine"]],
+  "domin": ["统治、主人", ["dominate", "dominant", "kingdom"]],
+  "don": ["给予", ["donate", "donation"]],
+  "dot": ["给予(don的变体)", ["anecdote"]],
+  "duc": ["引导、传导", ["produce", "introduce", "educate"]],
+  "duce": ["引导(duc的拉丁尾变体)", ["produce", "introduce", "reduce"]],
+  "duct": ["引导(duc的变体)", ["conduct", "duct"]],
+  "dur": ["持久、硬", ["durable", "during", "endure"]],
+  "dyn": ["力量", ["dynamic", "dynasty"]],
+  "equ": ["相等", ["equal", "equation", "adequate"]],
+  "err": ["错误、漫游", ["error", "errant", "erratic"]],
+  "ess": ["存在", ["essence", "essential"]],
+  "fac": ["做、制造", ["factory", "facility", "factor"]],
+  "fact": ["做(fac的变体)", ["factory", "manufacture", "fact"]],
+  "fect": ["做(fact的变体)", ["effect", "perfect", "infect"]],
+  "fic": ["做(fac的变体)", ["efficient", "sufficient"]],
+  "fer": ["携带、运送", ["transfer", "confer", "differ", "offer"]],
+  "fid": ["信任、忠诚", ["confident", "fidelity", "faith"]],
+  "fin": ["结束、界限", ["final", "finish", "define", "infinite"]],
+  "firm": ["坚固、确定", ["confirm", "firm", "infirm"]],
+  "fix": ["固定", ["fix", "prefix", "affix"]],
+  "flu": ["流动", ["fluent", "fluid", "influence"]],
+  "flux": ["流动(flu的变体)", ["flux", "influx"]],
+  "form": ["形状、形式", ["transform", "reform", "formal", "inform"]],
+  "fort": ["强、力量", ["effort", "fort", "fortify"]],
+  "fract": ["断裂", ["fracture", "fraction"]],
+  "frag": ["断裂(fract的变体)", ["fragile", "fragment"]],
+  "frater": ["兄弟", ["fraternity", "fraternal"]],
+  "fund": ["底部、基础", ["fund", "fundamental", "foundation"]],
+  "found": ["基础(fund的变体)", ["foundation", "found"]],
+  "fus": ["流、倒、熔", ["refuse", "confuse", "diffuse"]],
+  "gen": ["产生、出生、种类", ["generate", "gene", "genius", "gender"]],
+  "gener": ["产生、种类", ["generation", "general"]],
+  "geo": ["地球、土地", ["geography", "geology", "geometry"]],
+  "grad": ["步、级别", ["gradual", "grade", "graduate"]],
+  "gress": ["走(grad的变体)", ["progress", "aggressive", "congress"]],
+  "graph": ["写、画", ["graph", "paragraph", "photograph"]],
+  "gram": ["写、画(graph的变体)", ["grammar", "telegram", "diagram"]],
+  "grat": ["感激、高兴", ["grateful", "gratitude", "congratulate"]],
+  "greg": ["群体、聚集", ["aggregate", "segregate", "congregation"]],
+  "tide": ["潮汐、浪潮", ["tide", "tidal", "tidemark"]],
+  "tid": ["潮汐、时间", ["tidal", "tidy"]],
+  "hab": ["居住、拥有", ["habitat", "inhabit", "rehab"]],
+  "skeptic": ["怀疑者、怀疑", ["skeptic", "skeptical", "skepticism"]],
+  "acupunct": ["针刺(acu针+punct刺)", ["acupuncture"]],
+  "omni": ["全部、所有", ["omnibus", "omnipotent", "omnipresent"]],
+  "algor": ["算法", ["algorithm", "algorithmic"]],
+  "hibit": ["拿、持", ["prohibit", "exhibit", "inhibit"]],
+  "hum": ["土、地;人", ["humble", "human", "humidity"]],
+  "hydr": ["水", ["hydrogen", "hydraulic", "dehydrate"]],
+  "ject": ["投、掷", ["project", "inject", "reject", "subject"]],
+  "jud": ["判断、法律", ["judge", "judgment", "judicial"]],
+  "jur": ["法律、发誓", ["jury", "injury", "jurisdiction"]],
+  "jure": ["法律、正义", ["de jure", "injure", "perjure"]],
+  "junct": ["连接", ["junction", "conjunction"]],
+  "lat": ["带来、运载", ["translate", "relate", "latitude"]],
+  "leg": ["读、法律;选择", ["legal", "legislate"]],
+  "lect": ["选择、读、说(leg的变体)", ["collect", "select", "lecture"]],
+  "lev": ["举起、轻", ["elevate", "lever", "levity"]],
+  "liber": ["自由", ["liberty", "liberal", "liberate"]],
+  "lingu": ["语言", ["linguist", "language"]],
+  "liter": ["文字", ["literature", "literary", "illiterate"]],
+  "loc": ["地方", ["location", "locate", "local"]],
+  "log": ["说话、理性、学科", ["dialogue", "logic", "catalog"]],
+  "logue": ["说话、言语(log的变体)", ["dialogue", "monologue", "prologue"]],
+  "luc": ["光、明亮", ["lucid", "elucidate"]],
+  "lum": ["光(luc的变体)", ["illuminate", "luminous"]],
+  "magn": ["大", ["magnify", "magnificent", "magnitude"]],
+  "maj": ["大、主要", ["major", "majority"]],
+  "man": ["手", ["manual", "manufacture", "manage", "manuscript"]],
+  "mand": ["命令、委托", ["command", "demand"]],
+  "mend": ["命令、委托(mand的变体)", ["recommend"]],
+  "mani": ["手(man的变体)", ["manipulate"]],
+  "mar": ["海", ["marine", "maritime"]],
+  "matr": ["母亲、母", ["maternal", "matrimony"]],
+  "mater": ["母亲、母", ["maternal"]],
+  "med": ["中间", ["medium", "median", "immediate"]],
+  "medi": ["中间(med的变体)", ["mediate", "media"]],
+  "memor": ["记忆", ["memory", "memorial", "remember"]],
+  "ment": ["心灵、智力", ["mental", "mention"]],
+  "merc": ["贸易、报酬", ["merchant", "commerce"]],
+  "merg": ["沉、浸、融合", ["merge", "emerge", "submerge"]],
+  "meter": ["测量、计量器", ["thermometer", "diameter"]],
+  "metr": ["测量(meter的变体)", ["symmetry", "geometry"]],
+  "migr": ["迁移", ["migrate", "immigrate", "emigrate"]],
+  "milit": ["士兵、战争", ["military", "militant"]],
+  "min": ["小", ["minimum", "minimal", "minor"]],
+  "mir": ["惊奇、看", ["mirror", "miracle", "admire"]],
+  "miss": ["发送、放开", ["mission", "missile", "dismiss"]],
+  "mit": ["发送、放开(miss的变体)", ["transmit", "submit", "admit", "permit"]],
+  "mob": ["移动", ["mobile", "automobile"]],
+  "mot": ["移动(mob的变体)", ["motion", "motor", "emotion", "promote"]],
+  "mov": ["移动(mob的变体)", ["move", "remove"]],
+  "mod": ["模式、度量、适度", ["model", "modify", "modern", "moderate"]],
+  "mon": ["警告、提醒", ["monitor", "admonish", "monument"]],
+  "morph": ["形状、形态", ["morphology", "amorphous"]],
+  "mort": ["死", ["mortal", "immortal", "mortgage"]],
+  "mount": ["山、登上", ["mountain", "mount", "amount"]],
+  "mut": ["变化", ["mutate", "mutation", "mute"]],
+  "nat": ["出生、天生", ["nation", "native", "nature", "international"]],
+  "nation": ["民族、国家", ["nation", "national", "international"]],
+  "nav": ["船、航行", ["navy", "naval", "navigate"]],
+  "naut": ["航海者、宇航员", ["astronaut", "nautical"]],
+  "nect": ["连接", ["connect", "disconnect"]],
+  "neg": ["否定", ["negative", "neglect"]],
+  "nom": ["名字", ["nominate", "nominal", "anonymous"]],
+  "nomy": ["法则、学科", ["astronomy", "economy"]],
+  "norm": ["规则、标准", ["normal", "enormous", "norm"]],
+  "not": ["知道、标记", ["notable", "notice", "notify", "notebook"]],
+  "nounce": ["报告、宣布", ["announce", "pronounce", "denounce"]],
+  "nunci": ["报告(nounce的变体)", ["annunciation"]],
+  "nov": ["新", ["novel", "novice", "innovate"]],
+  "numer": ["数", ["number", "numerous", "numerate"]],
+  "nutri": ["营养、养育", ["nutrition", "nutrient"]],
+  "oper": ["工作", ["operate", "operation", "cooperate"]],
+  "opt": ["视力;选择", ["optic", "option", "adopt", "optical"]],
+  "ord": ["顺序、命令", ["order", "ordinal", "ordinary"]],
+  "ori": ["升起、起源", ["origin", "orient", "original"]],
+  "orn": ["装饰", ["ornament", "adorn"]],
+  "pan": ["全部、泛", ["pandemic", "panorama"]],
+  "par": ["相等、产生、准备", ["compare", "parity", "prepare"]],
+  "part": ["部分、分开", ["part", "partition", "particular", "apartment"]],
+  "pass": ["通过;感情、感受", ["passage", "passenger", "passion", "compassion"]],
+  "path": ["感情、疾病、疗法", ["sympathy", "pathology", "apathy", "pathetic"]],
+  "pater": ["父亲、父", ["paternal", "patriarch"]],
+  "patr": ["父亲、祖国(patri)", ["patriot", "patriotic"]],
+  "ped": ["脚", ["pedal", "pedestrian", "expedition"]],
+  "pod": ["脚(ped的变体)", ["podium", "tripod"]],
+  "pel": ["推、驱", ["expel", "compel", "propel"]],
+  "puls": ["推(pel的变体)", ["impulse", "compulsory", "pulse"]],
+  "pend": ["悬挂、称量、支付", ["depend", "suspend", "pendant"]],
+  "pens": ["悬挂、支付(pend的变体)", ["expense", "pension"]],
+  "pet": ["追求、请求", ["compete", "petition", "appetite"]],
+  "petit": ["追求(pet的变体)", ["petition"]],
+  "phil": ["爱", ["philosophy", "philanthropy", "bibliophile"]],
+  "phob": ["恐惧", ["phobia", "xenophobia"]],
+  "phon": ["声音", ["telephone", "microphone", "phonetic"]],
+  "phot": ["光", ["photograph", "photon"]],
+  "pict": ["画、描绘", ["picture", "depict", "pictorial"]],
+  "plac": ["取悦、平静", ["please", "placate", "complacent"]],
+  "plen": ["满、充满", ["plenty", "plentiful"]],
+  "plet": ["满(plen的变体)", ["complete", "replete"]],
+  "plete": ["填满、完成(plen的拉丁尾变体)", ["complete", "replete", "deplete"]],
+  "plic": ["折叠、弯曲、复杂", ["complicate", "duplicate", "implicit"]],
+  "ply": ["折叠、弯曲", ["apply", "supply", "imply"]],
+  "ply": ["折叠(plic的变体)", ["apply", "supply", "imply"]],
+  "pon": ["放置", ["component", "postpone"]],
+  "pos": ["放置", ["position", "oppose", "compose"]],
+  "posit": ["放置(pos的变体)", ["positive", "position"]],
+  "popul": ["人民", ["population", "popular", "populate"]],
+  "port": ["携带、搬运", ["portable", "export", "import", "transport", "support"]],
+  "poss": ["能够、有能力", ["possible", "possess", "impossible"]],
+  "potent": ["有力的、强大的", ["potential", "potent", "omnipotent"]],
+  "preci": ["价值", ["precious", "appreciate"]],
+  "prehend": ["抓住、理解", ["comprehend", "apprehend"]],
+  "prehens": ["抓住(prehens)", ["comprehensive"]],
+  "press": ["压", ["pressure", "depress", "express", "impress"]],
+  "express": ["表达(出+压)", ["express", "expression", "unexpressive"]],
+  "aic": "形容词后缀，…的(如 voltaic)",
+  "prim": ["第一、首要", ["primary", "prime", "primitive"]],
+  "priv": ["单独、剥夺", ["private", "privacy", "deprive"]],
+  "prob": ["试验、证明", ["probe", "probable", "approve"]],
+  "proxim": ["接近", ["proximity", "approximate"]],
+  "psych": ["心理、灵魂", ["psychology", "psychiatry", "psychic"]],
+  "punct": ["点、刺", ["punctuate", "punctual", "puncture"]],
+  "quer": ["寻求、询问", ["query", "inquire"]],
+  "quire": ["寻求、询问(quir的拉丁尾变体)", ["require", "inquire", "acquire"]],
+  "quest": ["寻求、询问", ["question", "request", "quest"]],
+  "quir": ["寻求(quest的变体)", ["acquire", "inquire", "require"]],
+  "quis": ["寻求(quest的变体)", ["acquisition"]],
+  "qui": ["安静", ["quiet", "quietude"]],
+  "quit": ["自由、放弃", ["quit"]],
+  "radi": ["光线、辐射", ["radiant", "radiation", "radius"]],
+  "rap": ["抓、夺、迅速", ["rapid", "rapt"]],
+  "rat": ["计算、理性", ["ratio", "rational", "rate"]],
+  "rect": ["直、正", ["correct", "direct", "erect", "rectangle"]],
+  "reg": ["统治、管理、王", ["regulate", "region", "regime"]],
+  "rid": ["笑", ["ridicule", "ridiculous"]],
+  "riv": ["河流", ["river", "rival"]],
+  "rog": ["问、要求", ["arrogate", "interrogate"]],
+  "run": ["跑", ["run", "outrun", "runaway"]],
+  "flect": ["弯曲", ["reflect", "reflection", "deflect"]],
+  "telescope": ["望远镜(tele远+scope看)", ["telescope", "telescopic"]],
+  "oc": ["朝向(ob的变体)", ["occur", "occlude"]],
+  "immun": ["免疫", ["immune", "autoimmune", "immunity"]],
+  "kinesis": ["运动", ["kinesis", "kinesiology"]],
+  "kine": ["运动", ["kinetic", "kinesis", "kinematics"]],
+  "kinet": ["运动(kine的变体)", ["kinetic", "hyperkinetic"]],
+  "kinesi": ["运动", ["kinesiology", "kinesis", "kinescope"]],
+  "cycl": ["圆、轮、循环", ["cycle", "motorcycle", "bicycle", "cyclone"]],
+  "cycle": ["圆、轮、循环(cycl的完整形式)", ["cycle", "motorcycle", "bicycle", "recycle"]],
+  "mot": ["移动", ["motor", "motion", "automobile"]],
+  "motor": ["发动机、马达", ["motor", "motorcycle", "motorway"]],
+  "anglo": ["英格兰、英国", ["Anglo", "anglophile", "Anglo-Saxon"]],
+  "construct": ["建造、结构", ["construct", "construction", "deconstruction"]],
+  "phot": ["光", ["photo", "photograph", "photovoltaic"]],
+  "photo": ["光、摄影", ["photo", "photograph", "photovoltaic"]],
+  "volt": ["电、电压", ["voltage", "photovoltaic"]],
+  "urb": ["城市", ["urban", "suburb", "urbane"]],
+  "plot": ["地块、情节", ["plot", "subplot"]],
+  "force": ["力量、武力", ["force", "workforce", "enforce"]],
+  "rupt": ["破裂", ["erupt", "interrupt", "corrupt", "disrupt"]],
+  "sacr": ["神圣", ["sacred", "sacrifice"]],
+  "sal": ["跳", ["assault", "salient"]],
+  "salu": ["健康、平安", ["salute", "salutary"]],
+  "san": ["健康", ["sanity", "insane", "sanitary"]],
+  "sanguin": ["血", ["sanguine"]],
+  "satis": ["足够、满足", ["satisfy", "satisfaction", "saturate"]],
+  "sci": ["知道", ["science", "conscious", "omniscient"]],
+  "scope": ["看、观察、仪器", ["telescope", "microscope", "periscope", "scope"]],
+  "scrib": ["写", ["describe", "scribble", "prescribe"]],
+  "scribe": ["写(scrib的拉丁尾变体)", ["describe", "prescribe", "inscribe"]],
+  "script": ["写(scrib的变体)", ["script", "transcript", "manuscript"]],
+  "sect": ["切割", ["section", "sector", "insect"]],
+  "sed": ["坐、安放", ["sedentary", "sediment"]],
+  "sid": ["坐(sed的变体)", ["preside", "reside", "subsidy"]],
+  "sess": ["坐、开会(sed的变体)", ["session", "possess"]],
+  "seg": ["切(sect的变体)", ["segment"]],
+  "semin": ["种子", ["seminar", "seminary", "disseminate"]],
+  "sen": ["老", ["senior", "senate", "senile"]],
+  "sens": ["感觉", ["sensible", "sensitive", "sensory"]],
+  "sent": ["感觉(sens的变体)", ["sentiment", "consent", "resent"]],
+  "sequ": ["跟随", ["sequence", "consequence", "subsequent"]],
+  "secut": ["跟随(sequ的变体)", ["execute", "persecute"]],
+  "sue": ["跟随(sequ的变体)", ["pursue", "issue"]],
+  "serv": ["服务、保存、奴仆", ["serve", "reserve", "conserve", "observe"]],
+  "sign": ["标记、签署", ["sign", "signal", "signature", "design"]],
+  "simil": ["相似", ["similar", "assimilate", "simulate"]],
+  "sist": ["站立、坚持", ["assist", "consist", "persist", "resist"]],
+  "soci": ["社会、同伴", ["society", "social", "associate"]],
+  "sol": ["单独;太阳;安慰", ["solo", "solar", "console", "solitary"]],
+  "solv": ["解开、溶解", ["solve", "resolve", "dissolve"]],
+  "solut": ["解开(solv的变体)", ["solution", "absolute", "resolution"]],
+  "somn": ["睡眠", ["insomnia", "somnambulist"]],
+  "son": ["声音", ["sonic", "resonant"]],
+  "spec": ["看、外观", ["special", "species", "specific"]],
+  "spect": ["看(spec的变体)", ["inspect", "respect", "prospect", "expect"]],
+  "spic": ["看(spec的变体)", ["conspicuous", "suspicious"]],
+  "spir": ["呼吸、精神", ["spirit", "inspire", "conspiracy", "expire"]],
+  "spire": ["呼吸(spir的拉丁尾变体)", ["inspire", "expire", "respire"]],
+  "stal": ["站立、固定", ["install", "installment"]],
+  "stall": ["站立(stal的变体)", ["stall", "forestall"]],
+  "stat": ["站立、稳定", ["status", "static", "statue", "station"]],
+  "stell": ["星", ["stellar", "constellation"]],
+  "strain": ["拉紧、束缚", ["constrain", "strain", "restraint"]],
+  "strict": ["拉紧、严格", ["strict", "restrict", "construct"]],
+  "string": ["拉紧(string的变体)", ["string", "stringent"]],
+  "struct": ["建造、结构", ["structure", "construct", "instruct", "destroy"]],
+  "sum": ["拿取、总计、最高", ["assume", "consume", "resume", "summary"]],
+  "sume": ["拿取、承担(sum的拉丁尾变体)", ["assume", "consume", "resume"]],
+  "surg": ["上升、涌起", ["surge", "insurgent"]],
+  "tain": ["持有、保持", ["contain", "maintain", "retain", "obtain"]],
+  "ten": ["持有(tain的变体)", ["tenable", "tenure"]],
+  "tin": ["持有(tain的变体)", ["continue", "continent"]],
+  "tact": ["接触", ["contact", "tactile"]],
+  "tang": ["接触(tact的变体)", ["tangible", "tangent"]],
+  "tax": ["安排、布置、税", ["taxonomy", "tax"]],
+  "techn": ["技艺、技术", ["technology", "technique"]],
+  "tempor": ["时间", ["temporary", "contemporary"]],
+  "tend": ["伸展、趋向", ["extend", "tend", "intend", "attend"]],
+  "tens": ["伸展(tend的变体)", ["tension", "intense", "extensive"]],
+  "tent": ["持有;伸展(tent)", ["content", "attention", "intention"]],
+  "tenu": ["薄、弱", ["tenuous", "extenuate"]],
+  "term": ["界限、末端、名称", ["terminal", "terminate", "term"]],
+  "terr": ["土地;恐惧", ["territory", "terrain", "terrible", "terror"]],
+  "test": ["证明、见证", ["protest", "test", "testify", "contest"]],
+  "text": ["编织", ["textile", "texture", "text"]],
+  "the": ["神", ["theology", "atheist"]],
+  "theo": ["神(the的变体)", ["theology"]],
+  "therap": ["治疗", ["therapy", "therapeutic"]],
+  "therm": ["热", ["thermometer", "thermal", "thermos"]],
+  "thes": ["放置", ["synthesis", "thesis"]],
+  "thet": ["放置(thes的变体)", ["antithesis"]],
+  "tim": ["害怕", ["timid", "intimidate"]],
+  "tom": ["切、切割", ["atom", "anatomy"]],
+  "ton": ["声音、调", ["tonality", "tone", "monotone"]],
+  "tort": ["扭、折磨", ["torture", "distort", "contortion"]],
+  "tox": ["毒", ["toxic", "detoxify"]],
+  "tract": ["拉、拖", ["attract", "extract", "contract", "tractor"]],
+  "trib": ["给予、分配、部落", ["tribute", "contribute", "distribute", "tribe"]],
+  "trud": ["推、挤", ["intrude", "protrude"]],
+  "trude": ["推、挤(trud的拉丁尾变体)", ["intrude", "protrude", "extrude"]],
+  "trus": ["推(trud的变体)", ["intrusive", "obtrusive"]],
+  "turb": ["扰乱、骚动", ["disturb", "turbine", "turbulent"]],
+  "ultim": ["最后、末端", ["ultimate", "ultimatum"]],
+  "umbr": ["影子", ["umbrella", "penumbra"]],
+  "und": ["波浪、涌动", ["abundant", "inundate"]],
+  "urb": ["城市", ["urban", "suburb"]],
+  "vac": ["空", ["vacant", "vacation", "vacuum"]],
+  "vad": ["走、入侵", ["invade", "evade"]],
+  "vas": ["走(vad的变体)", ["invasion", "evasive"]],
+  "vail": ["强、价值、有利", ["available", "prevail", "avail"]],
+  "val": ["强、价值(val)", ["value", "valid", "evaluate", "equivalent"]],
+  "van": ["前;空", ["vanish", "advance"]],
+  "vari": ["变化", ["various", "variable", "variety"]],
+  "ven": ["来、到", ["convene", "convent", "avenue"]],
+  "vene": ["来、到(ven的拉丁尾变体)", ["convene", "intervene", "contravene"]],
+  "vent": ["来(ven的变体)", ["event", "adventure", "prevent", "invent"]],
+  "ver": ["真、真实", ["verify", "very", "verdict"]],
+  "verb": ["词、言语", ["verbal", "verbatim", "proverb"]],
+  "vers": ["转、改变", ["reverse", "version", "universe", "conversation"]],
+  "vert": ["转(vers的变体)", ["convert", "invert", "introvert"]],
+  "vest": ["穿衣、投资", ["invest", "vest"]],
+  "vestig": ["足迹、痕迹", ["investigate", "vestige", "investigation"]],
+  "vid": ["看", ["video", "evident", "provide"]],
+  "vis": ["看(vid的变体)", ["visible", "visit", "vision", "revise"]],
+  "vig": ["活、生命力", ["vigor", "vigorous"]],
+  "vict": ["征服、胜利", ["victory", "victim"]],
+  "viv": ["活、生命", ["vivid", "survive", "revive", "vivisection"]],
+  "vive": ["活、生存(viv的拉丁尾变体)", ["survive", "revive"]],
+  "vivi": ["活、生命(viv的变体)", ["vivisection", "viviparous"]],
+  "vit": ["活(viv的变体)", ["vital", "vitamin"]],
+  "voc": ["声音、呼喊", ["vocal", "vocabulary", "advocate"]],
+  "voci": ["声音、呼喊(voc的连接元音变体)", ["vociferate", "vociferous", "vociferation"]],
+  "vok": ["声音、呼喊(voc的变体)", ["evoke", "provoke", "revoke"]],
+  "voke": ["声音、呼喊(voc的拉丁尾变体)", ["evoke", "provoke", "invoke"]],
+  "vol": ["意愿;卷、转", ["volunteer", "voluntary", "revolve", "evolve"]],
+  "vor": ["吃", ["carnivore", "herbivore"]],
+  "vulg": ["大众、普通", ["vulgar"]],
+
+  /* 常见自由词素（本身即基本词，可加前后缀构成新词） */
+  "happy": ["快乐、幸福", ["happy", "happiness", "unhappy"]],
+  "care": ["关心、照料", ["care", "careful", "careless"]],
+  "use": ["使用", ["use", "useful", "useless", "reuse"]],
+  "view": ["看、视野", ["view", "review", "preview", "interview"]],
+  "take": ["拿、取", ["take", "mistake", "undertake"]],
+  "stand": ["站立", ["stand", "understand", "withstand"]],
+  "hold": ["持有", ["hold", "behold", "uphold"]],
+  "write": ["写", ["write", "rewrite", "writing"]],
+  "read": ["读", ["read", "reread", "reader"]],
+  "speak": ["说、讲", ["speak", "speaker"]],
+  "work": ["工作", ["work", "worker", "workable"]],
+  "place": ["地方、放置", ["place", "replace", "displace"]],
+  "name": ["名字", ["name", "rename", "surname"]],
+  "like": ["喜欢;像", ["like", "dislike", "alike"]],
+  "liv": ["生活、活", ["live", "lively", "liver"]],
+  "look": ["看", ["look", "overlook"]],
+  "play": ["玩、演奏", ["play", "replay", "player"]],
+  "mark": ["标记", ["mark", "remark", "remarkable"]],
+  "print": ["印刷、打印", ["print", "reprint", "printing"]],
+  "color": ["颜色", ["color", "colorful", "colorless"]],
+  "do": ["做、干", ["do", "redo", "undo", "overdo"]],
+  "make": ["制作、使得", ["make", "remake", "makeup"]],
+  "auto": ["自己、自动", ["automatic", "automobile", "autograph", "autonomy"]],
+  "aut": ["自己(aut变体)", ["autism", "autistic", "autonomy"]],
+  "ist": ["表人(…者)", ["artist", "scientist", "autist"]],
+  "ic": ["形容词后缀，…的", ["basic", "artistic", "autistic"]],
+  "inter": ["在…之间", ["internet", "international", "interact", "interrupt"]],
+  "net": ["网络", ["internet", "network", "net"]],
+  "tele": ["远", ["telephone", "television", "telegram", "telescope"]],
+  "phone": ["声音、电话", ["telephone", "microphone", "headphone", "phone"]],
+  "uni": ["单一", ["university", "uniform", "universe", "unique"]],
+  "vers": ["转、改变", ["version", "reverse", "universe", "conversation"]],
+  "bio": ["生命、生物", ["biology", "biography", "antibiotic", "symbiosis"]],
+  "diverse": ["多样的", ["diversity", "diversify", "diverse"]],
+  "photo": ["光、摄影", ["photograph", "photon", "photosynthesis"]],
+  "synthes": ["合成", ["synthesis", "synthesize", "photosynthesis"]],
+  "kind": ["种类、善良", ["kindergarten", "kind", "mankind"]],
+  "smart": ["聪明的", ["smart", "smartphone"]],
+  "pod": ["脚(ped的变体)", ["podcast", "tripod"]],
+  "cast": ["投、扔", ["podcast", "broadcast", "cast"]],
+  "communic": ["共同、交流", ["communicate", "communication", "community"]],
+  "beauty": ["美丽", ["beautiful", "beautify", "beauty"]],
+  "happi": ["快乐", ["happiness", "happy"]],
+  "understand": ["理解", ["understanding", "understand"]],
+  "hang": ["悬挂", ["hangout", "hang", "hanging"]],
+  "out": ["外出、超过", ["hangout", "out", "outdoor"]],
+  "couch": ["长沙发", ["couch"]],
+  "sneak": ["偷偷摸摸", ["sneaky", "sneak"]]
+,
+  "web": ["网、蜘蛛网", ["website", "web", "webpage"]],
+  "site": ["位置、场所", ["website", "site", "situation"]],
+  "lap": ["膝盖、大腿", ["laptop", "lap"]],
+  "top": ["顶部", ["laptop", "top", "topic"]],
+  "gart": ["园(garden的变体)", ["kindergarten", "garden"]],
+  "environ": ["周围、环境", ["environment", "environmental", "environs"]],
+  "algo": ["算法", ["algorithm", "algorithmic"]],
+  "soft": ["软的", ["software", "soft"]],
+  "ware": ["器具、物品", ["software", "hardware", "warehouse"]],
+  "down": ["向下", ["download", "down", "downward"]],
+  "up": ["向上", ["upload", "up", "update"]],
+  "load": ["装载", ["download", "upload", "load", "unload"]],
+  "user": ["用户", ["username", "user", "usage"]],
+  "name": ["名字", ["username", "name", "rename"]]};
+
+/* 增强词表：word -> 该词的现成分解（由导入脚本注入，未注入时为 { }） */
+const ENHANCED = {};
+const ECDICT = {};          // 全量词典，运行时从 ecdict.json 加载
+let DATA_READY = false;     // 数据是否加载完成;
+
+/* ============================================================
+   算法：贪心切分
+   ============================================================ */
+
+function buildLists() {
+  const prefixes = Object.entries(PREFIXES).sort((a, b) => b[0].length - a[0].length);
+  const suffixes = Object.entries(SUFFIXES).sort((a, b) => b[0].length - a[0].length);
+  return { prefixes, suffixes };
+}
+const LISTS = buildLists();
+
+/* ============================================================
+   同源词 / 同根词 索引（运行时构建，不占数据体积）
+   同源词：按 词源来源(语言+原词) 分组，如 corpus ← 拉丁语 corpus → corporate/corps
+   同根词：按 词素(词根) 分组，如 port → export/import/transport
+   ============================================================ */
+const SRC_INDEX = new Map();    // key: 语言+原词 -> Set(单词)
+const MORPH_INDEX = new Map();  // key: 词素 -> Set(单词)
+const MORPH_SRC = {};           // 词素 -> {lang, word, note} 词根来源（用于全量词补演变链）
+const SUFFIX_KEYS = new Set(Object.keys(SUFFIXES));
+function buildIndex() {
+  SRC_INDEX.clear();
+  MORPH_INDEX.clear();
+  // 词根表例词也加入索引：port -> export/import/transport
+  for (const [root, val] of Object.entries(ROOTS)) {
+    if (root.length < 2 || !Array.isArray(val)) continue;
+    const ex = val[1];
+    if (!Array.isArray(ex)) continue;
+    if (!MORPH_INDEX.has(root)) MORPH_INDEX.set(root, new Set());
+    ex.forEach(w => { if (w) MORPH_INDEX.get(root).add(w); });
+  }
+  for (const [w, e] of Object.entries(ENHANCED)) {
+    if (!e.chain) continue;
+    for (const m of e.chain) {
+      const src = m.source;
+      if (src && src.lang && src.word) {
+        const key = src.lang + '\u0001' + src.word;
+        if (!SRC_INDEX.has(key)) SRC_INDEX.set(key, new Set());
+        SRC_INDEX.get(key).add(w);
+      }
+      const mm = m.m;
+      if (mm && mm.length >= 2 && !SUFFIX_KEYS.has(mm)) {
+        if (!MORPH_INDEX.has(mm)) MORPH_INDEX.set(mm, new Set());
+        MORPH_INDEX.get(mm).add(w);
+      }
+      if (src && src.lang && src.word && mm) {
+        if (!MORPH_SRC[mm]) MORPH_SRC[mm] = { lang: src.lang, word: src.word, note: src.note || '', meaning: m.meaning || '' };
+        else if (!MORPH_SRC[mm].meaning && m.meaning) MORPH_SRC[mm].meaning = m.meaning;
+      }
+    }
+  }
+}
+
+
+/* 查询某词的 同源词/同根词 */
+function findCognates(word) {
+  const e = ENHANCED[word];
+  const srcs = [];
+  const morphs = [];
+  const seenMorph = new Set();
+  // 全量词/表外词：用规则引擎拆解，查同根词（完整拆解失败退回部分拆解，如 binary→bi）
+  if (!e || !e.chain) {
+    const bd = decompose(word, 0) || partialDecompose(word);
+    if (bd) {
+      const allRoots = (bd.roots || []).map(r => r.m);
+      // 前缀也参与同根查询（如 binary 的 bi-、automatic 的 auto-）
+      if (bd.prefix) allRoots.push(bd.prefix.m.replace(/-.*$/, ''));
+      for (const rm of allRoots) {
+        if (rm.length < 2 || seenMorph.has(rm)) continue;
+        seenMorph.add(rm);
+        const mates = MORPH_INDEX.get(rm);
+        if (mates) {
+          const list = [...mates].filter(x => x !== word);
+          if (list.length) morphs.push({ m: rm, words: list });
+        }
+      }
+    }
+    return { srcs, morphs };
+  }
+  if (e && e.chain) {
+    for (const m of e.chain) {
+      const src = m.source;
+      if (src && src.lang && src.word) {
+        const key = src.lang + '\u0001' + src.word;
+        const mates = SRC_INDEX.get(key);
+        if (mates) {
+          const list = [...mates].filter(x => x !== word);
+          if (list.length) srcs.push({ lang: src.lang, word: src.word, words: list });
+        }
+      }
+      const mm = m.m;
+      if (mm && mm.length >= 2 && !SUFFIX_KEYS.has(mm)) {
+        const mates = MORPH_INDEX.get(mm);
+        if (mates) {
+          const list = [...mates].filter(x => x !== word);
+          if (list.length) morphs.push({ m: mm, words: list });
+        }
+      }
+    }
+  }
+  return { srcs, morphs };
+}
+
+/* ============================================================
+   英语基本词表：把常见英文单词本身当作"词根"
+   作用：拆"基本词+后缀"(teacher→teach+er)和复合词(newspaper→news+paper)
+   说明：已出现在 ROOTS 中的拉丁/希腊词根不再重复收录
+   ============================================================ */
+const BASEWORDS = {
+  "able": "能够的", "air": "空气", "all": "全部、都", "allow": "允许",
+  "animal": "动物", "answer": "回答", "apple": "苹果", "argue": "争论",
+  "arm": "手臂", "arrive": "到达", "ask": "询问", "baby": "婴儿",
+  "back": "后面、背部", "bad": "坏的", "ball": "球", "bank": "银行、河岸",
+  "bed": "床", "begin": "开始", "believe": "相信", "belong": "属于",
+  "best": "最好的", "big": "大的", "bird": "鸟", "birth": "出生",
+  "bitter": "苦的", "black": "黑色的", "blue": "蓝色的", "boat": "小船",
+  "body": "身体", "book": "书", "bottom": "底部", "box": "盒子",
+  "boy": "男孩", "brain": "大脑", "bread": "面包", "break": "打破",
+  "bridge": "桥", "bright": "明亮的", "bring": "带来", "brother": "兄弟",
+  "brown": "棕色的", "build": "建造", "bus": "公共汽车", "busy": "忙碌的",
+  "buy": "买", "call": "呼叫、打电话", "calm": "平静的", "care": "关心、照料",
+  "car": "汽车", "carpet": "地毯",
+  "carry": "搬运", "cat": "猫", "catch": "抓住", "center": "中心",
+  "chair": "椅子", "change": "改变", "cheap": "便宜的", "check": "检查",
+  "child": "孩子", "choose": "选择", "city": "城市", "class": "班级、课程",
+  "clean": "清洁的", "clear": "清晰的", "clever": "聪明的", "climb": "爬",
+  "close": "关闭", "cold": "寒冷的", "collect": "收集", "come": "来",
+  "common": "普通的", "continue": "继续", "cook": "烹饪", "cool": "凉爽的",
+  "count": "数数", "cover": "覆盖", "cow": "牛", "cut": "切",
+  "dance": "跳舞", "dark": "黑暗的", "daughter": "女儿", "day": "白天、一天",
+  "decide": "决定", "deep": "深的", "develop": "发展", "differ": "不同", "digit": "数字、手指",
+  "dirty": "脏的", "discover": "发现", "discuss": "讨论",
+  "diverse": "多样的", "dog": "狗", "door": "门", "draw": "画",
+  "drink": "喝", "drive": "驾驶", "dry": "干燥的", "ear": "耳朵",
+  "early": "早的", "earth": "地球、泥土", "easy": "容易的", "eat": "吃",
+  "empty": "空的", "end": "末端、结束", "engineer": "工程师", "enjoy": "享受",
+  "enter": "进入", "escape": "逃脱", "every": "每个", "explain": "解释",
+  "eye": "眼睛", "face": "脸", "fall": "落下", "family": "家庭",
+  "far": "远的", "farm": "农场", "fast": "快的", "father": "父亲",
+  "feel": "感觉", "field": "田野", "fight": "战斗", "find": "找到",
+  "fine": "好的", "finish": "完成", "fire": "火", "first": "第一",
+  "fish": "鱼", "flower": "花", "fly": "飞", "follow": "跟随",
+  "food": "食物", "foot": "脚", "forest": "森林", "forget": "忘记",
+  "forgive": "原谅", "free": "自由的", "fresh": "新鲜的", "friend": "朋友",
+  "front": "前面", "full": "满的", "game": "游戏",
+  "garden": "花园", "general": "一般的", "gentle": "温和的", "get": "得到",
+  "girl": "女孩", "give": "给予", "glad": "高兴的", "go": "走、去",
+  "gold": "金色的", "good": "好的", "grass": "草", "great": "伟大的",
+  "green": "绿色的", "ground": "地面", "grow": "生长", "grown": "成长的",
+  "hair": "头发", "hand": "手", "hang": "悬挂", "happy": "快乐的",
+  "hard": "硬的、困难的", "head": "头", "health": "健康", "hear": "听见",
+  "heart": "心脏", "heavy": "重的", "help": "帮助", 
+  "high": "高的", "hold": "握住", "home": "家", "honest": "诚实的",
+  "hope": "希望", "horse": "马", "hot": "热的", "house": "房子",
+  "huge": "巨大的", "hungry": "饥饿的", "hurt": "伤害", "ice": "冰",
+  "imagine": "想象", "improve": "改善", "invite": "邀请", "jump": "跳",
+  "keep": "保持", "kick": "踢", "kill": "杀死", "kind": "善良的、种类",
+  "kiss": "亲吻", "knee": "膝盖", "know": "知道", "lake": "湖",
+  "land": "土地", "last": "最后的", "late": "晚的", "laugh": "笑",
+  "lead": "带领", "leaf": "叶子", "learn": "学习", "leave": "离开",
+  "leg": "腿", "lend": "借出", "life": "生活、生命", "lift": "举起",
+  "light": "光、轻的", "like": "喜欢", "listen": "听", "live": "生活、居住",
+  "lock": "锁", "long": "长的", "look": "看", "lose": "失去",
+  "loud": "响亮的", "love": "爱", "low": "低的", "mail": "邮件",
+  "main": "主要的", "make": "制作", "manage": "管理", "market": "市场",
+  "marry": "结婚", "mean": "意味、意思是", "meat": "肉", "meet": "遇见",
+  "mention": "提到", "middle": "中间", "milk": "牛奶", "miss": "错过、想念",
+  "mix": "混合", "money": "钱", "moon": "月亮", "mother": "母亲",
+  "mountain": "山", "move": "移动", "music": "音乐", "name": "名字",
+  "near": "近的", "need": "需要", "new": "新的", "news": "新闻",
+  "next": "下一个", "nice": "好的", "night": "夜晚", "notice": "注意",
+  "old": "老的、旧的", "open": "打开的、开放", "orange": "橙子、橙色",
+  "own": "自己的、拥有", "paint": "画画、油漆", "paper": "纸、报纸",
+  "parent": "父母", "park": "公园", "part": "部分", "pass": "经过",
+  "path": "小路", "pay": "支付", "peace": "和平", "people": "人们",
+  "person": "人", "pink": "粉色的", "plane": "飞机", "plant": "植物、种植",
+  "play": "玩、演奏", "point": "点、要点", "police": "警察", "polite": "有礼貌的",
+  "poor": "贫穷的", "practice": "练习", "prepare": "准备",
+  "press": "按压", "print": "印刷", "produce": "生产", "proper": "适当的",
+  "protect": "保护", "provide": "提供", "public": "公共的", "pull": "拉",
+  "purple": "紫色的", "push": "推", "put": "放置", "quiet": "安静的",
+  "rain": "雨", "reach": "到达", "read": "读", "ready": "准备好的",
+  "real": "真实的", "receive": "收到", "red": "红色的", "refuse": "拒绝",
+  "regular": "规则的", "remain": "保持", "remember": "记住", "repeat": "重复",
+  "reply": "回复", "return": "返回", "rice": "米饭", "rich": "富有的",
+  "ride": "骑", "right": "正确的、右边", "river": "河", "road": "道路",
+  "rock": "岩石", "roof": "屋顶", "room": "房间", "rude": "粗鲁的",
+  "run": "跑", "sad": "悲伤的", "safe": "安全的", "sail": "航行",
+  "sand": "沙子", "save": "节省、拯救", "school": "学校", "sea": "海",
+  "search": "搜索", "see": "看见", "seem": "似乎", "sell": "卖",
+  "send": "发送", "serve": "服务", "shake": "摇动", "share": "分享",
+  "ship": "船", "shop": "商店", "short": "短的", "shoulder": "肩膀",
+  "shout": "喊叫", "show": "展示", "sick": "生病的", "side": "边",
+  "sign": "签名", "silver": "银色的", "simple": "简单的", "sing": "唱歌",
+  "sister": "姐妹", "sit": "坐", "sky": "天空", "sleep": "睡觉",
+  "slow": "慢的", "small": "小的", "smart": "聪明的", "smile": "微笑",
+  "smoke": "吸烟", "snow": "雪", "soft": "软的", "soil": "土壤",
+  "some": "一些", "son": "儿子", "song": "歌曲", "sour": "酸的",
+  "speak": "说话", "special": "特别的", "spend": "花费", "sport": "运动",
+  "stand": "站立", "star": "星星", "start": "开始", "stay": "停留",
+  "steal": "偷", "stone": "石头", "stop": "停止", "store": "商店",
+  "storm": "暴风雨", "story": "故事", "street": "街道", "strong": "强壮的",
+  "study": "学习", "succeed": "成功", "sugar": "糖", "suggest": "建议",
+  "sun": "太阳", "supply": "供应", "support": "支持", "suppose": "假设",
+  "sure": "确定的", "surprise": "使惊讶", "sweet": "甜的", "swim": "游泳",
+  "table": "桌子", "take": "拿、带走", "talk": "谈话", "taste": "品尝",
+  "teach": "教、讲授", "tell": "告诉", "thank": "感谢", "thing": "东西、事情",
+  "think": "思考", "throw": "扔", "tired": "疲倦的", "toe": "脚趾",
+  "top": "顶部", "touch": "触摸", "town": "城镇", "train": "火车、训练",
+  "travel": "旅行", "tree": "树", "true": "真实的", "try": "尝试",
+  "turn": "转动", "type": "打字、类型", "use": "使用", 
+  "visit": "参观、拜访", "wait": "等待", "wake": "醒来", "walk": "步行",
+  "wall": "墙", "want": "想要", "warm": "温暖的", "warn": "警告",
+  "wash": "洗", "waste": "浪费", "watch": "观看", "water": "水",
+  "way": "道路、方式", "weak": "弱的", "wear": "穿", "wet": "湿的",
+  "white": "白色的", "whole": "整个的", "wide": "宽的", "win": "赢",
+  "wind": "风", "window": "窗户", "wish": "希望", "woman": "女人",
+  "wonder": "好奇、想知道", "wood": "木头", "word": "单词", "work": "工作",
+  "world": "世界", "worry": "担心", "write": "写", "wrong": "错误的",
+  "yard": "院子", "year": "年", "yellow": "黄色的", "young": "年轻的",
+  "beauty": "美丽", "govern": "管理、统治", "grand": "宏大的、祖辈的",
+  "stream": "河流、溪流", "king": "国王", "communicate": "通讯、交流",
+  "discipline": "学科、纪律", "have": "有", "cause": "原因、导致",
+  "heal": "治愈", "student": "学生"
+};
+
+/* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
+/* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
+const WHOLE_ONLY = {
+  "kindergarten": "幼儿园（德语：Kinder儿童 + Garten园）",
+  "algorithm": "算法（源自数学家花剌子模的名字）",
+  "wifi": "无线局域网",
+  "google": "谷歌（搜索引擎，源自 googol 10的100次方）",
+  "bluetooth": "蓝牙（以丹麦国王哈拉尔·蓝牙命名）",
+};
+
+const BASEWORD_OVERRIDE = {
+  "man": { m: "man", meaning: "人、男人", cognates: [] },
+  "path": { m: "path", meaning: "小路、道路", cognates: [] }
+};
+
+/* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
+const IN_INTO = { port:1, ject:1, spect:1, sist:1, spir:1, press:1, cur:1, curs:1, gress:1, flu:1, quest:1, tend:1, trus:1, cept:1, vent:1, duc:1 };
+const IN_NOT = { vis:1, vari:1, fin:1, finit:1, sens:1, correct:1, direct:1, definite:1, legal:1, accurate:1, credible:1, mobile:1, mortal:1, sane:1, human:1, sufficient:1, efficient:1, convenient:1, significant:1, distinct:1, flexible:1, separable:1, conceiv:1, capable:1, formal:1 };
+
+/* 英语基本词变形还原：happi→happy，creat→create
+   深度限制：只有"直接命中"在任意深度生效；去y/补e/双写等变形还原
+   仅允许在剥切深度 ≤1（即整词或剥一个词缀后）——英语"动词去e+后缀"
+   派生是单层的（argue+ment、arrive+al），深层递归出现的基本词
+   多为无关凑巧（如 application 深处 appl→apple），应禁止顶替真词根。 */
+function baseRoot(seg, depth) {
+  if (BASEWORDS[seg]) return { m: seg, meaning: BASEWORDS[seg] };
+  if (depth > 1) return null;
+  // flex 标记：变形还原得到的词根（去y/补e/双写），评分时额外罚分，
+  // 避免在存在真词根竞争时顶替（如 apply 的 appl→apple，应拆 ap-+ply）
+  if (seg.endsWith('i')) {
+    const y = seg.slice(0, -1) + 'y';
+    if (BASEWORDS[y]) return { m: y, meaning: BASEWORDS[y], flex: true };
+  }
+  if (BASEWORDS[seg + 'e']) return { m: seg + 'e', meaning: BASEWORDS[seg + 'e'], flex: true };
+  if (seg.length >= 4 && seg[seg.length - 1] === seg[seg.length - 2]) {
+    const d = seg.slice(0, -1);
+    if (BASEWORDS[d]) return { m: d, meaning: BASEWORDS[d], flex: true };
+  }
+  return null;
+}
+
+/* 统一词根查询：拉丁词根 > 英语基本词(含变形还原)
+   isBase 标记：命中基本词表/整词表/变形还原的词，拆解评分时长度不计，
+   避免基本词在复合拆解中压过"真前缀+真词根"（如 complete 不被拆成 come+plete）。 */
+function rootOf(seg, depth) {
+  if (BASEWORD_OVERRIDE[seg]) return { ...BASEWORD_OVERRIDE[seg], isBase: true };
+  if (WHOLE_ONLY[seg]) return { m: seg, meaning: WHOLE_ONLY[seg], cognates: [], isBase: true };
+  if (ROOTS[seg]) return { m: seg, meaning: ROOTS[seg][0], cognates: ROOTS[seg][1] || [] };
+  const b = baseRoot(seg, depth);
+  return b ? { m: b.m, meaning: b.meaning, cognates: [], isBase: true, flex: !!b.flex } : null;
+}
+
+/* 前缀含义（含 in-/im- 消歧） */
+function prefMeaning(pf, rootM) {
+  if (!rootM) return pf.meaning;
+  const k = pf.m === 'im' ? 'in' : pf.m;
+  if (k === 'in') {
+    if (IN_INTO[rootM]) return '向内、进入';
+    if (IN_NOT[rootM]) return '不、无';
+  }
+  return pf.meaning;
+}
+
+/* ============================================================
+   算法：递归拆解
+   支持：前缀+词根+后缀、多层前缀(mis+under+stand)、
+         英语复合词(news+paper)、基本词+后缀(teach+er)
+   ============================================================ */
+function decompose(w, depth) {
+  if (w.length < 2 || depth > 4) return null;
+  const candidates = [];
+
+  // 0. 整段本身是词根/基本词
+  const whole = rootOf(w, depth);
+  if (whole) return { prefix: null, roots: [whole], suffixes: [] };
+
+  // 1. 前缀 + 递归拆剩余部分
+  for (const [pre, preM] of LISTS.prefixes) {
+    if (!w.startsWith(pre)) continue;
+    const rest = w.slice(pre.length);
+    if (rest.length < 2) continue;
+    const sub = decompose(rest, depth + 1);
+    if (!sub) continue;
+    const rootLen = sub.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
+    // 子拆解里已有前缀时，合并显示为"双前缀"(如 mis-under)
+    const prefix = sub.prefix
+      ? { m: pre + '-' + sub.prefix.m, meaning: preM + '；' + sub.prefix.meaning }
+      : { m: pre, meaning: preM };
+    candidates.push({
+      prefix: prefix,
+      roots: sub.roots,
+      suffixes: sub.suffixes,
+      score: rootLen * 2 + pre.length * 0.2 - (sub.roots.length + sub.suffixes.length) * 14 + sub.suffixes.length * 9 - (sub.roots.some(r => r.flex) ? 6 : 0)
+    });
+  }
+
+  // 2. 剥后缀（可连续多个），递归拆剩余部分
+  for (const [suf, sufM] of LISTS.suffixes) {
+    if (!w.endsWith(suf) || w.length - suf.length < 2) continue;
+    const rest = w.slice(0, w.length - suf.length);
+    // 弱后缀(s/es/e)只允许直接接在整词词根后，避免过度拆分(如 revers→rever+s 假拆分)
+    if ((suf === 's' || suf === 'es' || suf === 'e') && !rootOf(rest, depth)) continue;
+    const sub = decompose(rest, depth + 1);
+    if (!sub) continue;
+    const rootLen = sub.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
+    candidates.push({
+      prefix: sub.prefix,
+      roots: sub.roots,
+      suffixes: (sub.suffixes || []).concat([{ m: suf, meaning: sufM }]),
+      score: rootLen * 2 + (sub.prefix ? sub.prefix.m.length * 0.2 : 0) - (sub.roots.length + sub.suffixes.length) * 14 + (sub.suffixes.length + 1) * 9 - (sub.roots.some(r => r.flex) ? 6 : 0)
+    });
+  }
+
+  // 3. 复合词：整段拆成 2~3 个词根（可夹连接元音）
+  for (const g of splitRoots(w, depth)) {
+    const rootLen = g.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
+    candidates.push({
+      prefix: null, roots: g.roots, suffixes: [],
+      // 含基本词或变形还原词根的复合候选额外罚分，避免压过"真前缀+真词根"(如 complete 不拆成 come+plete)
+      score: rootLen * 2 - (g.roots.length - 1) * 14 - (g.roots.some(r => r.isBase) ? 6 : 0)
+    });
+  }
+
+  if (candidates.length === 0) return null;
+
+  // 去重：同一(前缀, 词根组) 保留后缀最少者；再取最高分
+  const best = new Map();
+  for (const c of candidates) {
+    const key = (c.prefix ? c.prefix.m : '') + '|' + c.roots.map(r => r.m).join('+');
+    const prev = best.get(key);
+    if (!prev || c.suffixes.length < prev.suffixes.length ||
+        (c.suffixes.length === prev.suffixes.length && c.score > prev.score)) {
+      best.set(key, c);
+    }
+  }
+  return [...best.values()].sort((a, b) => b.score - a.score)[0];
+}
+
+/* 把一段字母拆成 2~3 个已知词根（支持复合词和连接元音） */
+function splitRoots(seg, depth) {
+  const res = [];
+  if (!seg || seg.length < 2) return res;
+  for (let i = 2; i < seg.length - 2; i++) {
+    const a = rootOf(seg.slice(0, i), depth), b = rootOf(seg.slice(i), depth);
+    if (a && b) res.push({ roots: [a, b] });
+  }
+  for (let i = 2; i < seg.length - 4; i++) {
+    for (let k = i + 1; k < seg.length - 2; k++) {
+      const a = rootOf(seg.slice(0, i), depth), b = rootOf(seg.slice(i, k), depth), c = rootOf(seg.slice(k), depth);
+      if (a && b && c) res.push({ roots: [a, b, c] });
+      if (a && c && /^[ioae]$/.test(seg.slice(i, k)) && !PREFIXES[seg.slice(0, k)]) res.push({ roots: [a, c] });
+    }
+  }
+  return res;
+}
+
+/* 部分拆解兜底：完全拆不开时，优先展示"整词开头的真词根 + 未识别"
+   （如 architecture → arch + ??itecture、democracy → dem + ??ocracy），
+   其次才是"多字母前缀 + 未识别"（如 automato → auto- + mato）。
+   避免误把真词根的开头当 ad/de 变体前缀(如 ar-、de-)。放在 analyze 层而不是 decompose 里，
+   避免部分结果被父层递归拼进正常拆解（如 unhappy+ness 不被 un + 未识别 顶掉）。 */
+function partialDecompose(w) {
+  // 1. 词根前缀：整词以某真词根开头，剩余部分够长
+  let bestRoot = null, bestRlen = 0;
+  for (const rk of Object.keys(ROOTS)) {
+    if (rk.length < 2 || rk.length <= bestRlen) continue;
+    if (!w.startsWith(rk)) continue;
+    const rest = w.slice(rk.length);
+    if (rest.length < 2) continue;
+    bestRoot = { m: rk, meaning: ROOTS[rk][0], cognates: ROOTS[rk][1] || [] };
+    bestRlen = rk.length;
+  }
+  if (bestRoot) {
+    return { prefix: null, roots: [bestRoot], suffixes: [], unknown: w.slice(bestRlen) };
+  }
+  // 2. 前缀兜底
+  let bestPre = null, bestLen = 0;
+  for (const [pre, preM] of LISTS.prefixes) {
+    if (pre.length < 2 || pre.length <= bestLen) continue;
+    if (!w.startsWith(pre)) continue;
+    const rest = w.slice(pre.length);
+    if (rest.length < 2) continue;
+    bestPre = { m: pre, meaning: preM };
+    bestLen = pre.length;
+  }
+  if (!bestPre) return null;
+  return { prefix: bestPre, roots: [], suffixes: [], unknown: w.slice(bestPre.m.length) };
+}
+
+/* 编辑距离（Damerau-Levenshtein）：相邻字母换位算一次编辑，
+   能识别常见拼错（recieve→receive 的 ei/ie、binery→binary 的 er/re）。 */
+function editDistance(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev2 = null, prev = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] && prev2) {
+        cur[j] = Math.min(cur[j], prev2[j - 2] + 1);   // 相邻换位
+      }
+    }
+    prev2 = prev;
+    prev = cur;
+  }
+  return prev[n];
+}
+
+/* 词不存在时，在考试词库里找拼写相近的词作为建议。
+   阈值：短词(≤5字母)距离 ≤1，长词 ≤2；
+   首字母不同重罚（避免 finery 顶替 binery→binary）；
+   距离 2 的长词若末尾不同再半罚（排除 meaningless 类）。 */
+function suggestWord(w) {
+  if (!ENHANCED || w.length < 3) return null;
+  const MAX_DIST = w.length <= 5 ? 1 : 2;
+  let best = null, bestDist = 99;
+  for (const cand of Object.keys(ENHANCED)) {
+    if (Math.abs(cand.length - w.length) > 2) continue;
+    let d = editDistance(w, cand);
+    if (w[0] !== cand[0]) d += 2;                       // 首字母不同 → 重罚
+    else if (d === 2 && w.length > 5 && w[w.length - 1] !== cand[cand.length - 1]) d += 0.5;
+    if (d < bestDist) { bestDist = d; best = cand; }
+  }
+  if (best && bestDist <= MAX_DIST) return best;
+  return null;
+}
+
+function analyze(raw) {
+  const w = raw.toLowerCase().replace(/[^a-z]/g, '');
+  if (w.length < 2) return { found: false, reason: '请输入至少两个字母的单词' };
+  if (ENHANCED && ENHANCED[w]) {
+    return { found: true, word: w, source: 'enhanced', enhanced: ENHANCED[w], breakdown: null };
+  }
+  // 二级查词：全量词典兜底
+  if (ECDICT && ECDICT[w]) {
+    return { found: true, word: w, source: 'ecdict', ecdict: ECDICT[w], breakdown: null };
+  }
+  const bd = decompose(w, 0);
+  if (bd) {
+    return {
+      found: true, word: w, source: 'builtin',
+      breakdown: { ...bd, cognates: (bd.roots[0] && bd.roots[0].cognates) || [] },
+      suggestion: suggestWord(w)
+    };
+  }
+  const partial = partialDecompose(w);
+  if (partial) {
+    return { found: true, word: w, source: 'builtin', breakdown: { ...partial, cognates: [] }, suggestion: suggestWord(w) };
+  }
+  return { found: false, reason: '未发现明显的词根词缀结构', word: w, suggestion: suggestWord(w) };
+}
+
+/* 构成逻辑：把各部分含义拼成一句话 */
+function compose(b) {
+  const parts = [];
+  if (b.prefix) parts.push(prefMeaning(b.prefix, b.roots[0] && b.roots[0].m));
+  if (b.roots) b.roots.forEach(r => parts.push(r.meaning));
+  if (b.suffixes) b.suffixes.forEach(s => parts.push(s.meaning));
+  if (b.unknown) parts.push('未识别部分「' + b.unknown + '」');
+  return parts.join(' + ').split(';').join(' 或 ');
+}
+</script>
+
+<script>
+/* ============================================================
+   UI 逻辑
+   ============================================================ */
+async function loadData() {
+  const tip = document.getElementById('load-tip');
+  try {
+    if (tip) tip.textContent = '正在加载考试词库…';
+    const enhRes = await fetch('enhanced.json');
+    const enhText = await enhRes.text();
+    // 分片解析，避免阻塞主线程
+    await new Promise(r => setTimeout(r, 30));
+    const enh = JSON.parse(enhText);
+    Object.assign(ENHANCED, enh);
+    if (tip) tip.textContent = '考试词库加载完成（' + Object.keys(ENHANCED).length + ' 词），正在加载全量词典…';
+    await new Promise(r => setTimeout(r, 30));
+
+    const dictRes = await fetch('ecdict.json');
+    const dictText = await dictRes.text();
+    await new Promise(r => setTimeout(r, 30));
+    const dict = JSON.parse(dictText);
+    // ecdict 数据源的 \n 是字面反斜杠+n，归一化为真实换行，界面渲染才正常
+    for (const k in dict) { const e = dict[k]; if (e.t) e.t = e.t.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n'); if (e.d) e.d = e.d.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n'); }
+    Object.assign(ECDICT, dict);
+    buildIndex();
+    DATA_READY = true;
+    if (tip) tip.textContent = '已加载 ' + Object.keys(ENHANCED).length + ' 考试词 + ' + Object.keys(ECDICT).length + ' 全量词';
+    setTimeout(() => { if (tip) tip.textContent = ''; }, 4000);
+  } catch (e) {
+    console.error('数据加载失败', e);
+    if (tip) tip.textContent = '数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）';
+  }
+}
+loadData();
+
+const input = document.getElementById('input');
+const btn = document.getElementById('btn');
+const result = document.getElementById('result');
+
+/* 生成完整卡片 HTML（单查词 render 与右侧面板共用） */
+function cardHTML(r) {
+  let html = '';
+
+  if (r.found && r.source === 'enhanced') {
+    const e = r.enhanced;
+    html += `<div class="card">
+      <div class="word-line">
+        <span class="word">${r.word}</span>
+        <span class="badge enhanced">增强词表</span>
+        <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+      </div>`;
+    if (e.pron) html += `<div class="meaning"><div class="label">音标</div>${e.pron}</div>`;
+    if (e.meaning) html += `<div class="meaning"><div class="label">释义</div>${e.meaning}</div>`;
+    if (e.breakdown) html += `<div class="meaning"><div class="label">词根词缀分解</div>${e.breakdown}</div>`;
+    if (e.chain && e.chain.length) {
+      html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
+      e.chain.forEach(m => {
+        if (m.source && m.source.lang) {
+          const note = m.source.note ? `<span class="note">（${m.source.note}）</span>` : '';
+          html += `<div class="chain-item"><span class="chain-morph">${m.m}</span>` +
+            `<span class="chain-arrow">←</span>` +
+            `<span class="chain-src"><span class="lang">${m.source.lang}</span><span class="w">${m.source.word}</span>${note}</span>` +
+            `<span class="chain-meaning">${m.meaning ? '（' + m.meaning + '）' : ''}</span></div>`;
+        } else {
+          html += `<div class="chain-item"><span class="chain-morph">${m.m}</span>` +
+            `<span class="chain-nosrc">${m.meaning || ''}</span></div>`;
+        }
+      });
+      html += `</div></div>`;
+    }
+    if (e.etymology) html += `<div class="meaning"><div class="label">词源</div>${e.etymology}</div>`;
+    if (e.examples && e.examples.length) {
+      html += `<div class="meaning"><div class="label">例句</div>`;
+      e.examples.slice(0, 3).forEach(ex => {
+        const sep = ex.indexOf(' / ');
+        if (sep > -1) {
+          const enTxt = ex.slice(0, sep);
+          html += `<div class="ex"><div class="ex-en"><span class="ex-en-txt">${enTxt}</span>` +
+            `<button class="tts-btn ex-tts" data-text="${escapeHtml(enTxt).replace(/"/g, '&quot;')}" title="朗读英文例句">🔊</button></div>` +
+            `<div class="ex-zh">${ex.slice(sep + 3)}</div></div>`;
+        } else {
+          html += `<div class="ex"><div class="ex-zh">${ex}</div></div>`;
+        }
+      });
+      html += `</div>`;
+    }
+    const cog = findCognates(r.word);
+    if (cog.srcs.length || cog.morphs.length) {
+      html += `<div class="cognates"><div class="label">同源词 / 同根词</div>`;
+      cog.srcs.forEach(s => {
+        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
+        html += `<div class="cog-row"><span class="cog-lbl">${s.lang} ${s.word}</span>：${tags}</div>`;
+      });
+      cog.morphs.forEach(s => {
+        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
+        html += `<div class="cog-row"><span class="cog-lbl">同根 ${s.m}</span>：${tags}</div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  } else if (r.source === 'ecdict') {
+    const d = r.ecdict;
+    html += `<div class="card">
+      <div class="word-line">
+        <span class="word">${r.word}</span>
+        <span class="badge">全量词典</span>
+        <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+      </div>`;
+    if (d.p) html += `<div class="meaning"><div class="label">音标</div>${d.p}</div>`;
+    if (d.g) html += `<div class="meaning"><div class="label">词性</div>${d.g}</div>`;
+    if (d.t) html += `<div class="meaning"><div class="label">释义</div>${d.t.replace(/\n/g, '<br>')}</div>`;
+    if (d.d) {
+      html += `<div class="meaning"><div class="label">英文释义</div>`;
+      d.d.split('\n').map(s => s.trim()).filter(Boolean).forEach(ln => {
+        html += `<div class="ex-en def-line"><span class="ex-en-txt">${ln}</span>` +
+          `<button class="tts-btn ex-tts" data-text="${escapeHtml(ln).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div>`;
+      });
+      html += `</div>`;
+    }
+    // 全量词：先拆解（完整优先，失败退回部分拆解，如 binary→bi-+??nary），
+    // 再据此生成分解区块与词源演变链
+    const ecdBd = decompose(r.word, 0) || partialDecompose(r.word);
+    if (ecdBd) {
+      // 词根词缀分解（与 builtin 词同一套渲染）
+      const chunks = [];
+      if (ecdBd.prefix) chunks.push({ label: '前缀', m: ecdBd.prefix.m + '-', mtext: prefMeaning(ecdBd.prefix, ecdBd.roots[0] && ecdBd.roots[0].m) });
+      ecdBd.roots.forEach(rr => chunks.push({ label: '词根', m: rr.m, mtext: rr.meaning }));
+      if (ecdBd.suffixes) ecdBd.suffixes.forEach(s => chunks.push({ label: '后缀', m: '-' + s.m, mtext: s.meaning }));
+      if (ecdBd.unknown) chunks.push({ label: '未识别', m: ecdBd.unknown, mtext: '词源待考' });
+      if (chunks.length) {
+        html += `<div class="meaning"><div class="label">词根词缀分解</div><div class="breakdown">`;
+        chunks.forEach((c, i) => {
+          if (i > 0) html += `<span class="plus">+</span>`;
+          html += `<span class="morph"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}</span></span>`;
+        });
+        html += `</div></div>`;
+      }
+      const chainParts = [];
+      const allMorphs = []
+        .concat(ecdBd.prefix ? [{ m: ecdBd.prefix.m.replace(/-.*$/, ''), isPre: true }] : [])
+        .concat(ecdBd.roots.map(rr => ({ m: rr.m, meaning: rr.meaning || '' })))
+        .concat(ecdBd.suffixes.map(ss => ({ m: ss.m, meaning: ss.meaning || '' })));
+      for (const mp of allMorphs) {
+        let src = MORPH_SRC[mp.m];
+        if (!src && mp.m.length >= 3) {
+          // 变体映射：aut→auto, motor→motor, net→net
+          for (const cand of [mp.m + 'o', mp.m + 'e', mp.m.slice(0, -1), mp.m.slice(0, -1) + 'o']) {
+            if (MORPH_SRC[cand]) { src = MORPH_SRC[cand]; break; }
+          }
+        }
+        chainParts.push({ m: mp.m, meaning: mp.meaning || (src && src.meaning) || (mp.isPre ? (mp.m + '-') : ''), src: src });
+      }
+      const hasChainSrc = chainParts.some(cp => cp.src);
+      if (hasChainSrc) {
+        html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
+        chainParts.forEach(cp => {
+          if (cp.src) {
+            const note = cp.src.note ? `<span class="note">（${cp.src.note}）</span>` : '';
+            html += `<div class="chain-item"><span class="chain-morph">${cp.m}</span>` +
+              `<span class="chain-arrow">←</span>` +
+              `<span class="chain-src"><span class="lang">${cp.src.lang}</span><span class="w">${cp.src.word}</span>${note}</span>` +
+              `<span class="chain-meaning">${cp.meaning ? '（' + cp.meaning + '）' : ''}</span></div>`;
+          } else {
+            html += `<div class="chain-item"><span class="chain-morph">${cp.m}</span>` +
+              `<span class="chain-nosrc">${cp.meaning || ''}</span></div>`;
+          }
+        });
+        html += `</div></div>`;
+      }
+    }
+    const cog2 = findCognates(r.word);
+    if (cog2.morphs.length) {
+      html += `<div class="cognates"><div class="label">同根词</div>`;
+      cog2.morphs.forEach(s => {
+        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
+        html += `<div class="cog-row"><span class="cog-lbl">同根 ${s.m}</span>：${tags}</div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  } else if (r.found) {
+    const b = r.breakdown;
+    const chunks = [];
+    if (b.prefix) chunks.push({ label: '前缀', m: b.prefix.m + '-', mtext: prefMeaning(b.prefix, b.roots[0] && b.roots[0].m) });
+    b.roots.forEach(r => chunks.push({ label: '词根', m: r.m, mtext: r.meaning }));
+    if (b.suffixes) b.suffixes.forEach(s => chunks.push({ label: '后缀', m: '-' + s.m, mtext: s.meaning }));
+    if (b.unknown) chunks.push({ label: '未识别', m: b.unknown, mtext: '词源待考' });
+
+    html += `<div class="card">
+      <div class="word-line">
+        <span class="word">${r.word}</span>
+        <span class="badge">词根拆解</span>
+        <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+      </div>`;
+    if (r.suggestion && r.suggestion !== r.word) {
+      html += `<div class="spell-suggest">疑似拼写错误？你想查的是 <span class="cog" data-w="${r.suggestion}">${r.suggestion}</span> 吗？（点击跳转）</div>`;
+    }
+    html += `<div class="breakdown">`;
+    chunks.forEach((c, i) => {
+      if (i > 0) html += `<span class="plus">+</span>`;
+      html += `<span class="morph"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}</span></span>`;
+    });
+    html += `</div>`;
+
+    // 构成逻辑
+    const eq = [];
+    if (b.prefix) eq.push(b.prefix.m + '(' + prefMeaning(b.prefix, b.roots[0] && b.roots[0].m).split(';').join('/') + ')');
+    b.roots.forEach(r => eq.push(r.m + '(' + r.meaning + ')'));
+    if (b.suffixes) b.suffixes.forEach(s => eq.push(s.m + '(' + s.meaning + ')'));
+    if (b.unknown) eq.push(b.unknown + '(未识别)');
+    if (eq.length > 1) {
+      html += `<div class="meaning"><div class="label">构成逻辑</div>
+        <span class="eq">${eq.join(' + ')}</span>
+        <br>合起来大致是「${compose(b)}」——结合此含义理解单词的完整词义。</div>`;
+    }
+
+    // 同根词：查 MORPH_INDEX（可点击跳转），无结果时回退词根表例词
+    const cog2 = findCognates(r.word);
+    let cogMorphs = cog2.morphs || [];
+    if (!cogMorphs.length && b.cognates && b.cognates.length) {
+      cogMorphs = [{ m: b.roots[0] && b.roots[0].m, words: b.cognates }];
+    }
+    if (cogMorphs.length) {
+      html += `<div class="cognates"><div class="label">同根词</div>`;
+      cogMorphs.forEach(s => {
+        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
+        html += `<div class="cog-row"><span class="cog-lbl">同根 ${s.m}</span>：${tags}</div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div class="card"><div class="miss">
+      ${r.reason}<br>`;
+    if (r.suggestion && r.suggestion !== r.word) {
+      html += `你是不是想查 <span class="cog" data-w="${r.suggestion}">${r.suggestion}</span>？（点击跳转）<br>`;
+    }
+    html += `这个词很可能是自由词素（基本词）或词源特殊。试试其他单词，或运行"下载增强词表"扩大覆盖。
+    </div></div>`;
+  }
+
+  return html;
+}
+
+function render(r) {
+  result.innerHTML = cardHTML(r);
+  result.classList.add('show');
+  if (r.found) saveHistory(r);
+}
+
+function search() {
+  const v = input.value.trim();
+  if (!v) return;
+  if (!DATA_READY) {
+    const tip = document.getElementById('load-tip');
+    result.innerHTML = '<div class="card"><div class="miss">词库仍在加载，请稍候片刻再试…</div></div>';
+    result.classList.add('show');
+    return;
+  }
+  // 含空格即视为一段话 → 段落阅读模式；单个词走原查词
+  if (/\s/.test(v)) { renderParagraph(v); return; }
+  render(analyze(v));
+}
+
+/* ============================================================
+   段落阅读模式：贴一段话进来，点词内联展开拆解
+   ============================================================ */
+// 高频功能词：段落里跳过，不作为可点词
+const FUNC_WORDS = new Set(['the','a','an','to','of','in','on','at','for','with','by','and','or','but','so','as','from','into','onto','this','that','these','those','there','it','its','is','are','was','were','be','been','am','has','have','had','do','does','did','will','would','can','could','shall','should','may','might','not','no','yes','i','me','my','we','us','our','you','your','he','him','his','she','her','they','them','their']);
+
+// 判断一个词在段落里是否值得展开：功能词跳过；builtin 拆解需"已识别覆盖>=60%且含词根"；
+// 词典词（enhanced/ecdict）是真词，显示释义。
+function noteHasValue(r, w) {
+  if (FUNC_WORDS.has(w)) return false;
+  if (!r || !r.found) return false;
+  if (r.source === 'builtin' && r.breakdown) {
+    const b = r.breakdown;
+    const ident = (b.prefix ? b.prefix.m.length : 0)
+      + (b.roots || []).reduce((n, x) => n + (x.isBase ? 0 : x.m.length), 0)
+      + (b.suffixes || []).reduce((n, x) => n + x.m.length, 0);
+    return (b.roots || []).length > 0 && ident / w.length >= 0.6;
+  }
+  return true;  // enhanced/ecdict
+}
+
+function renderParagraph(text) {
+  // 按单词切分，保留标点空格。词: [A-Za-z']+，其余原样。
+  const tokens = text.split(/([A-Za-z']+)/);
+  const analyzed = new Map();  // word -> {r, note} 缓存，避免重复拆解
+  let html = '<div class="para-head"><button class="tts-btn" data-text="' +
+    escapeHtml(text).replace(/"/g, '&quot;') + '" title="朗读整段">🔊 朗读整段</button></div>';
+  html += '<div class="para">';
+  for (const tok of tokens) {
+    if (!tok) continue;
+    if (/^[A-Za-z']+$/.test(tok)) {
+      const key = tok.toLowerCase().replace(/[^a-z]/g, '');
+      let entry = analyzed.get(key);
+      if (!entry) {
+        const r = analyze(key);
+        analyzed.set(key, entry = { r });
+      }
+      if (noteHasValue(entry.r, key)) {
+        // 有拆解/释义的词 → 可点击 token，点击切右侧面板
+        html += `<span class="ptok" data-w="${tok}">${tok}</span> `;
+      } else {
+        html += `<span>${tok}</span> `;
+      }
+    } else {
+      html += escapeHtml(tok);
+    }
+  }
+  html += '</div>';
+  result.innerHTML = html;
+  result.classList.add('show');
+}
+
+/* 右侧滑出面板：段落深读用，复用 cardHTML 渲染完整卡片 */
+function openPanel(word) {
+  const r = analyze(word);
+  const body = document.getElementById('panel-body');
+  body.innerHTML = cardHTML(r);
+  document.getElementById('panel-title').textContent = word + ' · 详细';
+  document.getElementById('panel-mask').classList.add('show');
+  document.getElementById('panel').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('panel-mask').classList.remove('show');
+}
+
+/* ---------- 查词记录（localStorage，本地保存） ---------- */
+const HIST_KEY = 'wr_history';
+/* ---------- 收藏 ---------- */
+const FAV_KEY = 'wr_favs';
+function loadFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; } }
+function saveFavs(f) { try { localStorage.setItem(FAV_KEY, JSON.stringify(f)); } catch (e) {} }
+function isFav(w) { return loadFavs().includes(w); }
+function toggleFav(w) {
+  let f = loadFavs();
+  if (f.includes(w)) f = f.filter(x => x !== w);
+  else f.unshift(w);
+  saveFavs(f);
+  return f.includes(w);
+}
+function renderFavs() {
+  const el = document.getElementById('favlist');
+  if (!el) return;
+  const f = loadFavs();
+  if (!f.length) {
+    el.innerHTML = '<div class="card"><div class="miss">还没有收藏的单词。查询一个词，点右上角「☆ 收藏」即可加入。</div></div>';
+    return;
+  }
+  let h = '<div class="h-head">收藏（' + f.length + '）';
+  h += '<button class="h-btn" id="fav-clear">清空收藏</button></div>';
+  f.forEach(w => {
+    h += '<div class="h-item" data-word="' + w + '">' +
+      '<span class="h-w">' + w + '</span>' +
+      '<span class="h-s">' + (ENHANCED[w] ? (ENHANCED[w].meaning || '').split('\n')[0] : (ECDICT[w] ? (ECDICT[w].t || '').split('\n')[0] : '')) + '</span>' +
+      '<span class="fav-rm" data-del="' + w + '">✕</span>' +
+      '</div>';
+  });
+  el.innerHTML = h;
+}
+/* Tab 切换 */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  const showFav = name === 'fav';
+  document.getElementById('favlist').style.display = showFav ? 'block' : 'none';
+  document.getElementById('result').style.display = showFav ? 'none' : '';
+  document.getElementById('history').style.display = showFav ? 'none' : '';
+  if (showFav) renderFavs();
+}
+
+// 从分析结果里抽出一行摘要，方便扫一眼复习
+function historySummary(r) {
+  if (r.source === 'enhanced' && r.enhanced) {
+    const e = r.enhanced;
+    let s = (e.meaning || '').split('\n')[0].trim() || '';
+    if (e.breakdown) s = (e.breakdown.split('\n')[0].trim() + ' · ' + s).replace(/^· /, '');
+    return s;
+  }
+  const b = r.breakdown;
+  if (b) {
+    const parts = [];
+    if (b.prefix) parts.push(b.prefix.m + '(' + b.prefix.meaning + ')');
+    (b.roots || []).forEach(r0 => parts.push(r0.m + '(' + r0.meaning + ')'));
+    (b.suffixes || []).forEach(s0 => parts.push('-' + s0.m + '(' + s0.meaning + ')'));
+    if (r.source === 'builtin') return '词根 · ' + b.roots[0].meaning;
+    return parts.join(' + ');
+  }
+  return '';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// 解码 HTML 实体：数据里存的是 &amp;#x27; 这类，显示靠浏览器自动解码，
+// 但朗读时传给 TTS 的是原始串，必须还原成真实字符（如 ' 和 "）。
+function decodeEntities(s) {
+  return String(s)
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'").replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+let fsHandle = null;   // 已连接的本地记录文件句柄
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { return []; }
+}
+
+function saveHistory(r) {
+  let h = loadHistory();
+  h = h.filter(x => x.w !== r.word);          // 同词去重，移到最前
+  h.unshift({ w: r.word, s: historySummary(r), t: Date.now() });
+  if (h.length > 60) h = h.slice(0, 60);      // 只留最近 60 条，防止膨胀
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); } catch (e) {}
+  if (fsHandle) writeToFile(h);               // 已连本地文件则同步写盘
+  renderHistory();
+}
+
+// 把记录写入连接的本地文件（JSON，可读可改）
+async function writeToFile(h) {
+  if (!fsHandle) return;
+  try {
+    const w = await fsHandle.createWritable();
+    await w.write(JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), items: h }, null, 2));
+    await w.close();
+  } catch (e) { /* 写盘失败时数据仍在 localStorage，静默即可 */ }
+}
+
+// 选择本地记录文件，建立自动同步
+async function connectLocalFile() {
+  if (!window.showSaveFilePicker) {
+    alert('当前浏览器不支持自动写入本地文件。\n请改用 Edge 或 Chrome 打开本页，或用"导出"按钮手动备份。');
+    return;
+  }
+  try {
+    fsHandle = await window.showSaveFilePicker({
+      suggestedName: '查词记录.json',
+      types: [{ description: '查词记录 (JSON)', accept: { 'application/json': ['.json'] } }],
+    });
+    await mergeFromFile();       // 若该文件已有旧记录，先合并进来
+    await writeToFile(loadHistory());
+    updateLocalBtn();
+    renderHistory();
+  } catch (e) { /* 用户中途取消选择 */ }
+}
+
+// 读取已连接文件里的旧记录并合并——就算浏览器数据被清，重新连一次文件记录就回来了
+async function mergeFromFile() {
+  try {
+    const f = await fsHandle.getFile();
+    const data = JSON.parse(await f.text());
+    const items = data && Array.isArray(data.items) ? data.items : [];
+    if (!items.length) return;
+    const merged = loadHistory().concat(items).sort((a, b) => (b.t || 0) - (a.t || 0));
+    const map = new Map();               // 同一单词只保留时间最新的一条
+    merged.forEach(x => { if (x && x.w && (!map.has(x.w) || (map.get(x.w).t || 0) < (x.t || 0))) map.set(x.w, x); });
+    const h = [...map.values()].slice(0, 60);
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); } catch (e) {}
+  } catch (e) { /* 文件为空或格式不合法则忽略 */ }
+}
+
+// 一键导出当前记录（另存一份，用于备份或换电脑迁移）
+async function exportHistory() {
+  const h = loadHistory();
+  if (!h.length) { alert('暂无记录可导出'); return; }
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), items: h }, null, 2)],
+    { type: 'application/json' });
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: '查词记录-' + stamp + '.json',
+        types: [{ description: '查词记录 (JSON)', accept: { 'application/json': ['.json'] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return;
+    } catch (e) { /* 用户取消则走下方降级下载 */ }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = '查词记录-' + stamp + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+function updateLocalBtn() {
+  const b = document.getElementById('h-local');
+  if (!b) return;
+  if (fsHandle) { b.textContent = '已存本地 ✓'; b.disabled = true; }
+  else { b.textContent = '存到本地'; b.disabled = false; }
+}
+
+function renderHistory() {
+  const el = document.getElementById('history');
+  let h = [];
+  try { h = JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { h = []; }
+  if (!h.length) { el.classList.remove('show'); el.innerHTML = ''; return; }
+
+  const items = h.map(x => {
+    const d = new Date(x.t);
+    const ts = (d.getMonth() + 1) + '-' + d.getDate() + ' ' +
+      (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' +
+      (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+    return '<div class="h-item" data-word="' + escapeHtml(x.w) + '">' +
+      '<span class="h-w">' + escapeHtml(x.w) + '</span>' +
+      '<span class="h-s">' + escapeHtml(x.s) + '</span>' +
+      '<span class="h-t">' + ts + '</span></div>';
+  }).join('');
+
+  el.innerHTML = '<div class="h-head">查词记录' +
+    '<span class="h-n">' + h.length + '</span>' +
+    '<button class="h-btn" id="h-export">导出</button>' +
+    '<button class="h-btn" id="h-local">' + (fsHandle ? '已存本地 ✓' : '存到本地') + '</button>' +
+    '<button class="h-btn" id="h-clear">清空</button></div>' + items;
+  el.classList.add('show');
+}
+
+// 历史列表交互：点条目重新查这个词；点导出备份；点存到本地连文件；点清空删除全部
+document.getElementById('history').addEventListener('click', (e) => {
+  const item = e.target.closest('.h-item');
+  if (item) {
+    input.value = item.dataset.word;
+    search();
+    return;
+  }
+  if (e.target.id === 'h-export') { exportHistory(); return; }
+  if (e.target.id === 'h-local') { connectLocalFile(); return; }
+  if (e.target.id === 'h-clear' && confirm('确定清空全部查词记录吗？')) {
+    localStorage.removeItem(HIST_KEY);
+    if (fsHandle) writeToFile([]);   // 清空时同步清掉本地文件内容
+    renderHistory();
+  }
+});
+
+/* ============================================================
+   发音功能：内置浏览器语音（即点即播）+ Kokoro 高音质（本地服务）
+   ============================================================ */
+const KOKORO_URL = 'http://127.0.0.1:8757';
+const KOKORO_VOICES = [
+  ['af_heart', '美音·女·Heart'], ['af_bella', '美音·女·Bella'], ['af_nicole', '美音·女·Nicole'],
+  ['af_aoede', '美音·女·Aoede'], ['af_kore', '美音·女·Kore'],
+  ['am_adam', '美音·男·Adam'], ['am_michael', '美音·男·Michael'],
+  ['bf_emma', '英音·女·Emma'], ['bf_isabella', '英音·女·Isabella'], ['bm_george', '英音·男·George']
+];
+
+let ttsEngine = localStorage.getItem('wr_tts_eng') || 'builtin';
+let ttsKokoroVoice = localStorage.getItem('wr_tts_voice') || 'af_heart';
+let ttsBuiltinLang = localStorage.getItem('wr_tts_lang') || 'en-US';
+let ttsSpeed = parseFloat(localStorage.getItem('wr_tts_speed')) || 1;
+let kokoroOk = false;   // TTS 服务是否可用，启动时探测
+
+const ttsVoiceSel = document.getElementById('tts-voice');
+const ttsSpeedSel = document.getElementById('tts-speed');
+const ttsHint = document.getElementById('tts-hint');
+
+// 内置浏览器语音
+function speakBuiltin(text, rate) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = ttsBuiltinLang;
+  u.rate = rate;
+  speechSynthesis.speak(u);
+}
+
+// Kokoro 高音质：请求本地 TTS 服务合成并播放
+async function speakKokoro(text) {
+  const r = await fetch(KOKORO_URL + '/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, voice: ttsKokoroVoice, speed: ttsSpeed })
+  });
+  if (!r.ok) throw new Error('TTS ' + r.status);
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const a = new Audio(url);
+  a.onended = () => URL.revokeObjectURL(url);
+  await a.play();
+}
+
+// 统一入口：按当前引擎播放，Kokoro 失败时静默回退内置语音
+function speakText(text) {
+  text = decodeEntities(text);   // 还原 &#x27;/&quot; 等实体，朗读才跟原文一致
+  if (ttsEngine === 'kokoro' && kokoroOk) {
+    speakKokoro(text).catch(() => speakBuiltin(text, ttsSpeed));
+  } else {
+    speakBuiltin(text, ttsSpeed);
+  }
+}
+
+function fillVoiceOptions() {
+  ttsVoiceSel.innerHTML = '';
+  if (ttsEngine === 'kokoro') {
+    KOKORO_VOICES.forEach(([v, label]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = label;
+      if (v === ttsKokoroVoice) o.selected = true;
+      ttsVoiceSel.appendChild(o);
+    });
+  } else {
+    [['en-US', '美音'], ['en-GB', '英音']].forEach(([v, label]) => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = label;
+      if (v === ttsBuiltinLang) o.selected = true;
+      ttsVoiceSel.appendChild(o);
+    });
+  }
+}
+
+function updateTtsHint() {
+  ttsHint.textContent = (ttsEngine === 'kokoro' && !kokoroOk)
+    ? 'Kokoro 服务未启动，已回退内置语音' : '';
+}
+
+// 工具条交互
+document.querySelectorAll('.tts-eng').forEach(b => {
+  b.classList.toggle('active', b.dataset.eng === ttsEngine);
+  b.addEventListener('click', () => {
+    ttsEngine = b.dataset.eng;
+    localStorage.setItem('wr_tts_eng', ttsEngine);
+    document.querySelectorAll('.tts-eng').forEach(x => x.classList.toggle('active', x === b));
+    fillVoiceOptions();
+    updateTtsHint();
+  });
+});
+ttsVoiceSel.addEventListener('change', () => {
+  if (ttsEngine === 'kokoro') {
+    ttsKokoroVoice = ttsVoiceSel.value;
+    localStorage.setItem('wr_tts_voice', ttsKokoroVoice);
+  } else {
+    ttsBuiltinLang = ttsVoiceSel.value;
+    localStorage.setItem('wr_tts_lang', ttsBuiltinLang);
+  }
+});
+ttsSpeedSel.addEventListener('change', () => {
+  ttsSpeed = parseFloat(ttsSpeedSel.value) || 1;
+  localStorage.setItem('wr_tts_speed', String(ttsSpeed));
+});
+fillVoiceOptions();
+
+// 探测 Kokoro 服务是否在运行
+fetch(KOKORO_URL + '/health').then(r => r.json()).then(d => {
+  kokoroOk = !!d.ok;
+  updateTtsHint();
+}).catch(() => { kokoroOk = false; updateTtsHint(); });
+
+renderHistory();
+
+result.addEventListener('click', (e) => {
+    const t = e.target.closest('.cog');
+    if (t) { input.value = t.dataset.w; search(); return; }
+    // 段落阅读模式：点词直接右侧面板滑出完整卡片（不再内联展开）
+    const pt = e.target.closest('.ptok');
+    if (pt) {
+      openPanel(pt.dataset.w);
+      return;
+    }
+  });
+// 面板事件：关闭、遮罩点击关闭、同根词跳转、收藏
+document.getElementById('panel-close').addEventListener('click', closePanel);
+document.getElementById('panel-mask').addEventListener('click', closePanel);
+document.getElementById('panel-body').addEventListener('click', (e) => {
+    const cog = e.target.closest('.cog');
+    if (cog) { openPanel(cog.dataset.w); return; }
+  });
+// Tab 切换
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+// 收藏/历史事件委托
+document.addEventListener('click', (e) => {
+  // 发音按钮：data-w=单词，data-text=整段
+  const tb = e.target.closest('.tts-btn');
+  if (tb) {
+    const txt = tb.dataset.w || tb.dataset.text;
+    if (txt) {
+      speakText(txt);
+      tb.classList.add('playing');
+      setTimeout(() => tb.classList.remove('playing'), 800);
+    }
+    return;
+  }
+  const fb = e.target.closest('.fav-btn');
+  if (fb) {
+    const on = toggleFav(fb.dataset.fav);
+    fb.classList.toggle('on', on);
+    fb.textContent = on ? '★ 已收藏' : '☆ 收藏';
+    return;
+  }
+  const dl = e.target.closest('.fav-rm');
+  if (dl) {
+    saveFavs(loadFavs().filter(x => x !== dl.dataset.del));
+    renderFavs();
+    return;
+  }
+  const hi = e.target.closest('.h-item[data-word]');
+  if (hi && !e.target.closest('.fav-rm')) {
+    input.value = hi.dataset.word;
+    switchTab('query');
+    search();
+  }
+  const fc = e.target.closest('#fav-clear');
+  if (fc) { saveFavs([]); renderFavs(); }
+});
+btn.addEventListener('click', search);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+</script>
+</body>
+</html>
