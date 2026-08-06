@@ -12,7 +12,7 @@ transport → trans-(横穿) + port-(搬运)
 需要 Python 3，不需要装任何第三方库。
 
 ```bash
-git clone https://github.com/<你的用户名>/wordroot-analyzer.git
+git clone https://github.com/whiteian45-sudo/wordroot-analyzer.git
 cd wordroot-analyzer
 
 # Windows
