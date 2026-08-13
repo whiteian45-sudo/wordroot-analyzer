@@ -45,12 +45,22 @@
       radial-gradient(400px 260px at 20% 85%, rgba(120,180,255,0.10), transparent 70%);
     filter: blur(60px);
   }
-  h1 {
-    font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: .3px;
+  .brand { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .brand-badge {
+    width: 58px; height: 58px; border-radius: 18px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass-card-strong);
+    border: 1px solid var(--glass-border-hi);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .brand-badge svg { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
+  .brand h1 {
+    font-size: 30px; font-weight: 800; margin: 0; letter-spacing: .3px;
     background: linear-gradient(135deg, #fff, rgba(255,255,255,0.72));
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   }
-  .subtitle { color: var(--sub); font-size: 13px; margin-bottom: 28px; }
+  .brand .subtitle { color: var(--sub); font-size: 13px; margin: 5px 0 0; }
   .search { width: 100%; max-width: 560px; display: flex; gap: 10px; position: relative; z-index: 1; }
   .search input {
     flex: 1; padding: 14px 20px; font-size: 16px; border-radius: 16px;
@@ -62,12 +72,23 @@
   }
   .search input::placeholder { color: rgba(242,244,255,0.35); }
   .search input:focus { border-color: var(--glass-border-hi); background: var(--glass-card-strong); }
+  .search input.drag-over { border-color: var(--glass-border-hi); background: var(--glass-card-strong); box-shadow: 0 0 0 3px rgba(92,141,255,0.35); }
   .search button {
     padding: 0 26px; font-size: 15px; font-weight: 600; border: none; border-radius: 16px;
     background: linear-gradient(135deg, #5c8dff, #7a5cff);
     color: #fff; cursor: pointer; box-shadow: 0 6px 20px rgba(92,141,255,0.35);
     transition: transform .15s, box-shadow .15s, filter .15s;
+    position: relative; overflow: hidden;
   }
+  /* 悬停时一束斜光扫过按钮，像被擦亮 */
+  .search button::after {
+    content: ''; position: absolute; top: 0; left: -80%; width: 45%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.4), transparent);
+    transform: skewX(-20deg); pointer-events: none;
+    transition: left .55s ease;
+  }
+  .search button:hover::after { left: 130%; }
+  .search button:hover { box-shadow: 0 8px 26px rgba(92,141,255,0.5); }
   .search button:hover { filter: brightness(1.08); transform: translateY(-1px); }
   .search button:active { transform: translateY(0); }
   .result { width: 100%; max-width: 560px; margin-top: 26px; display: none; position: relative; z-index: 1; }
@@ -78,7 +99,10 @@
     border: 1px solid var(--glass-border);
     border-radius: 22px; padding: 22px 24px; margin-bottom: 16px;
     box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.09);
+    animation: cardIn .5s cubic-bezier(.2,.7,.2,1) backwards;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
   }
+  .card:hover { transform: translateY(-2px); border-color: var(--glass-border-hi); }
   .word-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .word { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
   .badge {
@@ -120,11 +144,33 @@
   .def-line:first-of-type { margin-top: 0; }
   .ex-zh { font-size: 13px; color: var(--sub); line-height: 1.6; margin-top: 3px; }
   .ex-tts { padding: 2px 8px; font-size: 12px; flex: none; margin-top: 1px; }
-  /* 词源演变链 */
+  /* 词源演变链：圆点+竖线的时间线，每个词素一个发光节点，逐个点亮 */
   .chain { margin-top: 14px; }
-  .chain-item { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .chain-item:last-child { border-bottom: none; }
-  .chain-morph { font-weight: 600; color: var(--accent); font-size: 14px; min-width: 70px; }
+  .chain-item {
+    position: relative; display: flex; align-items: center; flex-wrap: wrap;
+    gap: 8px; padding: 7px 0 7px 34px;
+  }
+  /* 发光圆点节点 */
+  .chain-item::after {
+    content: ''; position: absolute; left: 11px; top: 15px; width: 10px; height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #a8c8ff, var(--accent));
+    box-shadow: 0 0 8px rgba(110,168,255,0.55), inset 0 0 2px rgba(255,255,255,0.45);
+    animation: dotIn .45s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: calc(.3s + var(--i, 0) * .15s);
+  }
+  /* 节点之间的连接竖线 */
+  .chain-item::before {
+    content: ''; position: absolute; left: 15px; top: 30px; bottom: -14px; width: 2px;
+    background: linear-gradient(to bottom, rgba(110,168,255,0.35), rgba(110,168,255,0.04));
+    border-radius: 2px;
+  }
+  .chain-item:last-child::before { display: none; }
+  .chain-morph {
+    font-weight: 600; color: var(--accent); font-size: 13.5px;
+    background: var(--accent-soft); border: 1px solid rgba(110,168,255,0.22);
+    border-radius: 8px; padding: 2px 9px;
+  }
   .chain-arrow { color: var(--sub); font-size: 13px; }
   .chain-src { font-size: 13px; color: var(--text); }
   .chain-src .lang { color: var(--ok); font-weight: 600; margin-right: 4px; }
@@ -236,6 +282,14 @@
     background: linear-gradient(135deg, rgba(92,141,255,0.35), rgba(122,92,255,0.35));
     color: #fff; border-color: rgba(110,168,255,0.4); box-shadow: 0 4px 16px rgba(92,141,255,0.25);
   }
+  /* Tab 滑动指示条：一条发光的渐变线，在两个标签间滑动 */
+  .tab-ind {
+    position: absolute; bottom: -1px; left: 0; height: 3px; width: 0; border-radius: 3px;
+    background: linear-gradient(90deg, #5c8dff, #7a5cff);
+    box-shadow: 0 0 10px rgba(110,168,255,0.6);
+    transition: left .28s cubic-bezier(.2,.7,.2,1), width .28s cubic-bezier(.2,.7,.2,1);
+    pointer-events: none;
+  }
   .tip { color: var(--sub); font-size: 12px; margin-top: 16px; text-align: center; position: relative; z-index: 1; }
   #history { width: 100%; max-width: 560px; margin-top: 22px; display: none; position: relative; z-index: 1; }
   #history.show { display: block; }
@@ -255,12 +309,33 @@
   .fav-rm:hover { color: var(--gold); }
   /* 收藏列表里的词条容器也玻璃化 */
   .favlist .h-item { border: 1px solid var(--glass-border); margin-bottom: 8px; background: var(--glass-card); backdrop-filter: blur(12px); }
+
+  /* ===== 动效关键帧 ===== */
+  @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes dotIn  { from { opacity: 0; transform: scale(.4); }  to { opacity: 1; transform: scale(1); } }
+
+  /* 系统开启"减弱动态效果"时关掉装饰性动画，照顾偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    .card, .chain-item::after { animation: none; }
+    .search button::after, .tab-ind { transition: none; }
+  }
 </style>
 </head>
 <body>
 
-<h1>词根词缀分析器</h1>
-<div class="subtitle">输入一个英文单词，拆出它的前缀 / 词根 / 后缀</div>
+<div class="brand">
+  <div class="brand-badge" title="前缀 · 词根 · 后缀">
+    <svg width="30" height="22" viewBox="0 0 30 22" fill="none">
+      <rect x="0" y="7" width="8" height="8" rx="4" fill="#6ea8ff"/>
+      <rect x="9.5" y="3" width="11" height="16" rx="5" fill="#ffd479"/>
+      <rect x="22" y="9" width="6" height="5" rx="2.5" fill="#7ee2a8"/>
+    </svg>
+  </div>
+  <div class="brand-text">
+    <h1>词根词缀分析器</h1>
+    <div class="subtitle">输入一个英文单词，拆出它的前缀 / 词根 / 后缀</div>
+  </div>
+</div>
 
 <div class="search">
   <input id="input" type="text" placeholder="输入单词，如 transport" autofocus spellcheck="false">
@@ -286,6 +361,7 @@
 <div class="tabs">
   <button class="tab active" data-tab="query">查询</button>
   <button class="tab" data-tab="fav">收藏</button>
+  <span class="tab-ind" id="tab-ind"></span>
 </div>
 
 <div class="panel-mask" id="panel-mask"></div>
@@ -352,6 +428,7 @@ const PREFIXES = {
   "homo": "同、相同",
   "hyper": "超过、过多",
   "hypo": "在下、低于",
+  "iso": "相等、相同",
   "il": "不、无(in的变体)",
   "im": "不、无;向内(in的变体)",
   "in": "不、无;向内",
@@ -460,6 +537,7 @@ const SUFFIXES = {
   "ic": "形容词后缀，…的",
   "ical": "形容词后缀，…的",
   "ous": "形容词后缀，…的",
+  "aneous": "形容词后缀，…的（拉丁语 -aneus，如 spontaneous）",
   "ious": "形容词后缀，…的",
   "ful": "形容词后缀，充满…的",
   "less": "形容词后缀，无…的",
@@ -482,6 +560,7 @@ const SUFFIXES = {
   "ed": "过去分词后缀",
   "e": "动词词尾，常为弱化尾音(如 produce→pro-duc-e)",
   "est": "形容词最高级",
+  "et": "小后缀：小的…（像中文的儿字）",
   "ward": "副词后缀，向…方向",
   "wards": "副词后缀，向…方向",
   "ile": "形容词后缀，可…的(拉丁语)",
@@ -523,6 +602,7 @@ const ROOTS = {
   "bell": ["战争、好战", ["rebel", "belligerent"]],
   "bene": ["好、善", ["benefit", "benevolent"]],
   "bio": ["生命、生物", ["biology", "biography", "antibiotic"]],
+  "blank": ["白、空白", ["blank", "blanket", "blankly"], { "lang": "古法语", "word": "blanc", "note": "白色" }],
   "brev": ["短", ["abbreviate", "brevity"]],
   "cap": ["头、首", ["capital", "captain", "cap"]],
   "capt": ["拿、抓", ["capture", "captive"]],
@@ -726,6 +806,10 @@ const ROOTS = {
   "proxim": ["接近", ["proximity", "approximate"]],
   "psych": ["心理、灵魂", ["psychology", "psychiatry", "psychic"]],
   "punct": ["点、刺", ["punctuate", "punctual", "puncture"]],
+  "quaint": ["知道、认识（拉丁语 cognitus）", ["acquaintance", "acquaint", "quaint"]],
+  "quart": ["第四", ["quart", "quarter", "quartile", "quartet"], { "lang": "拉丁语", "word": "quartus", "note": "第四" }],
+  "quartz": ["石英", ["quartz", "quartzite", "quartzose"], { "lang": "德语", "word": "Quarz", "note": "石英" }],
+  "coron": ["花冠、冠（拉丁语 corona）", ["corona", "coronary", "coronet", "coronate"]],
   "quer": ["寻求、询问", ["query", "inquire"]],
   "quire": ["寻求、询问(quir的拉丁尾变体)", ["require", "inquire", "acquire"]],
   "quest": ["寻求、询问", ["question", "request", "quest"]],
@@ -799,6 +883,7 @@ const ROOTS = {
   "spec": ["看、外观", ["special", "species", "specific"]],
   "spect": ["看(spec的变体)", ["inspect", "respect", "prospect", "expect"]],
   "spic": ["看(spec的变体)", ["conspicuous", "suspicious"]],
+  "spont": ["自愿（拉丁语 sponte，自由意志）", ["spontaneous", "spontaneity"]],
   "spir": ["呼吸、精神", ["spirit", "inspire", "conspiracy", "expire"]],
   "spire": ["呼吸(spir的拉丁尾变体)", ["inspire", "expire", "respire"]],
   "stal": ["站立、固定", ["install", "installment"]],
@@ -824,6 +909,7 @@ const ROOTS = {
   "tens": ["伸展(tend的变体)", ["tension", "intense", "extensive"]],
   "tent": ["持有;伸展(tent)", ["content", "attention", "intention"]],
   "tenu": ["薄、弱", ["tenuous", "extenuate"]],
+  "temper": ["调和、节制、适中", ["temperance", "temperature", "temper"]],
   "term": ["界限、末端、名称", ["terminal", "terminate", "term"]],
   "terr": ["土地;恐惧", ["territory", "terrain", "terrible", "terror"]],
   "test": ["证明、见证", ["protest", "test", "testify", "contest"]],
@@ -840,6 +926,8 @@ const ROOTS = {
   "tort": ["扭、折磨", ["torture", "distort", "contortion"]],
   "tox": ["毒", ["toxic", "detoxify"]],
   "tract": ["拉、拖", ["attract", "extract", "contract", "tractor"]],
+  "trop": ["转向、转动（希腊语 tropos）", ["tropism", "tropic", "isotropic", "geotropism", "phototropism", "entropy"], { "lang": "希腊语", "word": "tropos", "note": "转向" }],
+  "troph": ["营养、滋养（希腊语 trophe）", ["trophic", "atrophy", "dystrophy", "trophism"], { "lang": "希腊语", "word": "trophe", "note": "营养" }],
   "trib": ["给予、分配、部落", ["tribute", "contribute", "distribute", "tribe"]],
   "trud": ["推、挤", ["intrude", "protrude"]],
   "trude": ["推、挤(trud的拉丁尾变体)", ["intrude", "protrude", "extrude"]],
@@ -997,6 +1085,9 @@ function buildIndex() {
         MORPH_INDEX.get(mm).add(w);
       }
       if (src && src.lang && src.word && mm) {
+        // 过滤占位来源：word 含"后缀"字样的是词源数据凑数占位（如 market 的 et→"拉丁语 后缀"），
+        // 不是真实词源词形，塞进 MORPH_SRC 会让演变链显示"et←拉丁语 后缀"这类怪结果
+        if (src.word.includes('后缀')) continue;
         if (!MORPH_SRC[mm]) MORPH_SRC[mm] = { lang: src.lang, word: src.word, note: src.note || '', meaning: m.meaning || '' };
         else if (!MORPH_SRC[mm].meaning && m.meaning) MORPH_SRC[mm].meaning = m.meaning;
       }
@@ -1070,7 +1161,7 @@ const BASEWORDS = {
   "body": "身体", "book": "书", "bottom": "底部", "box": "盒子",
   "boy": "男孩", "brain": "大脑", "bread": "面包", "break": "打破",
   "bridge": "桥", "bright": "明亮的", "bring": "带来", "brother": "兄弟",
-  "brown": "棕色的", "build": "建造", "bus": "公共汽车", "busy": "忙碌的",
+  "boot": "靴子", "brown": "棕色的", "build": "建造", "bus": "公共汽车", "busy": "忙碌的",
   "buy": "买", "call": "呼叫、打电话", "calm": "平静的", "care": "关心、照料",
   "car": "汽车", "carpet": "地毯",
   "carry": "搬运", "cat": "猫", "catch": "抓住", "center": "中心",
@@ -1111,7 +1202,7 @@ const BASEWORDS = {
   "kiss": "亲吻", "knee": "膝盖", "know": "知道", "lake": "湖",
   "land": "土地", "last": "最后的", "late": "晚的", "laugh": "笑",
   "lead": "带领", "leaf": "叶子", "learn": "学习", "leave": "离开",
-  "leg": "腿", "lend": "借出", "life": "生活、生命", "lift": "举起",
+  "leg": "腿", "lend": "借出", "lick": "舔", "life": "生活、生命", "lift": "举起",
   "light": "光、轻的", "like": "喜欢", "listen": "听", "live": "生活、居住",
   "lock": "锁", "long": "长的", "look": "看", "lose": "失去",
   "loud": "响亮的", "love": "爱", "low": "低的", "mail": "邮件",
@@ -1121,9 +1212,9 @@ const BASEWORDS = {
   "mix": "混合", "money": "钱", "moon": "月亮", "mother": "母亲",
   "mountain": "山", "move": "移动", "music": "音乐", "name": "名字",
   "near": "近的", "need": "需要", "new": "新的", "news": "新闻",
-  "next": "下一个", "nice": "好的", "night": "夜晚", "notice": "注意",
+  "next": "下一个", "nice": "好的", "night": "夜晚", "nose": "鼻子", "notice": "注意",
   "old": "老的、旧的", "open": "打开的、开放", "orange": "橙子、橙色",
-  "own": "自己的、拥有", "paint": "画画、油漆", "paper": "纸、报纸",
+  "own": "自己的、拥有", "paint": "画画、油漆", "paper": "纸、报纸", "polish": "擦亮、抛光",
   "parent": "父母", "park": "公园", "part": "部分", "pass": "经过",
   "path": "小路", "pay": "支付", "peace": "和平", "people": "人们",
   "person": "人", "pink": "粉色的", "plane": "飞机", "plant": "植物、种植",
@@ -1158,7 +1249,8 @@ const BASEWORDS = {
   "sure": "确定的", "surprise": "使惊讶", "sweet": "甜的", "swim": "游泳",
   "table": "桌子", "take": "拿、带走", "talk": "谈话", "taste": "品尝",
   "teach": "教、讲授", "tell": "告诉", "thank": "感谢", "thing": "东西、事情",
-  "think": "思考", "throw": "扔", "tired": "疲倦的", "toe": "脚趾",
+  "think": "思考", "throw": "扔", "tired": "疲倦的", "to": "到、向、对于",
+  "toe": "脚趾",
   "top": "顶部", "touch": "触摸", "town": "城镇", "train": "火车、训练",
   "travel": "旅行", "tree": "树", "true": "真实的", "try": "尝试",
   "turn": "转动", "type": "打字、类型", "use": "使用", 
@@ -1177,6 +1269,19 @@ const BASEWORDS = {
   "heal": "治愈", "student": "学生"
 };
 
+/* 双字母前缀 → 以它开头的所有基本词：复合词保护用
+   （apple-polish 的 apple 是基本词，避免前缀 ap- 吃掉它） */
+const BASE_PREFIXES = {};
+for (const bw of Object.keys(BASEWORDS)) {
+  if (bw.length >= 3) {
+    const p = bw.slice(0, 2);
+    (BASE_PREFIXES[p] = BASE_PREFIXES[p] || []).push(bw);
+  }
+}
+/* iso- 前缀防线：自动防线按"前2字符"分组管不到3字符前缀。
+   isolate/isolation 前3字符虽为 iso，但源自拉丁语 insula(岛)，非 iso- 相等前缀 */
+BASE_PREFIXES.iso = ['isol'];
+
 /* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
 /* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
 const WHOLE_ONLY = {
@@ -1191,6 +1296,17 @@ const BASEWORD_OVERRIDE = {
   "man": { m: "man", meaning: "人、男人", cognates: [] },
   "path": { m: "path", meaning: "小路、道路", cognates: [] }
 };
+
+/* troph/trop 误拆拦截表：strophe 系列词（希腊语 strephein=转，非 troph=营养）
+   和内部 trop 撞车词，强制不用 troph/trop 词根（见 decompose 中的过滤） */
+const TROP_STROPHE_BLOCK = new Set([
+  'astrophile', 'astrophil', 'astrophysical', 'astrophysicist', 'astrophysics', 'astrophysically',
+  'astrophorous',
+  'anastrophe', 'anastrophic', 'anastrophically',
+  'diastrophe', 'diastrophic', 'diastrophism', 'diastrophically', 'diastrophometer', 'diastrophometry',
+  'apostrophic', 'apostrophise', 'apostrophize', 'apostrophizes', 'apostrophising',
+  'retropatellar'
+]);
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
 const IN_INTO = { port:1, ject:1, spect:1, sist:1, spir:1, press:1, cur:1, curs:1, gress:1, flu:1, quest:1, tend:1, trus:1, cept:1, vent:1, duc:1 };
@@ -1210,10 +1326,24 @@ function baseRoot(seg, depth) {
     const y = seg.slice(0, -1) + 'y';
     if (BASEWORDS[y]) return { m: y, meaning: BASEWORDS[y], flex: true };
   }
-  if (BASEWORDS[seg + 'e']) return { m: seg + 'e', meaning: BASEWORDS[seg + 'e'], flex: true };
+  // 补 e 还原只对 ≥3 字母做：2 字母词补 e 会误伤基本词（to→toe、us→use、do→doe、be→bee）
+  if (seg.length >= 3 && BASEWORDS[seg + 'e']) return { m: seg + 'e', meaning: BASEWORDS[seg + 'e'], flex: true };
   if (seg.length >= 4 && seg[seg.length - 1] === seg[seg.length - 2]) {
     const d = seg.slice(0, -1);
     if (BASEWORDS[d]) return { m: d, meaning: BASEWORDS[d], flex: true };
+  }
+  // -ing/-er 变形还原：nosing→nose、licking→lick、licker→lick、running→run
+  // 三种形态：去 ing/er 后直接命中（look+ing→looking）、去双写（run+ning→running）、去 ing/er 补 e（nose+ing→nosing）
+  // dropped 记录剥掉的变形后缀，供 decompose 第 0 步补回 suffixes（teacher→teach+er，不再丢 -er）
+  if (seg.length >= 4 && (seg.endsWith('ing') || seg.endsWith('er'))) {
+    const dropped = seg.endsWith('ing') ? 'ing' : 'er';
+    const stem = seg.slice(0, seg.endsWith('ing') ? -3 : -2);
+    const hits = [];
+    if (BASEWORDS[stem]) hits.push(stem);
+    const dedup = stem.slice(0, -1);
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] && BASEWORDS[dedup]) hits.push(dedup);
+    if (BASEWORDS[stem + 'e']) hits.push(stem + 'e');
+    if (hits.length) return { m: hits[0], meaning: BASEWORDS[hits[0]], flex: true, dropped };
   }
   return null;
 }
@@ -1226,7 +1356,7 @@ function rootOf(seg, depth) {
   if (WHOLE_ONLY[seg]) return { m: seg, meaning: WHOLE_ONLY[seg], cognates: [], isBase: true };
   if (ROOTS[seg]) return { m: seg, meaning: ROOTS[seg][0], cognates: ROOTS[seg][1] || [] };
   const b = baseRoot(seg, depth);
-  return b ? { m: b.m, meaning: b.meaning, cognates: [], isBase: true, flex: !!b.flex } : null;
+  return b ? { m: b.m, meaning: b.meaning, cognates: [], isBase: true, flex: !!b.flex, dropped: b.dropped } : null;
 }
 
 /* 前缀含义（含 in-/im- 消歧） */
@@ -1247,15 +1377,30 @@ function prefMeaning(pf, rootM) {
    ============================================================ */
 function decompose(w, depth) {
   if (w.length < 2 || depth > 4) return null;
-  const candidates = [];
+  let candidates = [];
 
   // 0. 整段本身是词根/基本词
   const whole = rootOf(w, depth);
-  if (whole) return { prefix: null, roots: [whole], suffixes: [] };
+  if (whole) {
+    // flex 变形还原剥掉了 -er/-ing 后缀（teacher→teach+er），补回 suffixes 避免丢后缀
+    if (whole.flex && whole.dropped && LISTS.suffixes.some(s => s[0] === whole.dropped)) {
+      return { prefix: null, roots: [whole], suffixes: [{ m: whole.dropped, meaning: LISTS.suffixes.find(s => s[0] === whole.dropped)[1] }] };
+    }
+    return { prefix: null, roots: [whole], suffixes: [] };
+  }
 
   // 1. 前缀 + 递归拆剩余部分
   for (const [pre, preM] of LISTS.prefixes) {
     if (!w.startsWith(pre)) continue;
+    // 整词以某个"更长的基本词"开头时，禁止剥前缀
+    // （apple-polish 的 apple 是基本词，不能被 ap- 吃掉拆成 ap+pple-polish）
+    if (w.length > pre.length) {
+      let blocked = false;
+      for (const bw of BASE_PREFIXES[pre] || []) {
+        if (w.startsWith(bw)) { blocked = true; break; }
+      }
+      if (blocked) continue;
+    }
     const rest = w.slice(pre.length);
     if (rest.length < 2) continue;
     const sub = decompose(rest, depth + 1);
@@ -1278,7 +1423,19 @@ function decompose(w, depth) {
     if (!w.endsWith(suf) || w.length - suf.length < 2) continue;
     const rest = w.slice(0, w.length - suf.length);
     // 弱后缀(s/es/e)只允许直接接在整词词根后，避免过度拆分(如 revers→rever+s 假拆分)
-    if ((suf === 's' || suf === 'es' || suf === 'e') && !rootOf(rest, depth)) continue;
+    // 复数s兜底：剥掉s/es后剩余部分能完整拆解才放行(acquaintances→quaint+ance+s)。防误伤三门槛：
+    // ① es形变须符合复数形态(s/z/x/ch/sh/o结尾)  ② 拆解无基本词、词根合计≥3字符  ③ 拆解不再含e/s/es弱后缀
+    if (suf === 'e' && !rootOf(rest, depth)) continue;
+    // -et 小称后缀只接"真词根"、不接基本词（防 wallet→wall+et、rocket→rock+et、bucket→buck+et 假拆）
+    if (suf === 'et') {
+      const rr = rootOf(rest, depth);
+      if (!rr || rr.isBase) continue;
+    }
+    if ((suf === 's' || suf === 'es') && !rootOf(rest, depth)) {
+      if (suf === 'es' && !/[szx]$/.test(rest) && !/(ch|sh|o)$/.test(rest)) continue;
+      const sr = decompose(rest, depth + 1);
+      if (!sr || sr.roots.some(r => r.isBase) || sr.roots.reduce((n, r) => n + r.m.length, 0) < 3 || sr.suffixes.some(x => x.m === 'e' || x.m === 's' || x.m === 'es')) continue;
+    }
     const sub = decompose(rest, depth + 1);
     if (!sub) continue;
     const rootLen = sub.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
@@ -1298,6 +1455,13 @@ function decompose(w, depth) {
       // 含基本词或变形还原词根的复合候选额外罚分，避免压过"真前缀+真词根"(如 complete 不拆成 come+plete)
       score: rootLen * 2 - (g.roots.length - 1) * 14 - (g.roots.some(r => r.isBase) ? 6 : 0)
     });
+  }
+
+  /* 误拆防线：strophe 系列词（希腊语 strephein 转）内部含 troph/trop，
+     以及个别 trop 撞车词，禁止用 troph/trop 词根，避免 as-troph-ile、
+     re-trop+tell+ar 这类错误拆法（dystrophy 含 stroph 但确需 dys+troph+y，故按词拦截） */
+  if (TROP_STROPHE_BLOCK.has(w)) {
+    candidates = candidates.filter(c => !(c.roots || []).some(r => r.m === 'troph' || r.m === 'trop'));
   }
 
   if (candidates.length === 0) return null;
@@ -1357,13 +1521,38 @@ function partialDecompose(w) {
   for (const [pre, preM] of LISTS.prefixes) {
     if (pre.length < 2 || pre.length <= bestLen) continue;
     if (!w.startsWith(pre)) continue;
+    // 同 decompose：整词以该前缀的 blocked 基本词开头时跳过（isolate 非 iso- 前缀）
+    let blocked = false;
+    for (const bw of BASE_PREFIXES[pre] || []) {
+      if (w.startsWith(bw)) { blocked = true; break; }
+    }
+    if (blocked) continue;
     const rest = w.slice(pre.length);
     if (rest.length < 2) continue;
     bestPre = { m: pre, meaning: preM };
     bestLen = pre.length;
   }
-  if (!bestPre) return null;
-  return { prefix: bestPre, roots: [], suffixes: [], unknown: w.slice(bestPre.m.length) };
+  if (bestPre) return { prefix: bestPre, roots: [], suffixes: [], unknown: w.slice(bestPre.m.length) };
+
+  // 3. 后缀兜底：整词以已知后缀结尾、剩余部分拆不开时展示「??词干 + 后缀」
+  //    （vehemently → ??vehement + ly）。防误伤三条防线：
+  //    ① 整词本身是基本词/词根则跳过（family 不是 famil+ly）
+  //    ② 排除弱后缀 es（同 decompose，防 mosses→moss+es）
+  //    ③ 词干至少 4 个字符（only 不拆成 on+ly、silly 不拆成 sil+ly）
+  if (rootOf(w, 0)) return null;
+  let bestSuf = null, bestSlen = 0;
+  for (const [suf, sufM] of LISTS.suffixes) {
+    if (suf.length < 2 || suf === 'es' || suf.length <= bestSlen) continue;
+    if (!w.endsWith(suf)) continue;
+    const rest = w.slice(0, w.length - suf.length);
+    if (rest.length < 4) continue;
+    // -et 同 decompose：词干是基本词则跳过（wallet 不显示 ??wall+-et）
+    if (suf === 'et' && rootOf(rest, 0) && rootOf(rest, 0).isBase) continue;
+    bestSuf = { m: suf, meaning: sufM };
+    bestSlen = suf.length;
+  }
+  if (!bestSuf) return null;
+  return { prefix: null, roots: [], suffixes: [bestSuf], unknown: w.slice(0, w.length - bestSuf.m.length) };
 }
 
 /* 编辑距离（Damerau-Levenshtein）：相邻字母换位算一次编辑，
@@ -1442,6 +1631,82 @@ function compose(b) {
   if (b.unknown) parts.push('未识别部分「' + b.unknown + '」');
   return parts.join(' + ').split(';').join(' 或 ');
 }
+
+/* 把一次拆解结果渲染成「词根词缀分解 + 词源演变链」HTML。
+   ecdict 词与 enhanced 空 breakdown 兜底共用。bd 为 null 返回空串。 */
+function morphBlockHTML(w, bd) {
+  if (!bd) return '';
+  let h = '';
+  const chunks = [];
+  if (bd.prefix) chunks.push({ label: '前缀', m: bd.prefix.m + '-', mtext: prefMeaning(bd.prefix, bd.roots[0] && bd.roots[0].m) });
+  bd.roots.forEach(rr => chunks.push({ label: '词根', m: rr.m, mtext: rr.meaning }));
+  if (bd.suffixes) bd.suffixes.forEach(s => chunks.push({ label: '后缀', m: '-' + s.m, mtext: s.meaning }));
+  if (bd.unknown) chunks.push({ label: '未识别', m: bd.unknown, mtext: '词源待考' });
+  if (chunks.length) {
+    h += `<div class="meaning"><div class="label">词根词缀分解</div><div class="breakdown">`;
+    chunks.forEach((c, i) => {
+      if (i > 0) h += `<span class="plus">+</span>`;
+      h += `<span class="morph"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}</span></span>`;
+    });
+    h += `</div></div>`;
+  }
+  const chainParts = [];
+  const allMorphs = []
+    .concat(bd.prefix ? [{ m: bd.prefix.m.replace(/-.*$/, ''), isPre: true }] : [])
+    .concat(bd.roots.map(rr => ({ m: rr.m, meaning: rr.meaning || '' })))
+    .concat(bd.suffixes.map(ss => ({ m: ss.m, meaning: ss.meaning || '' })));
+  for (const mp of allMorphs) {
+    let src = MORPH_SRC[mp.m];
+    if (!src && ROOTS[mp.m] && ROOTS[mp.m][2]) src = ROOTS[mp.m][2];   // 词根表显式来源（blank→古法语 blanc）
+    if (!src && mp.m.length >= 3) {
+      // 变体映射：aut→auto, motor→motor, net→net
+      for (const cand of [mp.m + 'o', mp.m + 'e', mp.m.slice(0, -1), mp.m.slice(0, -1) + 'o']) {
+        if (MORPH_SRC[cand]) { src = MORPH_SRC[cand]; break; }
+      }
+    }
+    chainParts.push({ m: mp.m, meaning: mp.meaning || (src && src.meaning) || (mp.isPre ? (mp.m + '-') : ''), src: src });
+  }
+  const hasChainSrc = chainParts.some(cp => cp.src);
+  if (hasChainSrc) {
+    h += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
+    chainParts.forEach((cp, idx) => {
+      if (cp.src) {
+        const note = cp.src.note ? `<span class="note">（${cp.src.note}）</span>` : '';
+        h += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${cp.m}</span>` +
+          `<span class="chain-arrow">←</span>` +
+          `<span class="chain-src"><span class="lang">${cp.src.lang}</span><span class="w">${cp.src.word}</span>${note}</span>` +
+          `<span class="chain-meaning">${cp.meaning ? '（' + cp.meaning + '）' : ''}</span></div>`;
+      } else {
+        h += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${cp.m}</span>` +
+          `<span class="chain-nosrc">${cp.meaning || ''}</span></div>`;
+      }
+    });
+    h += `</div></div>`;
+  }
+  return h;
+}
+
+/* enhanced 词自带 breakdown 为空的兜底（theocracy 等）：跑引擎拆解，质量达标才渲染。
+   门槛从严，只放可靠拆解，避免把基本词（air/bread）或错拆（beautify→be+aut+ify、
+   rescission→re+sci+s+sion）显示出来。不达标返回空串，保持原样。 */
+function enhancedMorphFallback(w) {
+  const bd = decompose(w, 0) || partialDecompose(w);
+  if (!bd || !(bd.roots || []).length) return '';
+  if (bd.unknown) return '';                                     // 1. 必须全识别
+  if (bd.roots.some(r => r.isBase)) return '';                   // 2. 词根不能是基本词
+  if (bd.roots.some(r => r.m.length < 3)) return '';             // 3. 词根至少3字符
+  if (w.length < 6) return '';                                   // 4. 短词不自动拆
+  if (bd.prefix && bd.prefix.m.includes('-')) return '';         // 5. 前缀含连字符=叠前缀（un-a-ware-s 错拆）
+  const nPre = bd.prefix ? 1 : 0;
+  const chunks = nPre + (bd.roots || []).length + (bd.suffixes || []).length;
+  if (chunks < 2) return '';                                     // 6. 至少2个词素
+  const tot = (nPre ? bd.prefix.m.length : 0) + (bd.roots || []).reduce((n, x) => n + x.m.length, 0)
+    + (bd.suffixes || []).reduce((n, x) => n + x.m.length, 0);
+  const rootsum = (bd.roots || []).reduce((n, x) => n + x.m.length, 0);
+  if (tot / w.length < 0.6) return '';                           // 7. 全识别覆盖≥60%
+  if (rootsum / w.length < 0.5) return '';                       // 8. 词根占比≥50%（防前后缀撑腰）
+  return morphBlockHTML(w, bd);
+}
 </script>
 
 <script>
@@ -1483,6 +1748,11 @@ const input = document.getElementById('input');
 const btn = document.getElementById('btn');
 const result = document.getElementById('result');
 
+/* 数据措辞白话化：数据自带的"小后缀/指小后缀"用户看不懂，翻译成大白话 */
+function dp(s) {
+  return (s || '').replace(/指?小后缀/g, '小后缀：小的…（像中文的儿字）');
+}
+
 /* 生成完整卡片 HTML（单查词 render 与右侧面板共用） */
 function cardHTML(r) {
   let html = '';
@@ -1498,19 +1768,25 @@ function cardHTML(r) {
       </div>`;
     if (e.pron) html += `<div class="meaning"><div class="label">音标</div>${e.pron}</div>`;
     if (e.meaning) html += `<div class="meaning"><div class="label">释义</div>${e.meaning}</div>`;
-    if (e.breakdown) html += `<div class="meaning"><div class="label">词根词缀分解</div>${e.breakdown}</div>`;
+    if (e.breakdown) {
+      html += `<div class="meaning"><div class="label">词根词缀分解</div>${dp(e.breakdown)}</div>`;
+    } else {
+      // 数据缺 breakdown（theocracy 等）：跑引擎兜底，质量达标才显示，否则保持空白
+      html += enhancedMorphFallback(r.word);
+    }
     if (e.chain && e.chain.length) {
       html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
-      e.chain.forEach(m => {
+      e.chain.forEach((m, idx) => {
+        const mm = dp(m.meaning);
         if (m.source && m.source.lang) {
           const note = m.source.note ? `<span class="note">（${m.source.note}）</span>` : '';
-          html += `<div class="chain-item"><span class="chain-morph">${m.m}</span>` +
+          html += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${m.m}</span>` +
             `<span class="chain-arrow">←</span>` +
             `<span class="chain-src"><span class="lang">${m.source.lang}</span><span class="w">${m.source.word}</span>${note}</span>` +
-            `<span class="chain-meaning">${m.meaning ? '（' + m.meaning + '）' : ''}</span></div>`;
+            `<span class="chain-meaning">${mm ? '（' + mm + '）' : ''}</span></div>`;
         } else {
-          html += `<div class="chain-item"><span class="chain-morph">${m.m}</span>` +
-            `<span class="chain-nosrc">${m.meaning || ''}</span></div>`;
+          html += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${m.m}</span>` +
+            `<span class="chain-nosrc">${mm || ''}</span></div>`;
         }
       });
       html += `</div></div>`;
@@ -1566,56 +1842,8 @@ function cardHTML(r) {
       html += `</div>`;
     }
     // 全量词：先拆解（完整优先，失败退回部分拆解，如 binary→bi-+??nary），
-    // 再据此生成分解区块与词源演变链
-    const ecdBd = decompose(r.word, 0) || partialDecompose(r.word);
-    if (ecdBd) {
-      // 词根词缀分解（与 builtin 词同一套渲染）
-      const chunks = [];
-      if (ecdBd.prefix) chunks.push({ label: '前缀', m: ecdBd.prefix.m + '-', mtext: prefMeaning(ecdBd.prefix, ecdBd.roots[0] && ecdBd.roots[0].m) });
-      ecdBd.roots.forEach(rr => chunks.push({ label: '词根', m: rr.m, mtext: rr.meaning }));
-      if (ecdBd.suffixes) ecdBd.suffixes.forEach(s => chunks.push({ label: '后缀', m: '-' + s.m, mtext: s.meaning }));
-      if (ecdBd.unknown) chunks.push({ label: '未识别', m: ecdBd.unknown, mtext: '词源待考' });
-      if (chunks.length) {
-        html += `<div class="meaning"><div class="label">词根词缀分解</div><div class="breakdown">`;
-        chunks.forEach((c, i) => {
-          if (i > 0) html += `<span class="plus">+</span>`;
-          html += `<span class="morph"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}</span></span>`;
-        });
-        html += `</div></div>`;
-      }
-      const chainParts = [];
-      const allMorphs = []
-        .concat(ecdBd.prefix ? [{ m: ecdBd.prefix.m.replace(/-.*$/, ''), isPre: true }] : [])
-        .concat(ecdBd.roots.map(rr => ({ m: rr.m, meaning: rr.meaning || '' })))
-        .concat(ecdBd.suffixes.map(ss => ({ m: ss.m, meaning: ss.meaning || '' })));
-      for (const mp of allMorphs) {
-        let src = MORPH_SRC[mp.m];
-        if (!src && mp.m.length >= 3) {
-          // 变体映射：aut→auto, motor→motor, net→net
-          for (const cand of [mp.m + 'o', mp.m + 'e', mp.m.slice(0, -1), mp.m.slice(0, -1) + 'o']) {
-            if (MORPH_SRC[cand]) { src = MORPH_SRC[cand]; break; }
-          }
-        }
-        chainParts.push({ m: mp.m, meaning: mp.meaning || (src && src.meaning) || (mp.isPre ? (mp.m + '-') : ''), src: src });
-      }
-      const hasChainSrc = chainParts.some(cp => cp.src);
-      if (hasChainSrc) {
-        html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
-        chainParts.forEach(cp => {
-          if (cp.src) {
-            const note = cp.src.note ? `<span class="note">（${cp.src.note}）</span>` : '';
-            html += `<div class="chain-item"><span class="chain-morph">${cp.m}</span>` +
-              `<span class="chain-arrow">←</span>` +
-              `<span class="chain-src"><span class="lang">${cp.src.lang}</span><span class="w">${cp.src.word}</span>${note}</span>` +
-              `<span class="chain-meaning">${cp.meaning ? '（' + cp.meaning + '）' : ''}</span></div>`;
-          } else {
-            html += `<div class="chain-item"><span class="chain-morph">${cp.m}</span>` +
-              `<span class="chain-nosrc">${cp.meaning || ''}</span></div>`;
-          }
-        });
-        html += `</div></div>`;
-      }
-    }
+    // 再据此生成分解区块与词源演变链（渲染逻辑与 enhanced 兜底共用 morphBlockHTML）
+    html += morphBlockHTML(r.word, decompose(r.word, 0) || partialDecompose(r.word));
     const cog2 = findCognates(r.word);
     if (cog2.morphs.length) {
       html += `<div class="cognates"><div class="label">同根词</div>`;
@@ -1813,11 +2041,19 @@ function renderFavs() {
 /* Tab 切换 */
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  posTabInd();
   const showFav = name === 'fav';
   document.getElementById('favlist').style.display = showFav ? 'block' : 'none';
   document.getElementById('result').style.display = showFav ? 'none' : '';
   document.getElementById('history').style.display = showFav ? 'none' : '';
   if (showFav) renderFavs();
+}
+
+/* 让滑动指示条对准当前激活的 Tab */
+function posTabInd() {
+  const ind = document.getElementById('tab-ind');
+  const active = document.querySelector('.tab.active');
+  if (ind && active) { ind.style.left = active.offsetLeft + 'px'; ind.style.width = active.offsetWidth + 'px'; }
 }
 
 // 从分析结果里抽出一行摘要，方便扫一眼复习
@@ -2121,6 +2357,8 @@ document.getElementById('panel-body').addEventListener('click', (e) => {
   });
 // Tab 切换
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+posTabInd();  // 初始化指示条位置
+window.addEventListener('resize', posTabInd);
 // 收藏/历史事件委托
 document.addEventListener('click', (e) => {
   // 发音按钮：data-w=单词，data-text=整段
@@ -2158,6 +2396,15 @@ document.addEventListener('click', (e) => {
 });
 btn.addEventListener('click', search);
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+/* 拖拽搜索：从外部把词拖进输入框 → 直接替换内容（默认行为是插入，需拦截） */
+input.addEventListener('dragover', (e) => { e.preventDefault(); input.classList.add('drag-over'); });
+input.addEventListener('dragleave', () => input.classList.remove('drag-over'));
+input.addEventListener('drop', (e) => {
+  e.preventDefault();
+  input.classList.remove('drag-over');
+  const txt = (e.dataTransfer.getData('text') || '').trim();
+  if (txt) input.value = txt;
+});
 </script>
 </body>
 </html>

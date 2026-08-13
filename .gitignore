@@ -14,3 +14,7 @@ Desktop.ini
 # 本地运行缓存
 *.pyc
 __pycache__/
+
+# 测试分析输出（可随时重新生成）
+out_*.txt
+测试报告_*.md
