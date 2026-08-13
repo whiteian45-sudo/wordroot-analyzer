@@ -1228,7 +1228,7 @@ const BASEWORDS = {
   "regular": "规则的", "remain": "保持", "remember": "记住", "repeat": "重复",
   "reply": "回复", "return": "返回", "rice": "米饭", "rich": "富有的",
   "ride": "骑", "right": "正确的、右边", "river": "河", "road": "道路",
-  "rock": "岩石", "roof": "屋顶", "room": "房间", "rude": "粗鲁的",
+  "rock": "岩石", "roof": "屋顶", "room": "房间", "rough": "粗糙的", "rude": "粗鲁的",
   "run": "跑", "sad": "悲伤的", "safe": "安全的", "sail": "航行",
   "sand": "沙子", "save": "节省、拯救", "school": "学校", "sea": "海",
   "search": "搜索", "see": "看见", "seem": "似乎", "sell": "卖",
@@ -1297,16 +1297,23 @@ const BASEWORD_OVERRIDE = {
   "path": { m: "path", meaning: "小路、道路", cognates: [] }
 };
 
-/* troph/trop 误拆拦截表：strophe 系列词（希腊语 strephein=转，非 troph=营养）
-   和内部 trop 撞车词，强制不用 troph/trop 词根（见 decompose 中的过滤） */
-const TROP_STROPHE_BLOCK = new Set([
-  'astrophile', 'astrophil', 'astrophysical', 'astrophysicist', 'astrophysics', 'astrophysically',
-  'astrophorous',
-  'anastrophe', 'anastrophic', 'anastrophically',
-  'diastrophe', 'diastrophic', 'diastrophism', 'diastrophically', 'diastrophometer', 'diastrophometry',
-  'apostrophic', 'apostrophise', 'apostrophize', 'apostrophizes', 'apostrophising',
-  'retropatellar'
-]);
+/* 误拆拦截表：word → 禁用的词根列表（见 decompose 中的过滤）。
+   · strophe 系列词（希腊语 strephein=转，非 troph=营养）内部含 troph/trop
+   · dorough/eavestrough 的 rough 是撞车基本词（eavestrough 实为 eaves+trough）
+   新增词根后跑全量 diff，把新误拆词补进这里 */
+const ROOT_BLOCK = {
+  'astrophile': ['troph', 'trop'], 'astrophil': ['troph', 'trop'],
+  'astrophysical': ['troph', 'trop'], 'astrophysicist': ['troph', 'trop'],
+  'astrophysics': ['troph', 'trop'], 'astrophysically': ['troph', 'trop'], 'astrophorous': ['troph', 'trop'],
+  'anastrophe': ['troph', 'trop'], 'anastrophic': ['troph', 'trop'], 'anastrophically': ['troph', 'trop'],
+  'diastrophe': ['troph', 'trop'], 'diastrophic': ['troph', 'trop'], 'diastrophism': ['troph', 'trop'],
+  'diastrophically': ['troph', 'trop'], 'diastrophometer': ['troph', 'trop'], 'diastrophometry': ['troph', 'trop'],
+  'apostrophic': ['troph', 'trop'], 'apostrophise': ['troph', 'trop'], 'apostrophize': ['troph', 'trop'],
+  'apostrophizes': ['troph', 'trop'], 'apostrophising': ['troph', 'trop'],
+  'retropatellar': ['troph', 'trop'],
+  'dorough': ['rough'],
+  'eavestrough': ['rough']
+};
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
 const IN_INTO = { port:1, ject:1, spect:1, sist:1, spir:1, press:1, cur:1, curs:1, gress:1, flu:1, quest:1, tend:1, trus:1, cept:1, vent:1, duc:1 };
@@ -1457,11 +1464,11 @@ function decompose(w, depth) {
     });
   }
 
-  /* 误拆防线：strophe 系列词（希腊语 strephein 转）内部含 troph/trop，
-     以及个别 trop 撞车词，禁止用 troph/trop 词根，避免 as-troph-ile、
-     re-trop+tell+ar 这类错误拆法（dystrophy 含 stroph 但确需 dys+troph+y，故按词拦截） */
-  if (TROP_STROPHE_BLOCK.has(w)) {
-    candidates = candidates.filter(c => !(c.roots || []).some(r => r.m === 'troph' || r.m === 'trop'));
+  /* 误拆防线：按 ROOT_BLOCK 拦截表中该词禁用的词根过滤候选。
+     避免 as-troph-ile、re-trop+tell+ar、do+rough、e-a-vest+rough 这类错误拆法 */
+  const blk = ROOT_BLOCK[w];
+  if (blk) {
+    candidates = candidates.filter(c => !(c.roots || []).some(r => blk.includes(r.m)));
   }
 
   if (candidates.length === 0) return null;
