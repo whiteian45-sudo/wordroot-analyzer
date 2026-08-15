@@ -291,6 +291,22 @@
     pointer-events: none;
   }
   .tip { color: var(--sub); font-size: 12px; margin-top: 16px; text-align: center; position: relative; z-index: 1; }
+
+  /* 加载遮罩：液态玻璃风格，覆盖全屏 */
+  .load-mask { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center;
+    background: rgba(10,12,24,0.62); backdrop-filter: blur(14px) saturate(120%);
+    transition: opacity .45s ease; }
+  .load-mask.hide { opacity: 0; pointer-events: none; }
+  .load-card { background: var(--glass-card-strong); border: 1px solid var(--glass-border);
+    backdrop-filter: var(--blur); border-radius: 24px; padding: 30px 46px; text-align: center;
+    box-shadow: var(--shadow); min-width: 260px; }
+  .load-spin { width: 38px; height: 38px; margin: 0 auto 16px; border-radius: 50%;
+    border: 3px solid rgba(110,168,255,0.18); border-top-color: var(--accent);
+    animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #load-text { color: var(--text); font-size: 15px; font-weight: 600; }
+  .load-track { width: 230px; height: 6px; background: rgba(255,255,255,0.12); border-radius: 3px; margin: 16px auto 4px; overflow: hidden; }
+  .load-fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #8e7bff); transition: width .25s ease; }
   #history { width: 100%; max-width: 560px; margin-top: 22px; display: none; position: relative; z-index: 1; }
   #history.show { display: block; }
   #favlist { width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
@@ -342,7 +358,14 @@
   <button id="btn">分析</button>
 </div>
 
-<div id="load-tip" class="tip">正在加载词库…</div>
+<!-- 加载遮罩：启动时覆盖全屏，显示进度，加载完淡出 -->
+<div id="load-mask" class="load-mask">
+  <div class="load-card">
+    <div class="load-spin"></div>
+    <div id="load-text">正在加载词库…</div>
+    <div class="load-track"><div class="load-fill" id="load-fill"></div></div>
+  </div>
+</div>
 
 <div class="tts-bar" id="tts-bar">
   <span class="tts-label">发音</span>
@@ -579,7 +602,11 @@ const SUFFIXES = {
   "atic": "形容词后缀，…的",
   "tic": "形容词后缀，…的",
   "ine": "形容词/名词后缀，…的(拉丁语)",
-  "wise": "副词后缀，在…方面"
+  "wise": "副词后缀，在…方面",
+  "atory": "形容词/名词后缀，…的/…场所(如 laboratory)",
+  "etic": "形容词后缀，…的(如 sympathetic)",
+  "ient": "形容词后缀，…的(如 convenient)",
+  "uous": "形容词后缀，…的(如 continuous)"
 };
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
@@ -615,6 +642,7 @@ const ROOTS = {
   "cess": ["走、进行(ced的变体)", ["process", "success", "excess"]],
   "cent": ["百、百分之一", ["century", "percent", "centimeter"]],
   "centr": ["中心", ["central", "concentrate"]],
+  "cerat": ["角（希腊语 keras）", ["triceratops", "ceratops"], { "lang": "希腊语", "word": "keras", "note": "角" }],
   "chron": ["时间", ["chronic", "synchronize", "chronology"]],
   "cid": ["切、杀", ["decide", "insecticide"]],
   "cis": ["切(cid的变体)", ["concise", "incision"]],
@@ -636,6 +664,7 @@ const ROOTS = {
   "cours": ["跑、进行(curr的变体)", ["course", "intercourse"]],
   "dem": ["人民", ["democracy", "demographic", "epidemic"]],
   "cracy": ["统治、政体", ["democracy", "autocracy", "bureaucracy"]],
+  "carcer": ["监狱、囚禁（拉丁语 carcer）", ["incarcerate", "carceral"], { "lang": "拉丁语", "word": "carcer", "note": "监狱" }],
   "derm": ["皮肤", ["dermatology", "hypodermic"]],
   "dict": ["说、言", ["dictate", "dictionary", "predict", "verdict"]],
   "dic": ["说(dict的变体)", ["indicate", "dedicate"]],
@@ -757,6 +786,7 @@ const ROOTS = {
   "nutri": ["营养、养育", ["nutrition", "nutrient"]],
   "oper": ["工作", ["operate", "operation", "cooperate"]],
   "opt": ["视力;选择", ["optic", "option", "adopt", "optical"]],
+  "ops": ["脸、眼（希腊语 ops）", ["triceratops", "cyclops", "synopsis"], { "lang": "希腊语", "word": "ops", "note": "脸、眼" }],
   "ord": ["顺序、命令", ["order", "ordinal", "ordinary"]],
   "ori": ["升起、起源", ["origin", "orient", "original"]],
   "orn": ["装饰", ["ornament", "adorn"]],
@@ -802,6 +832,7 @@ const ROOTS = {
   "aic": "形容词后缀，…的(如 voltaic)",
   "prim": ["第一、首要", ["primary", "prime", "primitive"]],
   "priv": ["单独、剥夺", ["private", "privacy", "deprive"]],
+  "proto": ["原始、第一（希腊语 protos）", ["prototype", "protocol", "protozoa"], { "lang": "希腊语", "word": "protos", "note": "第一" }],
   "prob": ["试验、证明", ["probe", "probable", "approve"]],
   "proxim": ["接近", ["proximity", "approximate"]],
   "psych": ["心理、灵魂", ["psychology", "psychiatry", "psychic"]],
@@ -889,6 +920,7 @@ const ROOTS = {
   "stal": ["站立、固定", ["install", "installment"]],
   "stall": ["站立(stal的变体)", ["stall", "forestall"]],
   "stat": ["站立、稳定", ["status", "static", "statue", "station"]],
+  "stice": ["站立、止住（拉丁语 sistere 的变体）", ["solstice", "solstices"], { "lang": "拉丁语", "word": "sistere", "note": "站立" }],
   "stell": ["星", ["stellar", "constellation"]],
   "strain": ["拉紧、束缚", ["constrain", "strain", "restraint"]],
   "strict": ["拉紧、严格", ["strict", "restrict", "construct"]],
@@ -955,6 +987,7 @@ const ROOTS = {
   "vestig": ["足迹、痕迹", ["investigate", "vestige", "investigation"]],
   "vid": ["看", ["video", "evident", "provide"]],
   "vis": ["看(vid的变体)", ["visible", "visit", "vision", "revise"]],
+  "viscer": ["内脏（拉丁语 viscus）", ["viscera", "visceral", "eviscerate"], { "lang": "拉丁语", "word": "viscus", "note": "内脏" }],
   "vig": ["活、生命力", ["vigor", "vigorous"]],
   "vict": ["征服、胜利", ["victory", "victim"]],
   "viv": ["活、生命", ["vivid", "survive", "revive", "vivisection"]],
@@ -1032,7 +1065,18 @@ const ROOTS = {
   "up": ["向上", ["upload", "up", "update"]],
   "load": ["装载", ["download", "upload", "load", "unload"]],
   "user": ["用户", ["username", "user", "usage"]],
-  "name": ["名字", ["username", "name", "rename"]]};
+  "name": ["名字", ["username", "name", "rename"]],
+  "zoon": ["动物（希腊语 zoon）", ["zoonosis", "protozoon", "epizoon"], { "lang": "希腊语", "word": "zoon", "note": "动物" }],
+  "zoa": ["动物（希腊语 zoon 的复数）", ["protozoa", "metazoa", "protozoan"], { "lang": "希腊语", "word": "zoon", "note": "动物" }],
+  "zoo": ["动物（希腊语 zoon）", ["zoo", "zoology", "zoological"], { "lang": "希腊语", "word": "zoon", "note": "动物" }],
+  "electr": ["电（希腊语 elektron）", ["electricity", "electric", "electrical"], { "lang": "希腊语", "word": "elektron", "note": "琥珀（摩擦生电）" }],
+  "eluct": ["挣扎、挣脱（拉丁语 luctari）", ["ineluctable"], { "lang": "拉丁语", "word": "luctari", "note": "挣扎" }],
+  "gnos": ["知道（希腊语 gnosis）", ["diagnose", "diagnosis", "prognosis"], { "lang": "希腊语", "word": "gnosis", "note": "知识" }],
+  "miser": ["可怜、不幸（拉丁语 miser）", ["miserable", "commiserate", "misery"], { "lang": "拉丁语", "word": "miser", "note": "可怜" }],
+  "trit": ["摩擦、磨损（拉丁语 terere）", ["attrition", "contrition", "triturate"], { "lang": "拉丁语", "word": "terere", "note": "摩擦" }],
+  "bin": ["二、成双（拉丁语 bini）", ["combination", "combine", "binary"], { "lang": "拉丁语", "word": "bini", "note": "成双" }],
+  "triev": ["找到、发现（古法语 trouver）", ["retrieval", "retrieve"], { "lang": "古法语", "word": "trouver", "note": "找到" }],
+  "ciss": ["切、割（拉丁语 caedere 的变体）", ["abscission", "scission"], { "lang": "拉丁语", "word": "caedere", "note": "切" }]};
 
 /* 增强词表：word -> 该词的现成分解（由导入脚本注入，未注入时为 { }） */
 const ENHANCED = {};
@@ -1109,6 +1153,14 @@ function findCognates(word) {
       const allRoots = (bd.roots || []).map(r => r.m);
       // 前缀也参与同根查询（如 binary 的 bi-、automatic 的 auto-）
       if (bd.prefix) allRoots.push(bd.prefix.m.replace(/-.*$/, ''));
+      // 动态补录：把当前词加入其拆解词根的索引，让查过的词互相可见（渐进式双向）
+      // 解决"查 A 能看到 B、查 B 看不到 A"：MORPH_INDEX 静态只含词根例词+考试词演变链，
+      // 76 万 ecdict 词的动态拆解不进索引；查询时补录后，同根词查询随使用渐进收敛。
+      for (const rm of allRoots) {
+        if (rm.length < 2) continue;
+        if (!MORPH_INDEX.has(rm)) MORPH_INDEX.set(rm, new Set());
+        MORPH_INDEX.get(rm).add(word);
+      }
       for (const rm of allRoots) {
         if (rm.length < 2 || seenMorph.has(rm)) continue;
         seenMorph.add(rm);
@@ -1312,7 +1364,28 @@ const ROOT_BLOCK = {
   'apostrophizes': ['troph', 'trop'], 'apostrophising': ['troph', 'trop'],
   'retropatellar': ['troph', 'trop'],
   'dorough': ['rough'],
-  'eavestrough': ['rough']
+  'eavestrough': ['rough'],
+  /* cerat 误伤：cerate 家族（蜡，拉丁语 cera），非"角" */
+  'acerate': ['cerat'], 'aceratosis': ['cerat'], 'cerate': ['cerat'], 'cerated': ['cerat'], 'cerates': ['cerat'], 'ceratine': ['cerat'], 'deceration': ['cerat'],
+  /* carcer/viscer 误伤：-ed/-ing 形式缺 at 后缀，剩余段误拆成 car/vis+cerat */
+  'incarcerated': ['cerat'], 'incarcerating': ['cerat'], 'incarcerator': ['cerat'],
+  'eviscerated': ['cerat'], 'eviscerating': ['cerat'], 'viscerated': ['cerat'], 'viscerating': ['cerat'],
+  /* ops 误伤：ops=operation 缩写或普通词尾 */
+  'coops': ['ops'], 'wallops': ['ops'], 'opsearch': ['ops'], 'opsit': ['ops'], 'toops': ['ops'], 'eops': ['ops'], 'autocopser': ['ops'],
+  /* biopsy 族：正确是 bio+opsy（生命+看），被 bi-(二)+ops 抢先 */
+  'biopsy': ['ops'], 'biopsied': ['ops'], 'biopsying': ['ops'],
+  /* zoon 误伤：ose/otic 非后缀，zoonose/zoonotic 被拆成 zoo+nose/zoo+not（回退 partial 显示 zoon+未识别） */
+  'zoonose': ['zoo'], 'zoonotic': ['zoo'],
+  /* zoom 过去式：zoomed 被拆成 zoo+med（医药），应整词 zoom 变形 */
+  'zoomed': ['zoo'],
+  /* proton 族：protonated/protonation 是质子(proton)派生，拆 proto+nat(出生) 误导 */
+  'protonated': ['proto'], 'protonation': ['proto'], 'unprotonated': ['proto'],
+  /* combination 族：加 bin 词根后仍被 nat(出生) 的拆法压过，拦 nat 让 com+bin+ation 胜出 */
+  'combination': ['nat'],
+  /* bin 误伤：albin(白化病 alb+in)、arabin(阿拉伯糖)、拉丁短语等，均非"二" */
+  'albin': ['bin'], 'albinal': ['bin'], 'albine': ['bin'], 'albiness': ['bin'], 'albinic': ['bin'], 'albinism': ['bin'], 'albinismus': ['bin'], 'albinistic': ['bin'], 'albinson': ['bin'], 'albinus': ['bin'],
+  'arabin': ['bin'], 'arabinal': ['bin'], 'arabine': ['bin'], 'arabinoside': ['bin'], 'arabinosis': ['bin'],
+  'abinitio': ['bin'], 'anabin': ['bin'], 'anatabine': ['bin'], 'antimicrobin': ['bin']
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -1382,6 +1455,9 @@ function prefMeaning(pf, rootM) {
    支持：前缀+词根+后缀、多层前缀(mis+under+stand)、
          英语复合词(news+paper)、基本词+后缀(teach+er)
    ============================================================ */
+/* 拆解评分权重（可调参）：SUF 后缀奖励、MORPH 词素惩罚、PRE 前缀系数、
+   BASE 基本词惩罚、FLEX 变形还原惩罚。调参后跑 test_decompose.js --guard + --diff 回归。 */
+const SCORE = { SUF: 9, MORPH: 14, PRE: 0.2, BASE: 6, FLEX: 6 };
 function decompose(w, depth) {
   if (w.length < 2 || depth > 4) return null;
   let candidates = [];
@@ -1421,7 +1497,7 @@ function decompose(w, depth) {
       prefix: prefix,
       roots: sub.roots,
       suffixes: sub.suffixes,
-      score: rootLen * 2 + pre.length * 0.2 - (sub.roots.length + sub.suffixes.length) * 14 + sub.suffixes.length * 9 - (sub.roots.some(r => r.flex) ? 6 : 0)
+      score: rootLen * 2 + pre.length * SCORE.PRE - (sub.roots.length + sub.suffixes.length) * SCORE.MORPH + sub.suffixes.length * SCORE.SUF - (sub.roots.some(r => r.flex) ? SCORE.FLEX : 0)
     });
   }
 
@@ -1450,7 +1526,7 @@ function decompose(w, depth) {
       prefix: sub.prefix,
       roots: sub.roots,
       suffixes: (sub.suffixes || []).concat([{ m: suf, meaning: sufM }]),
-      score: rootLen * 2 + (sub.prefix ? sub.prefix.m.length * 0.2 : 0) - (sub.roots.length + sub.suffixes.length) * 14 + (sub.suffixes.length + 1) * 9 - (sub.roots.some(r => r.flex) ? 6 : 0)
+      score: rootLen * 2 + (sub.prefix ? sub.prefix.m.length * SCORE.PRE : 0) - (sub.roots.length + sub.suffixes.length) * SCORE.MORPH + (sub.suffixes.length + 1) * SCORE.SUF - (sub.roots.some(r => r.flex) ? SCORE.FLEX : 0)
     });
   }
 
@@ -1460,7 +1536,7 @@ function decompose(w, depth) {
     candidates.push({
       prefix: null, roots: g.roots, suffixes: [],
       // 含基本词或变形还原词根的复合候选额外罚分，避免压过"真前缀+真词根"(如 complete 不拆成 come+plete)
-      score: rootLen * 2 - (g.roots.length - 1) * 14 - (g.roots.some(r => r.isBase) ? 6 : 0)
+      score: rootLen * 2 - (g.roots.length - 1) * SCORE.MORPH - (g.roots.some(r => r.isBase) ? SCORE.BASE : 0)
     });
   }
 
@@ -1721,33 +1797,53 @@ function enhancedMorphFallback(w) {
    UI 逻辑
    ============================================================ */
 async function loadData() {
-  const tip = document.getElementById('load-tip');
+  const textEl = document.getElementById('load-text');
+  const fillEl = document.getElementById('load-fill');
+  const mask = document.getElementById('load-mask');
+  const setProg = p => { if (fillEl) fillEl.style.width = Math.min(100, p) + '%'; };
   try {
-    if (tip) tip.textContent = '正在加载考试词库…';
-    const enhRes = await fetch('enhanced.json');
-    const enhText = await enhRes.text();
-    // 分片解析，避免阻塞主线程
-    await new Promise(r => setTimeout(r, 30));
-    const enh = JSON.parse(enhText);
+    textEl.textContent = '正在加载考试词库…';
+    const enh = await fetchJSON('enhanced.json', setProg, 0, 28);
     Object.assign(ENHANCED, enh);
-    if (tip) tip.textContent = '考试词库加载完成（' + Object.keys(ENHANCED).length + ' 词），正在加载全量词典…';
-    await new Promise(r => setTimeout(r, 30));
-
-    const dictRes = await fetch('ecdict.json');
-    const dictText = await dictRes.text();
-    await new Promise(r => setTimeout(r, 30));
-    const dict = JSON.parse(dictText);
+    textEl.textContent = '考试词库完成，正在加载全量词典…';
+    const dict = await fetchJSON('ecdict.json', setProg, 28, 100);
     // ecdict 数据源的 \n 是字面反斜杠+n，归一化为真实换行，界面渲染才正常
     for (const k in dict) { const e = dict[k]; if (e.t) e.t = e.t.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n'); if (e.d) e.d = e.d.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n'); }
     Object.assign(ECDICT, dict);
     buildIndex();
     DATA_READY = true;
-    if (tip) tip.textContent = '已加载 ' + Object.keys(ENHANCED).length + ' 考试词 + ' + Object.keys(ECDICT).length + ' 全量词';
-    setTimeout(() => { if (tip) tip.textContent = ''; }, 4000);
+    setProg(100);
+    textEl.textContent = '加载完成 ✓';
+    setTimeout(() => mask.classList.add('hide'), 350);
+    setTimeout(() => mask.remove(), 900);
+    const inp = document.getElementById('input'); if (inp) inp.focus();
   } catch (e) {
     console.error('数据加载失败', e);
-    if (tip) tip.textContent = '数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）';
+    textEl.textContent = '数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）';
   }
+}
+
+/* 带进度读取+解析 JSON：按 Content-Length 算百分比，分片读不阻塞主线程 */
+async function fetchJSON(url, prog, from, to) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(url + ' HTTP ' + res.status);
+  const total = +res.headers.get('Content-Length') || 0;
+  if (!res.body || !total) {  // 无流式支持/无长度时退回整体加载
+    const obj = await res.json();
+    prog(to);
+    return obj;
+  }
+  const reader = res.body.getReader();
+  const chunks = [];
+  let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    got += value.length;
+    prog(from + (to - from) * got / total);
+  }
+  return JSON.parse(await new Blob(chunks).text());
 }
 loadData();
 
@@ -1936,7 +2032,6 @@ function search() {
   const v = input.value.trim();
   if (!v) return;
   if (!DATA_READY) {
-    const tip = document.getElementById('load-tip');
     result.innerHTML = '<div class="card"><div class="miss">词库仍在加载，请稍候片刻再试…</div></div>';
     result.classList.add('show');
     return;
@@ -2410,7 +2505,10 @@ input.addEventListener('drop', (e) => {
   e.preventDefault();
   input.classList.remove('drag-over');
   const txt = (e.dataTransfer.getData('text') || '').trim();
-  if (txt) input.value = txt;
+  if (txt) {
+    input.value = txt;
+    search();   // 拖入即分析，无需再点"分析"
+  }
 });
 </script>
 </body>
