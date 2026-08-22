@@ -21,3 +21,12 @@ out_*.txt
 
 # UI 真机验证截图（test_ui.js 每次运行生成）
 _ui_test.png
+
+# 本地许可/第三方词典派生（版权数据，勿提交）
+# 牛津9(Etymonline/thesaurus 等)内容属版权方，仅本机生成使用
+oxford.json
+etym.json
+thes.json
+ex.json
+us_ipa.json
+*.bak

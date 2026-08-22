@@ -5,54 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>词根词缀分析器</title>
 <style>
+
   :root {
     /* 液态玻璃色板 */
-    --glass-bg: #0a0c18;
-    --glass-card: rgba(255,255,255,0.07);
-    --glass-card-strong: rgba(255,255,255,0.10);
-    --glass-border: rgba(255,255,255,0.14);
-    --glass-border-hi: rgba(255,255,255,0.28);
-    --text: #f2f4ff;
-    --sub: rgba(242,244,255,0.55);
+    --glass-bg: #0a0d1e;
+    --glass-card: rgba(255,255,255,0.08);
+    --glass-card-strong: rgba(255,255,255,0.14);
+    --glass-border: rgba(255,255,255,0.18);
+    --glass-border-hi: rgba(255,255,255,0.36);
+    --text: #f4f6ff;
+    --sub: rgba(244,246,255,0.6);
     --accent: #6ea8ff;
-    --accent-soft: rgba(110,168,255,0.14);
+    --accent-soft: rgba(110,168,255,0.16);
     --ok: #7ee2a8;
     --gold: #ffd479;
     --gold-soft: rgba(255,212,121,0.16);
-    --shadow: 0 12px 40px rgba(0,0,0,0.45);
-    --blur: blur(28px) saturate(150%);
+    --shadow: 0 16px 48px rgba(0,0,0,0.5);
+    --blur: blur(26px) saturate(170%) brightness(1.07);
   }
   * { box-sizing: border-box; }
   html { height: 100%; }
   body {
     margin: 0; min-height: 100%;
-    background:
-      radial-gradient(900px 700px at 8% 0%, rgba(94,110,255,0.28), transparent 60%),
-      radial-gradient(800px 600px at 92% 8%, rgba(180,80,255,0.22), transparent 60%),
-      radial-gradient(900px 700px at 50% 110%, rgba(0,200,255,0.18), transparent 60%),
-      radial-gradient(600px 500px at 80% 60%, rgba(255,140,120,0.14), transparent 60%),
-      var(--glass-bg);
-    background-attachment: fixed;
+    background: var(--glass-bg);
     color: var(--text);
     font-family: -apple-system, "SF Pro Display", "Segoe UI", "Microsoft YaHei", sans-serif;
     display: flex; flex-direction: column; align-items: center; padding: 48px 16px 60px;
   }
-  /* 顶部光晕装饰 */
+  /* 背景光晕层：几团边界更锐、更饱和的彩色光斑，卡片糊上去晕成彩色雾——"背景透过玻璃"的感觉 */
   body::before {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(500px 320px at 70% 12%, rgba(255,255,255,0.08), transparent 70%),
-      radial-gradient(400px 260px at 20% 85%, rgba(120,180,255,0.10), transparent 70%);
-    filter: blur(60px);
+      radial-gradient(900px 700px at 15% 0%, rgba(110,130,255,0.28), transparent 60%),
+      radial-gradient(520px 340px at 72% 10%, rgba(255,255,255,0.20), transparent 60%),
+      radial-gradient(460px 300px at 78% 38%, rgba(110,168,255,0.34), transparent 54%),
+      radial-gradient(520px 380px at 22% 30%, rgba(150,120,255,0.32), transparent 56%),
+      radial-gradient(420px 300px at 30% 82%, rgba(120,220,180,0.24), transparent 54%),
+      radial-gradient(380px 280px at 55% 70%, rgba(255,180,140,0.18), transparent 57%);
+    filter: blur(46px) saturate(1.25);
+  }
+  /* 细噪点颗粒：给背景加高频细节，backdrop blur 才有东西可糊，玻璃质感才出得来 */
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+    opacity: .05;
+  }
+  /* 背景图虚化层：把实景图 blur 成柔光氛围色，叶脉细节化开不再抢戏；放大盖住 blur 露出的边缘 */
+  .bg-blur {
+    position: fixed; inset: 0; z-index: -3; pointer-events: none;
+    background:
+      linear-gradient(rgba(10,13,30,0.38), rgba(10,13,30,0.38)),
+      url('bg.jpg') center/cover no-repeat;
+    filter: blur(18px) saturate(1.12);
+    transform: scale(1.12);
   }
   .brand { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
   .brand-badge {
-    width: 58px; height: 58px; border-radius: 18px; flex: none;
+    width: 58px; height: 58px; border-radius: 22px; flex: none;
     display: flex; align-items: center; justify-content: center;
-    background: var(--glass-card-strong);
-    border: 1px solid var(--glass-border-hi);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 24px rgba(0,0,0,0.35);
+    background: linear-gradient(150deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05));
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 10px 28px rgba(0,0,0,0.4);
   }
   .brand-badge svg { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
   .brand h1 {
@@ -65,19 +80,23 @@
   .search input {
     flex: 1; padding: 14px 20px; font-size: 16px; border-radius: 16px;
     border: 1px solid var(--glass-border);
-    background: var(--glass-card);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    color: var(--text); outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    background: linear-gradient(150deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+    backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
+    color: var(--text); outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
     transition: border-color .2s, background .2s;
   }
   .search input::placeholder { color: rgba(242,244,255,0.35); }
   .search input:focus { border-color: var(--glass-border-hi); background: var(--glass-card-strong); }
   .search input.drag-over { border-color: var(--glass-border-hi); background: var(--glass-card-strong); box-shadow: 0 0 0 3px rgba(92,141,255,0.35); }
   .search button {
-    padding: 0 26px; font-size: 15px; font-weight: 600; border: none; border-radius: 16px;
-    background: linear-gradient(135deg, #5c8dff, #7a5cff);
-    color: #fff; cursor: pointer; box-shadow: 0 6px 20px rgba(92,141,255,0.35);
-    transition: transform .15s, box-shadow .15s, filter .15s;
+    padding: 0 26px; font-size: 15px; font-weight: 600; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.28);
+    background: linear-gradient(135deg, rgba(92,141,255,0.55), rgba(122,92,255,0.55));
+    backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+    color: #fff; cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 6px 20px rgba(92,141,255,0.4);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    transition: transform .15s, box-shadow .15s, background .15s;
     position: relative; overflow: hidden;
   }
   /* 悬停时一束斜光扫过按钮，像被擦亮 */
@@ -88,36 +107,68 @@
     transition: left .55s ease;
   }
   .search button:hover::after { left: 130%; }
-  .search button:hover { box-shadow: 0 8px 26px rgba(92,141,255,0.5); }
-  .search button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .search button:hover { box-shadow: 0 8px 26px rgba(92,141,255,0.55), inset 0 1px 0 rgba(255,255,255,0.4); background: linear-gradient(135deg, rgba(92,141,255,0.72), rgba(122,92,255,0.72)); transform: translateY(-1px); }
   .search button:active { transform: translateY(0); }
   .result { width: 100%; max-width: 560px; margin-top: 26px; display: none; position: relative; z-index: 1; }
+  /* 搜索联想下拉 */
+  #suggest { width: 100%; max-width: 560px; display: none; position: relative; z-index: 3; margin-top: 6px;
+    background: linear-gradient(150deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 16px;
+    backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25); overflow: hidden; }
+  #suggest .sg-item { padding: 9px 16px; cursor: pointer; font-size: 15px; color: rgba(255,255,255,0.88);
+    border-bottom: 1px solid rgba(255,255,255,0.05); }
+  #suggest .sg-item:last-child { border-bottom: none; }
+  #suggest .sg-item:hover, #suggest .sg-item.cur { background: rgba(110,168,255,0.14); }
   .result.show { display: block; }
   .card {
-    background: var(--glass-card);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    border: 1px solid var(--glass-border);
+    position: relative; isolation: isolate; overflow: hidden;
     border-radius: 22px; padding: 22px 24px; margin-bottom: 16px;
-    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.09);
+    background: transparent;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45);
     animation: cardIn .5s cubic-bezier(.2,.7,.2,1) backwards;
-    transition: transform .25s, border-color .25s, box-shadow .25s;
+    transition: transform .25s, box-shadow .25s;
+  }
+  /* 液态玻璃：背景层折射+磨砂（内容层保持锐利） */
+  .card::before {
+    content: ''; position: absolute; inset: 0; border-radius: 22px; z-index: -1;
+    background: linear-gradient(160deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.012) 100%);
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(26px) saturate(165%); -webkit-backdrop-filter: blur(26px) saturate(165%);
+  }
+  .card::after {
+    content: ''; position: absolute; inset: 0; border-radius: 22px; z-index: -1; pointer-events: none;
+    /* 斜向眩光带 + 顶部下压光：湿玻璃的镜面反光 */
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.07) 15%, rgba(255,255,255,0) 32%),
+      radial-gradient(130% 100% at 50% -18%, rgba(255,255,255,0.14), transparent 55%);
+    /* 四周折射环：顶亮、两侧微亮、底略暗，模拟光线在玻璃边缘打弯 */
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -1px 0 rgba(255,255,255,0.04),
+      inset 1px 0 0 rgba(255,255,255,0.12),
+      inset -1px 0 0 rgba(255,255,255,0.12),
+      0 0 14px rgba(255,255,255,0.04);
   }
   .card:hover { transform: translateY(-2px); border-color: var(--glass-border-hi); }
   .word-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .word { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
   .badge {
-    font-size: 12px; padding: 4px 12px; border-radius: 30px;
+    font-size: 12px; padding: 4px 12px; border-radius: 999px;
     background: var(--accent-soft); border: 1px solid rgba(110,168,255,0.25);
-    color: var(--accent); backdrop-filter: blur(8px);
+    color: var(--accent); 
   }
   .badge.enhanced { color: var(--ok); border-color: rgba(126,226,168,0.3); background: rgba(126,226,168,0.12); }
+  .badge.redir { color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); font-weight: 400; }
+  .ex-src { font-size: 10px; padding: 2px 6px; border-radius: 999px; margin-right: 6px; color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); vertical-align: middle; }
+  .ex-hl { background: rgba(110,168,255,0.28); color: #fff; border-radius: 3px; padding: 0 2px; font-style: normal; }
   .breakdown { display: flex; align-items: stretch; gap: 6px; margin: 18px 0 4px; flex-wrap: wrap; }
   .morph {
     flex: 1 1 0; min-width: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    border-radius: 14px; padding: 9px 14px;
+    border-radius: 16px; padding: 9px 14px;
     background: var(--glass-card-strong); border: 1px solid var(--glass-border);
-    backdrop-filter: blur(12px);
+    
   }
   .morph b { font-size: 17px; letter-spacing: .5px; }
   .morph .m { color: var(--sub); font-size: 12px; max-width: 130px; text-align: center; overflow-wrap: anywhere; }
@@ -128,15 +179,32 @@
   .meaning .label { color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px; }
   .eq { color: var(--accent); font-weight: 600; }
   .cognates { margin-top: 14px; }
+  .rel-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 14px; }
+  .rel-col { min-width: 0; }
+  .rel-col .cognates { margin-top: 0; }
+  @media (max-width: 720px) { .rel-wrap { grid-template-columns: 1fr; } }
+  /* 左侧相关词汇侧边栏：宽屏显示、贴近卡片、滚动跟随；窗口窄时回退卡片内 */
+  #side-rel { display: none; position: fixed; top: 88px; width: 250px; max-height: 82vh; overflow-y: auto; overflow-x: hidden; z-index: 5;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+  #side-rel::-webkit-scrollbar { width: 4px; }
+  #side-rel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
+  #side-rel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+  #side-rel::-webkit-scrollbar-track { background: transparent; }
+  #side-rel .rel-wrap { grid-template-columns: 1fr; margin-top: 0; }
+  #side-rel .rel-col .cognates { margin-top: 14px; }
+  @media (min-width: 1080px) {
+    #side-rel { display: block; left: max(14px, calc(50% - 554px)); }
+    .result .rel-wrap { display: none; }
+  }
   .cognates .tag {
     display: inline-block; margin: 3px 6px 3px 0; padding: 4px 12px;
-    background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 18px;
-    font-size: 13px; color: var(--text); backdrop-filter: blur(8px);
+    background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 999px;
+    font-size: 13px; color: var(--text); 
   }
   .miss { color: var(--sub); font-size: 14px; line-height: 1.8; }
   .ex {
     margin-top: 7px; padding: 9px 12px; background: var(--glass-card);
-    border: 1px solid var(--glass-border); border-radius: 12px; font-size: 13px; color: var(--sub);
+    border: 1px solid var(--glass-border); border-radius: 10px; font-size: 13px; color: var(--sub);
   }
   .ex-en { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; color: var(--text); line-height: 1.6; }
   .ex-en-txt { flex: 1; }
@@ -169,7 +237,7 @@
   .chain-morph {
     font-weight: 600; color: var(--accent); font-size: 13.5px;
     background: var(--accent-soft); border: 1px solid rgba(110,168,255,0.22);
-    border-radius: 8px; padding: 2px 9px;
+    border-radius: 10px; padding: 2px 9px;
   }
   .chain-arrow { color: var(--sub); font-size: 13px; }
   .chain-src { font-size: 13px; color: var(--text); }
@@ -181,8 +249,8 @@
   /* 同源词/同根词标签云 */
   .cog {
     display: inline-block; margin: 3px 6px 3px 0; padding: 4px 12px;
-    background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 18px;
-    font-size: 13px; color: var(--text); cursor: pointer; backdrop-filter: blur(8px);
+    background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 999px;
+    font-size: 13px; color: var(--text); cursor: pointer; 
     transition: border-color .15s, color .15s, background .15s;
   }
   .cog:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
@@ -201,8 +269,8 @@
   .panel {
     position: fixed; top: 0; right: 0; height: 100vh; width: 420px; max-width: 92vw;
     transform: translateX(105%); transition: transform .3s ease; z-index: 100;
-    background: rgba(12,14,28,0.9); backdrop-filter: blur(32px) saturate(150%);
-    -webkit-backdrop-filter: blur(32px) saturate(150%);
+    background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(12,14,28,0.9) 55%);
+    backdrop-filter: blur(32px) saturate(150%); -webkit-backdrop-filter: blur(32px) saturate(150%);
     border-left: 1px solid var(--glass-border);
     box-shadow: -20px 0 60px rgba(0,0,0,0.5);
     display: flex; flex-direction: column;
@@ -215,7 +283,7 @@
   .panel-title { font-weight: 700; font-size: 16px; }
   .panel-close {
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
-    border-radius: 20px; padding: 5px 14px; font-size: 13px; cursor: pointer; backdrop-filter: blur(8px);
+    border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer; 
     transition: all .15s;
   }
   .panel-close:hover { color: var(--text); border-color: var(--glass-border-hi); }
@@ -224,8 +292,8 @@
   /* 收藏按钮 */
   .fav-btn {
     margin-left: auto; border: 1px solid var(--glass-border); background: var(--glass-card);
-    color: var(--sub); border-radius: 20px; padding: 5px 14px; font-size: 13px;
-    cursor: pointer; align-self: center; backdrop-filter: blur(8px);
+    color: var(--sub); border-radius: 999px; padding: 5px 14px; font-size: 13px;
+    cursor: pointer; align-self: center; 
     transition: all .15s;
   }
   .fav-btn:hover { border-color: var(--gold); color: var(--gold); }
@@ -233,8 +301,8 @@
   /* 发音按钮 */
   .tts-btn {
     border: 1px solid var(--glass-border); background: var(--glass-card);
-    color: var(--sub); border-radius: 20px; padding: 5px 12px; font-size: 13px;
-    cursor: pointer; align-self: center; backdrop-filter: blur(8px);
+    color: var(--sub); border-radius: 999px; padding: 5px 12px; font-size: 13px;
+    cursor: pointer; align-self: center; 
     transition: all .15s; line-height: 1;
   }
   .tts-btn:hover { color: var(--accent); border-color: var(--accent); }
@@ -244,7 +312,7 @@
   .spell-suggest {
     margin: 4px 0 10px; padding: 8px 12px; font-size: 13px; color: var(--text);
     border: 1px solid rgba(255, 200, 80, 0.35); border-radius: 10px;
-    background: rgba(255, 200, 80, 0.08); backdrop-filter: blur(6px);
+    background: rgba(255, 200, 80, 0.08); 
   }
   .spell-suggest .cog { border-color: rgba(255,200,80,0.5); color: var(--gold); }
   /* 发音工具条 */
@@ -256,14 +324,14 @@
   .tts-bar .tts-label { font-size: 12px; opacity: .8; }
   .tts-eng {
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
-    border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px);
+    border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; 
     transition: all .15s;
   }
   .tts-eng:hover { color: var(--accent); border-color: var(--accent); }
   .tts-eng.active { color: #fff; border-color: rgba(110,168,255,0.5); background: linear-gradient(135deg, rgba(92,141,255,0.4), rgba(122,92,255,0.4)); }
   .tts-bar select {
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--text);
-    border-radius: 10px; padding: 4px 6px; font-size: 12px; backdrop-filter: blur(8px); cursor: pointer;
+    border-radius: 10px; padding: 4px 6px; font-size: 12px;  cursor: pointer;
   }
   .tts-bar select option { background: #1a1e2e; }
   .tts-hint { font-size: 11px; opacity: .65; }
@@ -273,7 +341,7 @@
   .tabs { display: flex; gap: 8px; width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
   .tab {
     flex: 1; padding: 10px 0; text-align: center; font-size: 14px; font-weight: 500;
-    border: 1px solid var(--glass-border); border-radius: 14px;
+    border: 1px solid var(--glass-border); border-radius: 16px;
     background: var(--glass-card); backdrop-filter: var(--blur);
     color: var(--sub); cursor: pointer; transition: all .2s;
   }
@@ -283,13 +351,6 @@
     color: #fff; border-color: rgba(110,168,255,0.4); box-shadow: 0 4px 16px rgba(92,141,255,0.25);
   }
   /* Tab 滑动指示条：一条发光的渐变线，在两个标签间滑动 */
-  .tab-ind {
-    position: absolute; bottom: -1px; left: 0; height: 3px; width: 0; border-radius: 3px;
-    background: linear-gradient(90deg, #5c8dff, #7a5cff);
-    box-shadow: 0 0 10px rgba(110,168,255,0.6);
-    transition: left .28s cubic-bezier(.2,.7,.2,1), width .28s cubic-bezier(.2,.7,.2,1);
-    pointer-events: none;
-  }
   .tip { color: var(--sub); font-size: 12px; margin-top: 16px; text-align: center; position: relative; z-index: 1; }
 
   /* 加载遮罩：液态玻璃风格，覆盖全屏 */
@@ -298,7 +359,7 @@
     transition: opacity .45s ease; }
   .load-mask.hide { opacity: 0; pointer-events: none; }
   .load-card { background: var(--glass-card-strong); border: 1px solid var(--glass-border);
-    backdrop-filter: var(--blur); border-radius: 24px; padding: 30px 46px; text-align: center;
+    backdrop-filter: var(--blur); border-radius: 22px; padding: 30px 46px; text-align: center;
     box-shadow: var(--shadow); min-width: 260px; }
   .load-spin { width: 38px; height: 38px; margin: 0 auto 16px; border-radius: 50%;
     border: 3px solid rgba(110,168,255,0.18); border-top-color: var(--accent);
@@ -312,11 +373,11 @@
   #favlist { width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
   .h-head { display: flex; align-items: center; gap: 8px; color: var(--sub); font-size: 13px; margin-bottom: 8px; }
   .h-n { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 0 8px; font-size: 12px; }
-  .h-btn { border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub); border-radius: 8px; padding: 4px 12px; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px); transition: color .15s; }
+  .h-btn { border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub); border-radius: 10px; padding: 4px 12px; font-size: 12px; cursor: pointer;  transition: color .15s; }
   .h-btn:hover { color: var(--text); }
   .h-btn:disabled { opacity: .55; cursor: default; }
   #h-clear { margin-left: auto; }
-  .h-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 13px; transition: background .15s; }
+  .h-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; transition: background .15s; }
   .h-item:hover { background: var(--glass-card); }
   .h-w { font-weight: 600; color: var(--accent); min-width: 90px; }
   .h-s { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
@@ -324,10 +385,10 @@
   .fav-rm { color: var(--sub); cursor: pointer; padding: 0 4px; font-size: 12px; }
   .fav-rm:hover { color: var(--gold); }
   /* 收藏列表里的词条容器也玻璃化 */
-  .favlist .h-item { border: 1px solid var(--glass-border); margin-bottom: 8px; background: var(--glass-card); backdrop-filter: blur(12px); }
+  .favlist .h-item { border: 1px solid var(--glass-border); margin-bottom: 8px; background: var(--glass-card);  }
 
   /* ===== 动效关键帧 ===== */
-  @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes cardIn { from { transform: translateY(10px); } to { transform: none; } }
   @keyframes dotIn  { from { opacity: 0; transform: scale(.4); }  to { opacity: 1; transform: scale(1); } }
 
   /* 系统开启"减弱动态效果"时关掉装饰性动画，照顾偏好 */
@@ -335,9 +396,12 @@
     .card, .chain-item::after { animation: none; }
     .search button::after, .tab-ind { transition: none; }
   }
+
 </style>
 </head>
 <body>
+<div class="bg-blur"></div>
+<div id="side-rel"></div>
 
 <div class="brand">
   <div class="brand-badge" title="前缀 · 词根 · 后缀">
@@ -357,34 +421,25 @@
   <input id="input" type="text" placeholder="输入单词，如 transport" autofocus spellcheck="false">
   <button id="btn">分析</button>
 </div>
-
-<!-- 加载遮罩：启动时覆盖全屏，显示进度，加载完淡出 -->
-<div id="load-mask" class="load-mask">
-  <div class="load-card">
-    <div class="load-spin"></div>
-    <div id="load-text">正在加载词库…</div>
-    <div class="load-track"><div class="load-fill" id="load-fill"></div></div>
-  </div>
-</div>
+<div id="suggest"></div>
 
 <div class="tts-bar" id="tts-bar">
   <span class="tts-label">发音</span>
-  <button class="tts-eng active" data-eng="builtin" title="浏览器自带，即点即播">内置</button>
-  <button class="tts-eng" data-eng="kokoro" title="Kokoro 高音质，需 TTS 服务在运行">Kokoro</button>
-  <select id="tts-voice" title="声音"></select>
+  <button class="tts-eng" data-eng="builtin" title="浏览器自带，即点即播">内置</button>
+  <button class="tts-eng active" data-eng="kokoro" title="Kokoro 高音质，需 TTS 服务在运行">Kokoro</button>
+  <select id="tts-voice" title="声音">
+    <option value="af_heart">美音·女·Heart</option><option value="af_bella">美音·女·Bella</option><option value="af_nicole">美音·女·Nicole</option><option value="af_aoede">美音·女·Aoede</option><option value="af_kore">美音·女·Kore</option><option value="am_adam">美音·男·Adam</option><option value="am_michael">美音·男·Michael</option><option value="bf_emma">英音·女·Emma</option><option value="bf_isabella">英音·女·Isabella</option><option value="bm_george">英音·男·George</option>
+  </select>
   <select id="tts-speed" title="语速">
-    <option value="0.75">慢</option>
-    <option value="1" selected>正常</option>
-    <option value="1.25">稍快</option>
-    <option value="1.5">快</option>
+    <option value="0.75">慢</option><option value="1" selected>正常</option><option value="1.25">稍快</option><option value="1.5">快</option>
   </select>
   <span class="tts-hint" id="tts-hint"></span>
 </div>
 
 <div class="tabs">
   <button class="tab active" data-tab="query">查询</button>
+  <button class="tab" data-tab="ex">例句</button>
   <button class="tab" data-tab="fav">收藏</button>
-  <span class="tab-ind" id="tab-ind"></span>
 </div>
 
 <div class="panel-mask" id="panel-mask"></div>
@@ -399,8 +454,25 @@
 <div class="result" id="result"></div>
 <div id="history"></div>
 <div id="favlist" class="favlist" style="display:none"></div>
+<div id="exsearch" style="display:none">
+  <div class="search">
+    <input id="ex-input" placeholder="输入搭配/短语，如 take the bus…">
+    <button id="ex-btn">搜索例句</button>
+  </div>
+  <div class="ex-count" id="ex-count"></div>
+  <div id="ex-list"></div>
+</div>
+
+<div id="load-mask" class="load-mask">
+  <div class="load-card">
+    <div class="load-spin"></div>
+    <div id="load-text">正在加载…</div>
+    <div class="load-bar"><div id="load-fill"></div></div>
+  </div>
+</div>
 
 <script id="core">
+
 /* ============================================================
    数据区：内置词根词缀表（离线可用）
    增强词表挂载点：{} 会被导入脚本替换为 JSON
@@ -411,11 +483,16 @@ const PREFIXES = {
   "a": "不、无",
   "ab": "离开、脱离",
   "ad": "朝向、加强",
+  "aero": "空气、航空",
   "ac": "朝向(ad的变体)",
   "af": "朝向(ad的变体)",
   "ag": "朝向(ad的变体)",
   "al": "朝向(ad的变体)",
+  "amphi": "两边、周围",
   "an": "朝向(ad的变体)",
+  "ana": "向上、再",
+  "andro": "男、雄",
+  "anemo": "风",
   "ap": "朝向(ad的变体)",
   "ar": "朝向(ad的变体)",
   "as": "朝向(ad的变体)",
@@ -423,11 +500,18 @@ const PREFIXES = {
   "ambi": "两者、周围",
   "ante": "在…之前",
   "anti": "反对、相反",
+  "apo": "从、离开、远离",
   "astro": "星、天体",
+  "atmo": "蒸汽、气体",
+  "audio": "听",
   "auto": "自己、自动",
   "be": "使…、加以",
   "bene": "好、善",
   "bi": "二、双",
+  "biblio": "书",
+  "carbo": "碳",
+  "chemo": "化学",
+  "chloro": "绿、氯",
   "circum": "环绕、周围",
   "co": "共同(con的变体)",
   "com": "共同、一起",
@@ -436,32 +520,54 @@ const PREFIXES = {
   "cor": "共同(con的变体)",
   "contra": "相反、反对",
   "counter": "反对、对应",
+  "cyclo": "圆、环",
+  "cyto": "细胞",
   "de": "向下、去除",
+  "dendro": "树",
+  "dexter": "右、灵巧",
   "di": "二、分开",
+  "dia": "穿过、横跨、完全",
   "dif": "分开(dis的变体)",
   "dis": "不、分离、否定",
+  "dys": "坏、异常、困难",
   "e": "出、向外(ex的变体)",
+  "eco": "生态、家",
+  "electro": "电",
+  "endo": "内、内部",
+  "ethno": "民族、种族",
   "ex": "出、向外、前任",
   "ef": "出(exit前缀变体)",
   "en": "使…、进入",
   "em": "使…、进入",
   "extra": "超出、外部",
   "fore": "前、先",
+  "gigant": "巨人、巨大",
+  "helio": "太阳",
+  "hemi": "半",
+  "hepta": "七",
   "hetero": "异、不同",
+  "hexa": "六",
+  "histo": "组织",
+  "homeo": "相同、类似",
   "homo": "同、相同",
   "hyper": "超过、过多",
+  "hypno": "睡眠",
   "hypo": "在下、低于",
+  "infra": "在下、低于",
   "iso": "相等、相同",
   "il": "不、无(in的变体)",
   "im": "不、无;向内(in的变体)",
   "in": "不、无;向内",
+  "info": "信息",
   "ir": "不、无(in的变体)",
   "inter": "在…之间",
   "intra": "在内、内部",
   "intro": "向内",
+  "kilo": "千",
   "macro": "大、宏观",
   "mal": "坏、恶",
   "mega": "大、百万",
+  "megalo": "巨大",
   "meta": "变化、超越",
   "micro": "小、微观",
   "milli": "千分之一、毫",
@@ -469,32 +575,43 @@ const PREFIXES = {
   "mis": "错误、坏",
   "mono": "单一",
   "multi": "多",
+  "nano": "微小、纳米",
+  "necro": "死、尸体",
   "neo": "新",
+  "neuro": "神经",
   "non": "非、不",
   "ob": "朝向、反对",
   "oc": "朝向(ob的变体)",
+  "octa": "八",
   "of": "朝向(ob的变体)",
   "op": "朝向(ob的变体)",
   "out": "超过、向外",
   "over": "超过、过度、在…上",
+  "panto": "全部、完全",
   "para": "旁边、辅助",
+  "penta": "五",
   "per": "贯穿、完全",
   "peri": "周围",
+  "physio": "生理、自然",
   "poly": "多",
   "post": "在…之后",
   "pre": "在…之前",
   "pro": "向前、支持、代替",
   "proto": "原始、第一",
   "pseudo": "假、伪",
+  "pyro": "火",
   "quadri": "四",
   "quasi": "类似、准",
   "re": "再、回、向后",
   "retro": "向后、回溯",
   "se": "分离、分开",
   "semi": "半",
+  "silico": "硅",
+  "step": "继、后(表示继亲)",
   "sub": "下、次、副",
   "suc": "下(sub的变体)",
   "suf": "下(sub的变体)",
+  "sui": "自己",
   "sup": "下(sub的变体)",
   "sus": "下(sub的变体)",
   "super": "上、超、过度",
@@ -502,7 +619,11 @@ const PREFIXES = {
   "sym": "共同、同时",
   "syn": "共同、同时",
   "tele": "远",
+  "teleo": "目的、终点",
+  "tetra": "四",
+  "thermo": "热",
   "trans": "横穿、跨越、变化",
+  "tres": "穿过(trans的变体)",
   "tri": "三",
   "ultra": "极、超",
   "un": "不、相反",
@@ -510,7 +631,10 @@ const PREFIXES = {
   "uni": "一、单一",
   "up": "向上",
   "vice": "副、代理",
-  "with": "向后、相反"
+  "viril": "男子",
+  "vita": "生命",
+  "with": "向后、相反",
+  "xeno": "异、外、陌生"
 };
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
@@ -572,6 +696,7 @@ const SUFFIXES = {
   "ent": "形容词/名词后缀，…的/…者",
   "ary": "形容词/名词后缀，…的/…处所",
   "ory": "形容词/名词后缀，…的/…处所",
+  "arian": "形容词/名词后缀，…的追随者/…主义者",
   "an": "形容词/名词后缀，…的/…地方的人",
   "ian": "形容词/名词后缀，…的/…地方的人",
   "osis": "名词后缀，表状态、疾病",
@@ -611,13 +736,165 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
+  "acro": ["高、尖端", ["acronym", "acropolis", "acrobat"], {"lang": "希腊语", "word": "akros"}],
   "ag": ["做、行动、驱动", ["action", "agent", "agenda", "active"]],
   "act": ["做、行动", ["action", "react", "active"]],
+  "agglutin": ["粘合、凝集", ["agglutinate", "agglutination"], {"lang": "拉丁语", "word": "agglutinare"}],
+  "agr": ["田地、农业", ["agriculture", "agrarian"], {"lang": "拉丁语", "word": "ager"}],
+  "albin": ["白色", ["albino", "albumen"], {"lang": "拉丁语", "word": "albus"}],
+  "alg": ["疼痛", ["nostalgia", "analgesic", "neuralgia"], {"lang": "希腊语", "word": "algos"}],
+  "alga": ["藻类", ["algae", "algal"], {"lang": "拉丁语", "word": "alga"}],
+  "algebra": ["代数", ["algebra", "algebraic"], {"lang": "阿拉伯语", "word": "al-jabr"}],
   "ali": ["其他", ["alien", "alibi"]],
+  "allegor": ["寓言、隐喻", ["allegory", "allegorical"], {"lang": "希腊语", "word": "allegoria"}],
+  "allerg": ["过敏", ["allergy", "allergic", "allergen"], {"lang": "希腊语", "word": "allos"}],
+  "allo": ["异、其他", ["allotrope", "allopathy"], {"lang": "希腊语", "word": "allos"}],
   "alter": ["其他、改变", ["alternative", "alter"]],
   "ambul": ["行走", ["ambulance", "amble"]],
+  "ampl": ["大、广阔", ["ample", "amplify", "amplitude"], {"lang": "拉丁语", "word": "amplus"}],
+  "ancien": ["古老、古代", ["ancient", "anciently"], {"lang": "古法语", "word": "ancien"}],
+  "aner": ["男人(andro的变体)", ["androgen", "philanderer"], {"lang": "希腊语", "word": "aner"}],
+  "angl": ["角、英格兰", ["angle", "triangle", "English"], {"lang": "拉丁语", "word": "angulus"}],
   "anim": ["心灵、生命", ["animal", "animate", "unanimous"]],
   "ann": ["年", ["annual", "anniversary"]],
+  "antelop": ["羚羊", ["antelope"], {"lang": "希腊语", "word": "antholops"}],
+  "api": ["蜜蜂", ["apiary", "apiarist"], {"lang": "拉丁语", "word": "apis"}],
+  "arbor": ["树", ["arboreal", "arboretum"], {"lang": "拉丁语", "word": "arbor"}],
+  "archeo": ["古老、原始", ["archaeology", "archeology", "archaic"], {"lang": "希腊语", "word": "archaios"}],
+  "aren": ["沙", ["arena", "arenaceous"], {"lang": "拉丁语", "word": "arena"}],
+  "argent": ["银", ["argent", "Argentina"], {"lang": "拉丁语", "word": "argentum"}],
+  "arm": ["武器", ["army", "armament", "disarm"], {"lang": "拉丁语", "word": "arma"}],
+  "arteri": ["动脉", ["artery", "arterial", "arteriosclerosis"], {"lang": "希腊语", "word": "arteria"}],
+  "arthr": ["关节", ["arthritis", "arthropod"], {"lang": "希腊语", "word": "arthron"}],
+  "asper": ["粗糙、严酷", ["asperity"], {"lang": "拉丁语", "word": "asper"}],
+  "atomi": ["原子", ["atomic", "atomize"], {"lang": "希腊语", "word": "atomos"}],
+  "audit": ["听、审计(aud的变体)", ["auditor", "audition"], {"lang": "拉丁语", "word": "audire"}],
+  "aug": ["增长、预言", ["augment", "august", "augury"], {"lang": "拉丁语", "word": "augere"}],
+  "aur": ["金、金色", ["aurora", "auric"], {"lang": "拉丁语", "word": "aurum"}],
+  "ava": ["化身、形象", ["avatar"], {"lang": "梵语", "word": "avatara"}],
+  "avi": ["鸟", ["aviation", "aviary", "aviator"], {"lang": "拉丁语", "word": "avis"}],
+  "avicul": ["养鸟", ["aviculture"], {"lang": "拉丁语", "word": "avicula"}],
+  "axiom": ["公理", ["axiom", "axiomatic"], {"lang": "希腊语", "word": "axioma"}],
+  "azur": ["蓝色", ["azure"], {"lang": "波斯语", "word": "lazhward"}],
+  "bacter": ["细菌", ["bacteria", "bacterium", "bacteriology"], {"lang": "希腊语", "word": "bakterion"}],
+  "bar": ["重、压力", ["barometer", "baritone"], {"lang": "希腊语", "word": "baros"}],
+  "barbar": ["野蛮、粗鲁", ["barbarian", "barbaric", "barbarous"], {"lang": "希腊语", "word": "barbaros"}],
+  "bath": ["深", ["bathos", "batholith"], {"lang": "希腊语", "word": "bathys"}],
+  "benef": ["好、善(bene的变体)", ["benefit", "beneficial"], {"lang": "拉丁语", "word": "bene"}],
+  "biochem": ["生物化学", ["biochemistry", "biochemical"], {"lang": "希腊语", "word": "bios"}],
+  "blast": ["胚、芽", ["blast", "gastrula"], {"lang": "希腊语", "word": "blastos"}],
+  "botan": ["植物", ["botany", "botanical", "botanist"], {"lang": "希腊语", "word": "botane"}],
+  "bovin": ["牛", ["bovine", "bovid"], {"lang": "拉丁语", "word": "bos"}],
+  "britt": ["易碎、脆", ["brittle"], {"lang": "古英语", "word": "brytel"}],
+  "bronch": ["支气管", ["bronchial", "bronchitis", "bronchus"], {"lang": "希腊语", "word": "bronchos"}],
+  "brunet": ["棕色", ["brunette", "brunet"], {"lang": "古法语", "word": "brunet"}],
+  "budd": ["萌芽、芽", ["budding", "bud"], {"lang": "古英语", "word": "budda"}],
+  "cad": ["落下", ["cadence", "cascade", "accident"], {"lang": "拉丁语", "word": "cadere"}],
+  "calc": ["石灰、钙", ["calcium", "calculate", "calcify"], {"lang": "拉丁语", "word": "calx"}],
+  "camp": ["田野、营地", ["camp", "campaign", "campus"], {"lang": "拉丁语", "word": "campus"}],
+  "cand": ["白色、发光", ["candidate", "candle", "incandescent"], {"lang": "拉丁语", "word": "candere"}],
+  "canin": ["犬、狗", ["canine", "canid"], {"lang": "拉丁语", "word": "canis"}],
+  "cant": ["唱", ["cantata", "canticle", "incantation"], {"lang": "拉丁语", "word": "canere"}],
+  "capit": ["头", ["capital", "capitol", "decapitate"], {"lang": "拉丁语", "word": "caput"}],
+  "cardio": ["心(card的变体)", ["cardiology", "cardiovascular"], {"lang": "希腊语", "word": "kardia"}],
+  "carn": ["肉、肉体", ["carnivore", "carnal", "carnival"], {"lang": "拉丁语", "word": "caro"}],
+  "cathedra": ["主教座、大教堂", ["cathedral"], {"lang": "希腊语", "word": "kathedra"}],
+  "caus": ["原因", ["cause", "accuse", "causal"], {"lang": "拉丁语", "word": "causa"}],
+  "cauter": ["烧灼、烙", ["cauterize", "cautery"], {"lang": "希腊语", "word": "kauterion"}],
+  "celebrit": ["闻名、名声", ["celebrity"], {"lang": "拉丁语", "word": "celeber"}],
+  "celer": ["快、迅速", ["accelerate", "celerity"], {"lang": "拉丁语", "word": "celer"}],
+  "cens": ["评估、审查", ["census", "censure", "censor"], {"lang": "拉丁语", "word": "censere"}],
+  "cephal": ["头", ["cephalopod", "encephalitis"], {"lang": "希腊语", "word": "kephale"}],
+  "cern": ["分开、辨认", ["discern", "concern", "discreet"], {"lang": "拉丁语", "word": "cernere"}],
+  "cert": ["确定、确实", ["certain", "certify", "ascertain"], {"lang": "拉丁语", "word": "certus"}],
+  "cervin": ["鹿", ["cervine", "cervid"], {"lang": "拉丁语", "word": "cervus"}],
+  "charit": ["爱、慈善", ["charity", "charitable"], {"lang": "拉丁语", "word": "caritas"}],
+  "chemistr": ["化学", ["chemistry", "chemical", "chemist"], {"lang": "希腊语", "word": "chemeia"}],
+  "chiro": ["手", ["chiropractor", "chirography"], {"lang": "希腊语", "word": "cheir"}],
+  "chlor": ["绿、氯(chloro的变体)", ["chlorophyll", "chlorine"], {"lang": "希腊语", "word": "chloros"}],
+  "chrom": ["颜色", ["chromosome", "monochrome", "chromatic"], {"lang": "希腊语", "word": "chroma"}],
+  "cin": ["灰色、灰烬", ["cinder", "incinerate"], {"lang": "拉丁语", "word": "cinis"}],
+  "cinere": ["灰烬色、灰色", ["cinereous", "cinerary"], {"lang": "拉丁语", "word": "cinis"}],
+  "circumstantia": ["环境、情况", ["circumstance", "circumstantial"], {"lang": "拉丁语", "word": "circumstantia"}],
+  "civ": ["公民、城市", ["city", "civil", "civic"], {"lang": "拉丁语", "word": "civis"}],
+  "clar": ["清楚、明亮", ["clarify", "declare", "clarify"], {"lang": "拉丁语", "word": "clarus"}],
+  "climat": ["气候", ["climate", "climatic", "climatology"], {"lang": "希腊语", "word": "klima"}],
+  "clin": ["倾斜、倚靠", ["incline", "clinic", "decline"], {"lang": "拉丁语", "word": "clinare"}],
+  "coll": ["山丘", ["colline", "colliculus"], {"lang": "拉丁语", "word": "collis"}],
+  "colonia": ["殖民、移民", ["colonial", "colonialism", "colony"], {"lang": "拉丁语", "word": "colonia"}],
+  "compris": ["包含、包括", ["comprise", "comprising"], {"lang": "拉丁语", "word": "comprehendere"}],
+  "concavit": ["凹陷", ["concavity", "concave"], {"lang": "拉丁语", "word": "concavus"}],
+  "confl": ["合并、融合", ["conflate", "conflation"], {"lang": "拉丁语", "word": "conflare"}],
+  "conspirat": ["共谋、阴谋", ["conspirator", "conspiracy"], {"lang": "拉丁语", "word": "conspirare"}],
+  "consternat": ["惊愕、惊恐", ["consternation"], {"lang": "拉丁语", "word": "consternare"}],
+  "consummat": ["完成、圆满", ["consummation", "consummate"], {"lang": "拉丁语", "word": "consummare"}],
+  "consumpt": ["消耗、消费", ["consumption", "consumptive"], {"lang": "拉丁语", "word": "consumere"}],
+  "contagio": ["接触、传染", ["contagious", "contagion"], {"lang": "拉丁语", "word": "contagio"}],
+  "contempt": ["轻视、蔑视", ["contempt", "contemptible"], {"lang": "拉丁语", "word": "contemnere"}],
+  "contribut": ["贡献、促成(trib的变体)", ["contributor", "contribution"], {"lang": "拉丁语", "word": "contribuere"}],
+  "controversia": ["争论、争议", ["controversy", "controversial"], {"lang": "拉丁语", "word": "controversia"}],
+  "contumaci": ["顽固、藐视", ["contumacious", "contumacy"], {"lang": "拉丁语", "word": "contumax"}],
+  "contus": ["打伤、挫伤", ["contusion"], {"lang": "拉丁语", "word": "contundere"}],
+  "corne": ["角、角质", ["corner", "cornea"], {"lang": "拉丁语", "word": "cornu"}],
+  "cornu": ["角", ["cornucopia", "cornice"], {"lang": "拉丁语", "word": "cornu"}],
+  "corpore": ["身体、实体(corpor的变体)", ["corporeal", "incorporate"], {"lang": "拉丁语", "word": "corpus"}],
+  "cors": ["紧身、束腰", ["corsage", "corset"], {"lang": "古法语", "word": "cors"}],
+  "cosm": ["宇宙、秩序", ["cosmos", "cosmic", "cosmetic"], {"lang": "希腊语", "word": "kosmos"}],
+  "crampe": ["痉挛、抽筋", ["cramped", "cramp"], {"lang": "古法语", "word": "crampe"}],
+  "crani": ["颅、头骨", ["cranium", "cranial", "craniotomy"], {"lang": "希腊语", "word": "kranion"}],
+  "crat": ["统治、权力", ["democracy", "aristocrat", "bureaucracy"], {"lang": "希腊语", "word": "kratos"}],
+  "cre": ["创造、生长", ["create", "increase", "concrete"], {"lang": "拉丁语", "word": "creare"}],
+  "credulit": ["轻信(cred的变体)", ["credulity", "credulous"], {"lang": "拉丁语", "word": "credere"}],
+  "creste": ["冠、羽冠", ["crested", "crest"], {"lang": "拉丁语", "word": "crista"}],
+  "crim": ["罪、罪行", ["crime", "criminal", "incriminate"], {"lang": "拉丁语", "word": "crimen"}],
+  "criminolog": ["犯罪学", ["criminology", "criminologist"], {"lang": "拉丁语", "word": "crimen"}],
+  "crit": ["判断、批评", ["critic", "criterion", "critique"], {"lang": "希腊语", "word": "krites"}],
+  "cruci": ["十字", ["crucifix", "crucial", "crucify"], {"lang": "拉丁语", "word": "crux"}],
+  "crump": ["褶皱、碎裂", ["crumple", "crump"], {"lang": "古英语", "word": "crimp"}],
+  "cry": ["冷、冰", ["crystal", "cryogenics"], {"lang": "希腊语", "word": "kryos"}],
+  "cultura": ["文化、耕作(cult的变体)", ["culture", "cultural"], {"lang": "拉丁语", "word": "cultura"}],
+  "curvi": ["弯曲(curv的变体)", ["curvilinear", "curve"], {"lang": "拉丁语", "word": "curvus"}],
+  "cyan": ["蓝色", ["cyanide", "cyanosis"], {"lang": "希腊语", "word": "kyanos"}],
+  "cyber": ["网络、控制", ["cyberspace", "cybernetics"], {"lang": "希腊语", "word": "kybernetes"}],
+  "dactyl": ["手指、脚趾", ["dactyl", "pterodactyl"], {"lang": "希腊语", "word": "daktylos"}],
+  "dastard": ["卑怯、懦夫", ["dastardly", "dastard"], {"lang": "古法语", "word": "dastard"}],
+  "debat": ["辩论", ["debate", "debater"], {"lang": "拉丁语", "word": "battuere"}],
+  "debentur": ["债务、借款", ["debenture"], {"lang": "拉丁语", "word": "debere"}],
+  "dec": ["十", ["decade", "decimal", "December"], {"lang": "拉丁语", "word": "decem"}],
+  "deceiv": ["欺骗(decept的变体)", ["deceive", "deceiving"], {"lang": "拉丁语", "word": "decipere"}],
+  "decess": ["死亡、去世", ["deceased", "decess"], {"lang": "拉丁语", "word": "decedere"}],
+  "decim": ["十、十分之一", ["decimal", "decimate"], {"lang": "拉丁语", "word": "decimus"}],
+  "decre": ["法令、判决", ["decree"], {"lang": "拉丁语", "word": "decretum"}],
+  "degr": ["程度、等级", ["degree"], {"lang": "拉丁语", "word": "gradus"}],
+  "deit": ["神", ["deity", "deify", "deification"], {"lang": "拉丁语", "word": "deus"}],
+  "delineat": ["描绘、勾画", ["delineate", "delineation"], {"lang": "拉丁语", "word": "delineare"}],
+  "demi": ["半", ["demigod", "demisemiquaver"], {"lang": "法语", "word": "demi"}],
+  "dent": ["牙", ["dentist", "dental", "dentition"], {"lang": "拉丁语", "word": "dens"}],
+  "deris": ["嘲笑、讥讽", ["derisive", "derision"], {"lang": "拉丁语", "word": "deridere"}],
+  "deriv": ["派生、引出", ["derive", "derivative", "derivation"], {"lang": "拉丁语", "word": "derivare"}],
+  "despis": ["鄙视、轻蔑", ["despise", "despicable"], {"lang": "拉丁语", "word": "despicere"}],
+  "despit": ["蔑视、不顾", ["despite"], {"lang": "古法语", "word": "despit"}],
+  "destin": ["命运、注定", ["destiny", "destine"], {"lang": "拉丁语", "word": "destinare"}],
+  "desul": ["跳跃、游离", ["desultory"], {"lang": "拉丁语", "word": "desultor"}],
+  "deterior": ["恶化、变坏", ["deteriorate", "deterioration"], {"lang": "拉丁语", "word": "deterior"}],
+  "dextro": ["右、右旋", ["dextrose", "dextral"], {"lang": "拉丁语", "word": "dexter"}],
+  "difficult": ["困难", ["difficulty", "difficult"], {"lang": "拉丁语", "word": "difficilis"}],
+  "diplomat": ["外交、文书", ["diplomacy", "diplomatic", "diplomat"], {"lang": "希腊语", "word": "diploma"}],
+  "doctrina": ["教义、学说", ["doctrine", "doctrinaire"], {"lang": "拉丁语", "word": "doctrina"}],
+  "dole": ["悲哀、哀悼", ["doleful", "dole"], {"lang": "拉丁语", "word": "dolere"}],
+  "dolor": ["悲伤、痛苦", ["dolorous"], {"lang": "拉丁语", "word": "dolor"}],
+  "dorm": ["睡眠", ["dormitory", "dormant", "dormouse"], {"lang": "拉丁语", "word": "dormire"}],
+  "dual": ["二、双重", ["dual", "duality", "duel"], {"lang": "拉丁语", "word": "duo"}],
+  "dynam": ["力、动力", ["dynamic", "dynamism", "dynamic"], {"lang": "希腊语", "word": "dynamis"}],
+  "dynamo": ["力、动力(dynam的变体)", ["dynamo", "dynamite"], {"lang": "希腊语", "word": "dynamis"}],
+  "ecolog": ["生态学", ["ecology", "ecological", "ecologist"], {"lang": "希腊语", "word": "oikos"}],
+  "econom": ["经济", ["economy", "economic", "economist"], {"lang": "希腊语", "word": "oikonomia"}],
+  "effervesc": ["沸腾、活跃", ["effervescent", "effervesce"], {"lang": "拉丁语", "word": "effervescere"}],
+  "efficaci": ["有效、效力", ["efficacy", "efficacious"], {"lang": "拉丁语", "word": "efficere"}],
+  "ego": ["自我", ["ego", "egoism", "egocentric"], {"lang": "拉丁语", "word": "ego"}],
+  "elus": ["躲避、逃逸", ["elusive", "elude"], {"lang": "拉丁语", "word": "eludere"}],
+  "embl": ["标志、象征", ["emblem", "emblematic"], {"lang": "希腊语", "word": "emblema"}],
   "enn": ["年(ann的变体)", ["centennial"]],
   "anthrop": ["人、人类", ["anthropology", "misanthropy"]],
   "aqua": ["水", ["aquarium", "aquatic"]],
@@ -631,6 +908,7 @@ const ROOTS = {
   "bio": ["生命、生物", ["biology", "biography", "antibiotic"]],
   "blank": ["白、空白", ["blank", "blanket", "blankly"], { "lang": "古法语", "word": "blanc", "note": "白色" }],
   "brev": ["短", ["abbreviate", "brevity"]],
+  "burgl": ["入室盗窃、破门行窃（中世纪拉丁语 burglaria，与拉丁语 burgus 城寨同源）", ["burglary", "burglar", "burgle", "burglarize"], { "lang": "中世纪拉丁语", "word": "burglaria", "note": "入室行窃" }],
   "cap": ["头、首", ["capital", "captain", "cap"]],
   "capt": ["拿、抓", ["capture", "captive"]],
   "cept": ["拿、抓(capt的变体)", ["accept", "receive", "concept"]],
@@ -642,10 +920,13 @@ const ROOTS = {
   "cess": ["走、进行(ced的变体)", ["process", "success", "excess"]],
   "cent": ["百、百分之一", ["century", "percent", "centimeter"]],
   "centr": ["中心", ["central", "concentrate"]],
+  "centri": ["中心(centr的变体)", ["centrifugal", "centripetal"], { "lang": "希腊语", "word": "kentron" }],
   "cerat": ["角（希腊语 keras）", ["triceratops", "ceratops"], { "lang": "希腊语", "word": "keras", "note": "角" }],
   "chron": ["时间", ["chronic", "synchronize", "chronology"]],
+  "chute": ["跌落、滑道（拉丁语 cadere 落下的法语变体）", ["parachute", "chute", "parachutist"], { "lang": "法语", "word": "chute", "note": "跌落" }],
   "cid": ["切、杀", ["decide", "insecticide"]],
   "cis": ["切(cid的变体)", ["concise", "incision"]],
+  "circa": ["约、环绕", ["circa", "circadian", "circuitous"], { "lang": "拉丁语", "word": "circa" }],
   "cit": ["唤起、呼叫、激发", ["excite", "recite", "cite"]],
   "civil": ["公民、文明", ["civil", "civilization"]],
   "claim": ["呼喊、叫", ["claim", "proclaim"]],
@@ -662,6 +943,7 @@ const ROOTS = {
   "curr": ["跑、流动", ["current", "currency"]],
   "curs": ["跑(curr的变体)", ["cursor", "excursion"]],
   "cours": ["跑、进行(curr的变体)", ["course", "intercourse"]],
+  "defens": ["防御、保卫", ["defensible", "defensive", "defend"], { "lang": "拉丁语", "word": "defendere" }],
   "dem": ["人民", ["democracy", "demographic", "epidemic"]],
   "cracy": ["统治、政体", ["democracy", "autocracy", "bureaucracy"]],
   "carcer": ["监狱、囚禁（拉丁语 carcer）", ["incarcerate", "carceral"], { "lang": "拉丁语", "word": "carcer", "note": "监狱" }],
@@ -670,6 +952,7 @@ const ROOTS = {
   "dic": ["说(dict的变体)", ["indicate", "dedicate"]],
   "dign": ["值得、尊严", ["dignity", "dignify", "indignation"]],
   "doc": ["教、教导", ["doctor", "document", "doctrine"]],
+  "dogma": ["教条、信条", ["dogma", "dogmatism", "dogmatic"], { "lang": "希腊语", "word": "dokein" }],
   "doct": ["教(doct的变体)", ["doctrine"]],
   "domin": ["统治、主人", ["dominate", "dominant", "kingdom"]],
   "don": ["给予", ["donate", "donation"]],
@@ -679,37 +962,345 @@ const ROOTS = {
   "duct": ["引导(duc的变体)", ["conduct", "duct"]],
   "dur": ["持久、硬", ["durable", "during", "endure"]],
   "dyn": ["力量", ["dynamic", "dynasty"]],
+  "enter": ["肠", ["enteritis", "enteric"], {"lang": "希腊语", "word": "enteron"}],
+  "entom": ["昆虫", ["entomology", "entomologist"], {"lang": "希腊语", "word": "entomon"}],
+  "entour": ["随从、随行", ["entourage"], {"lang": "法语", "word": "entourer"}],
+  "epidemiolog": ["流行病学", ["epidemiology", "epidemiological"], {"lang": "希腊语", "word": "epi"}],
   "equ": ["相等", ["equal", "equation", "adequate"]],
+  "equin": ["马", ["equestrian", "equine", "equestrienne"], {"lang": "拉丁语", "word": "equus"}],
+  "ergon": ["工作、功", ["ergonomic", "ergonomics", "energy"], { "lang": "希腊语", "word": "ergon" }],
   "err": ["错误、漫游", ["error", "errant", "erratic"]],
+  "erythr": ["红色", ["erythrocyte", "erythromycin"], {"lang": "希腊语", "word": "erythros"}],
+  "espion": ["间谍、刺探", ["espionage"], {"lang": "法语", "word": "espion"}],
   "ess": ["存在", ["essence", "essential"]],
+  "etern": ["永恒", ["eternity", "eternal"], {"lang": "拉丁语", "word": "aeternus"}],
+  "eu": ["好、善、优良", ["eulogy", "euphoria", "euphemism"], {"lang": "希腊语", "word": "eu"}],
+  "experientia": ["经验", ["experiential", "experience"], {"lang": "拉丁语", "word": "experientia"}],
+  "explos": ["爆炸", ["explosive", "explode"], {"lang": "拉丁语", "word": "explodere"}],
+  "exponent": ["指数", ["exponent", "exponential"], {"lang": "拉丁语", "word": "exponere"}],
   "fac": ["做、制造", ["factory", "facility", "factor"]],
   "fact": ["做(fac的变体)", ["factory", "manufacture", "fact"]],
+  "facult": ["能力、才能", ["faculty"], {"lang": "拉丁语", "word": "facultas"}],
+  "fall": ["错误、欺骗", ["fallacy", "fallible", "false"], {"lang": "拉丁语", "word": "fallere"}],
+  "fals": ["欺骗、错误", ["false", "falsify", "falsification"], {"lang": "拉丁语", "word": "fallere"}],
   "fect": ["做(fact的变体)", ["effect", "perfect", "infect"]],
+  "felin": ["猫", ["feline", "felinity"], {"lang": "拉丁语", "word": "felis"}],
+  "fend": ["打击、防御", ["defend", "offend", "fend"], {"lang": "拉丁语", "word": "fendere"}],
+  "ferr": ["铁", ["ferrous", "ferric"], {"lang": "拉丁语", "word": "ferrum"}],
+  "fess": ["承认、声明", ["confess", "profess"], {"lang": "拉丁语", "word": "fateri"}],
+  "festiv": ["节日、欢庆", ["festive", "festivity"], {"lang": "拉丁语", "word": "festum"}],
   "fic": ["做(fac的变体)", ["efficient", "sufficient"]],
   "fer": ["携带、运送", ["transfer", "confer", "differ", "offer"]],
   "fid": ["信任、忠诚", ["confident", "fidelity", "faith"]],
+  "figurat": ["形状、塑造", ["figurative", "figuration"], {"lang": "拉丁语", "word": "figura"}],
   "fin": ["结束、界限", ["final", "finish", "define", "infinite"]],
   "firm": ["坚固、确定", ["confirm", "firm", "infirm"]],
   "fix": ["固定", ["fix", "prefix", "affix"]],
+  "flam": ["火焰", ["flame", "flamboyant", "flammable"], {"lang": "拉丁语", "word": "flamma"}],
+  "flor": ["花", ["floral", "florist", "flourish"], {"lang": "拉丁语", "word": "flos"}],
   "flu": ["流动", ["fluent", "fluid", "influence"]],
+  "flum": ["河流", ["flume", "fluvial"], {"lang": "拉丁语", "word": "flumen"}],
+  "fluor": ["氟、流动", ["fluoride", "fluorescent"], {"lang": "拉丁语", "word": "fluere"}],
+  "fluviatil": ["河流的", ["fluvial", "fluviatile"], {"lang": "拉丁语", "word": "fluvius"}],
   "flux": ["流动(flu的变体)", ["flux", "influx"]],
   "form": ["形状、形式", ["transform", "reform", "formal", "inform"]],
   "fort": ["强、力量", ["effort", "fort", "fortify"]],
+  "fov": ["养育、偏爱", ["favor", "favorable"], {"lang": "拉丁语", "word": "fovere"}],
   "fract": ["断裂", ["fracture", "fraction"]],
   "frag": ["断裂(fract的变体)", ["fragile", "fragment"]],
   "frater": ["兄弟", ["fraternity", "fraternal"]],
+  "fraternit": ["兄弟、友爱", ["fraternity", "fraternal"], {"lang": "拉丁语", "word": "frater"}],
+  "frig": ["冷", ["frigid", "refrigerator", "frigidity"], {"lang": "拉丁语", "word": "frigus"}],
+  "fruct": ["果实、成果", ["fruition", "fructose", "fruit"], {"lang": "拉丁语", "word": "fructus"}],
+  "frug": ["节俭、果实", ["frugal", "frugality"], {"lang": "拉丁语", "word": "frugi"}],
+  "frui": ["果实、享受(fruct的变体)", ["fruition", "fruit"], {"lang": "拉丁语", "word": "frui"}],
+  "fug": ["逃跑", ["fugitive", "refuge", "fugue"], {"lang": "拉丁语", "word": "fugere"}],
+  "fum": ["烟、熏", ["fume", "fumigate"], {"lang": "拉丁语", "word": "fumus"}],
+  "function": ["功能、执行", ["function", "functionary"], {"lang": "拉丁语", "word": "fungi"}],
   "fund": ["底部、基础", ["fund", "fundamental", "foundation"]],
   "found": ["基础(fund的变体)", ["foundation", "found"]],
+  "fung": ["真菌", ["fungus", "fungal", "fungicide"], {"lang": "拉丁语", "word": "fungus"}],
   "fus": ["流、倒、熔", ["refuse", "confuse", "diffuse"]],
+  "gam": ["婚姻、两性", ["monogamy", "polygamy", "gamble"], {"lang": "希腊语", "word": "gamos"}],
+  "gastr": ["胃", ["gastric", "gastronomy", "gastritis"], {"lang": "希腊语", "word": "gaster"}],
+  "gel": ["霜、冻结", ["gelid", "congel"], {"lang": "拉丁语", "word": "gelu"}],
   "gen": ["产生、出生、种类", ["generate", "gene", "genius", "gender"]],
   "gener": ["产生、种类", ["generation", "general"]],
+  "gentilit": ["家族、贵族", ["gentility", "gentleman"], {"lang": "拉丁语", "word": "gens"}],
+  "genu": ["膝盖", ["genuine", "genuflect"], {"lang": "拉丁语", "word": "genu"}],
   "geo": ["地球、土地", ["geography", "geology", "geometry"]],
+  "geolog": ["地质学", ["geology", "geological", "geologist"], {"lang": "希腊语", "word": "ge"}],
+  "geometr": ["几何", ["geometry", "geometric", "geometrical"], {"lang": "希腊语", "word": "geo"}],
+  "gest": ["运送、举止", ["gesture", "suggest", "digest"], {"lang": "拉丁语", "word": "gerere"}],
+  "glaci": ["冰、冰川", ["glacier", "glacial", "glaciology"], {"lang": "拉丁语", "word": "glacies"}],
+  "glob": ["球", ["global", "globe", "globular"], {"lang": "拉丁语", "word": "globus"}],
+  "gloss": ["舌、语言", ["glossary", "polyglot", "glossitis"], {"lang": "希腊语", "word": "glossa"}],
+  "gon": ["角", ["polygon", "gonad", "pentagon"], {"lang": "希腊语", "word": "gonia"}],
   "grad": ["步、级别", ["gradual", "grade", "graduate"]],
+  "grammat": ["语法、书写", ["grammar", "grammatical", "diagram"], {"lang": "希腊语", "word": "gramma"}],
+  "grammatik": ["语法", ["grammatical", "grammarian"], {"lang": "希腊语", "word": "grammatikos"}],
+  "grav": ["重、严重", ["gravity", "grave", "aggravate"], {"lang": "拉丁语", "word": "gravis"}],
   "gress": ["走(grad的变体)", ["progress", "aggressive", "congress"]],
   "graph": ["写、画", ["graph", "paragraph", "photograph"]],
   "gram": ["写、画(graph的变体)", ["grammar", "telegram", "diagram"]],
   "grat": ["感激、高兴", ["grateful", "gratitude", "congratulate"]],
   "greg": ["群体、聚集", ["aggregate", "segregate", "congregation"]],
+  "gubernator": ["统治、治理", ["gubernatorial"], {"lang": "拉丁语", "word": "gubernator"}],
+  "guttur": ["喉咙", ["guttural", "guttural"], {"lang": "拉丁语", "word": "guttur"}],
+  "gyn": ["女性、妇女", ["gynecology", "androgynous", "gynecoid"], {"lang": "希腊语", "word": "gyne"}],
+  "gyros": ["旋转、回转", ["gyroscope", "gyration"], {"lang": "希腊语", "word": "gyros"}],
+  "hal": ["呼吸", ["inhale", "exhale"], {"lang": "拉丁语", "word": "halare"}],
+  "hallucin": ["幻觉", ["hallucinate", "hallucination"], {"lang": "拉丁语", "word": "hallucinari"}],
+  "hepat": ["肝", ["hepatitis", "hepatic"], {"lang": "希腊语", "word": "hepar"}],
+  "her": ["继承、继承人", ["heir", "heritage", "inherit"], {"lang": "拉丁语", "word": "heres"}],
+  "herpet": ["爬行动物", ["herpetology", "herpetofauna"], {"lang": "希腊语", "word": "herpeton"}],
+  "hormon": ["激素、荷尔蒙", ["hormone", "hormonal"], {"lang": "希腊语", "word": "hormon"}],
+  "horticultur": ["园艺学", ["horticulture", "horticultural"], {"lang": "拉丁语", "word": "hortus"}],
+  "hospit": ["款待、客人", ["hospitality", "hospitable", "hospital"], {"lang": "拉丁语", "word": "hospes"}],
+  "hypnos": ["睡眠(hypno的变体)", ["hypnosis", "hypnotic"], {"lang": "希腊语", "word": "hypnos"}],
+  "hypothes": ["假设", ["hypothesis", "hypothetical"], {"lang": "希腊语", "word": "hypothesis"}],
+  "iatr": ["医生、治疗", ["psychiatry", "pediatrics", "iatrogenic"], {"lang": "希腊语", "word": "iatros"}],
+  "ichthy": ["鱼", ["ichthyology", "ichthyosaur"], {"lang": "希腊语", "word": "ichthys"}],
+  "ident": ["相同、一致", ["identity", "identify", "identical"], {"lang": "拉丁语", "word": "idem"}],
+  "ign": ["火", ["ignite", "ignition"], {"lang": "拉丁语", "word": "ignis"}],
+  "illus": ["幻象、欺骗", ["illusory", "illusion"], {"lang": "拉丁语", "word": "illudere"}],
+  "illustr": ["说明、阐明", ["illustrate", "illustration"], {"lang": "拉丁语", "word": "illustrare"}],
+  "imitat": ["模仿", ["imitative", "imitate", "imitation"], {"lang": "拉丁语", "word": "imitari"}],
+  "indiscr": ["轻率、不慎重", ["indiscretion"], {"lang": "拉丁语", "word": "indiscretus"}],
+  "industri": ["勤奋、产业", ["industry", "industrial"], {"lang": "拉丁语", "word": "industria"}],
+  "infinit": ["无限(fin的变体)", ["infinite", "infinity"], {"lang": "拉丁语", "word": "infinitus"}],
+  "inflammat": ["发炎、点燃", ["inflammation", "inflammatory"], {"lang": "拉丁语", "word": "inflammare"}],
+  "iniquit": ["不公、邪恶", ["iniquity", "iniquitous"], {"lang": "拉丁语", "word": "iniquus"}],
+  "insula": ["岛", ["insular", "insulate"], {"lang": "拉丁语", "word": "insula"}],
+  "integrat": ["积分、整合", ["integral", "integrate", "integration"], {"lang": "拉丁语", "word": "integer"}],
+  "integrit": ["完整、正直", ["integrity"], {"lang": "拉丁语", "word": "integer"}],
+  "interlocut": ["对话、交谈", ["interlocutor"], {"lang": "拉丁语", "word": "interloqui"}],
+  "irasc": ["易怒、暴躁", ["irascible", "irascibility"], {"lang": "拉丁语", "word": "irasci"}],
+  "it": ["走", ["exit", "itinerary", "itinerant"], {"lang": "拉丁语", "word": "ire"}],
+  "jac": ["投、掷(ject的变体)", ["eject", "project", "adjective"], {"lang": "拉丁语", "word": "jacere"}],
+  "jurisprud": ["法学、法理", ["jurisprudence", "jurisprudent"], {"lang": "拉丁语", "word": "jurisprudentia"}],
+  "just": ["正义、公平", ["justice", "justify", "adjust"], {"lang": "拉丁语", "word": "justus"}],
+  "keros": ["蜡、煤油", ["kerosene"], {"lang": "希腊语", "word": "keros"}],
+  "labor": ["劳动、工作", ["labor", "laboratory", "collaborate"], {"lang": "拉丁语", "word": "labor"}],
+  "lac": ["牛奶", ["lactose", "lactic", "lactation"], {"lang": "拉丁语", "word": "lac"}],
+  "laryng": ["喉", ["larynx", "laryngitis", "laryngeal"], {"lang": "希腊语", "word": "larynx"}],
+  "legis": ["法律(leg的变体)", ["legislator", "legislation"], {"lang": "拉丁语", "word": "lex"}],
+  "leonin": ["狮子", ["leonine"], {"lang": "拉丁语", "word": "leo"}],
+  "leuc": ["白色", ["leucocyte", "leukemia"], {"lang": "希腊语", "word": "leukos"}],
+  "lexic": ["词典、词汇", ["lexicon", "lexicography", "lexical"], {"lang": "希腊语", "word": "lexikon"}],
+  "lic": ["允许、许可", ["license", "illicit", "licit"], {"lang": "拉丁语", "word": "licere"}],
+  "lieu": ["位置、场所", ["lieutenant"], {"lang": "法语", "word": "lieu"}],
+  "lig": ["绑、连接", ["oblige", "religion", "ligament"], {"lang": "拉丁语", "word": "ligare"}],
+  "lign": ["木", ["lignin", "ligneous"], {"lang": "拉丁语", "word": "lignum"}],
+  "linea": ["线、线条", ["lineage", "linear"], {"lang": "拉丁语", "word": "linea"}],
+  "linguist": ["语言学", ["linguistics", "linguist"], {"lang": "拉丁语", "word": "lingua"}],
+  "lipos": ["脂、脂肪", ["liposuction", "lipid"], {"lang": "希腊语", "word": "lipos"}],
+  "lith": ["石头", ["lithograph", "lithium", "megalith"], {"lang": "希腊语", "word": "lithos"}],
+  "logarithm": ["对数", ["logarithm", "logarithmic"], {"lang": "希腊语", "word": "logos"}],
+  "loqu": ["说话", ["eloquent", "loquacious", "colloquial"], {"lang": "拉丁语", "word": "loqui"}],
+  "lud": ["玩耍、嘲弄", ["illusion", "elude", "allude"], {"lang": "拉丁语", "word": "ludere"}],
+  "lumin": ["光", ["luminous", "illuminate"], {"lang": "拉丁语", "word": "lumen"}],
+  "luna": ["月亮", ["lunar", "lunatic"], {"lang": "拉丁语", "word": "luna"}],
+  "lupin": ["狼", ["lupine", "lupus"], {"lang": "拉丁语", "word": "lupus"}],
+  "lut": ["泥", ["lute", "lutulent"], {"lang": "拉丁语", "word": "lutum"}],
+  "lys": ["溶解、分解", ["analysis", "catalyst", "paralysis"], {"lang": "希腊语", "word": "lysis"}],
+  "magistrat": ["长官、地方法官", ["magistrate"], {"lang": "拉丁语", "word": "magistratus"}],
+  "magnet": ["磁铁", ["magnet", "magnetic", "magnetism"], {"lang": "希腊语", "word": "magnes"}],
+  "mamm": ["乳房、哺乳", ["mammal", "mammary"], {"lang": "拉丁语", "word": "mamma"}],
+  "marin": ["海", ["marine", "maritime", "marinate"], {"lang": "拉丁语", "word": "mare"}],
+  "masculin": ["男性、雄性", ["masculine", "masculinity"], {"lang": "拉丁语", "word": "masculus"}],
+  "masquer": ["面具、假面", ["masquerade", "masque"], {"lang": "意大利语", "word": "maschera"}],
+  "matrice": ["母体、模", ["matrix", "matrices"], {"lang": "拉丁语", "word": "matrix"}],
+  "matricula": ["登记、注册", ["matriculate", "matriculation"], {"lang": "拉丁语", "word": "matricula"}],
+  "medic": ["医学、治疗", ["medical", "medicine", "medicate"], {"lang": "拉丁语", "word": "medicus"}],
+  "medicin": ["医学、药物", ["medicine", "medicinal", "medical"], {"lang": "拉丁语", "word": "medicina"}],
+  "mel": ["蜂蜜", ["mellifluous", "molasses"], {"lang": "拉丁语", "word": "mel"}],
+  "melan": ["黑色、黑暗", ["melanin", "melancholy", "melanoma"], {"lang": "希腊语", "word": "melas"}],
+  "men": ["月经、月", ["menopause", "menstrual"], {"lang": "拉丁语", "word": "mensis"}],
+  "menac": ["威胁、恐吓", ["menace", "menacing", "menaced", "menacer"], {"lang": "拉丁语", "word": "minacia"}],
+  "mens": ["测量、心智", ["dimension", "measure", "mental"], {"lang": "拉丁语", "word": "mensura"}],
+  "meteor": ["气象、流星", ["meteorology", "meteor", "meteorite"], {"lang": "希腊语", "word": "meteoros"}],
+  "militia": ["民兵、军队(milit的变体)", ["militia", "militant"], {"lang": "拉丁语", "word": "miles"}],
+  "mille": ["千", ["millennium", "millimeter"], {"lang": "拉丁语", "word": "mille"}],
+  "ministr": ["服务、管理", ["minister", "ministry", "administer"], {"lang": "拉丁语", "word": "minister"}],
+  "minut": ["微小", ["minute", "minutiae"], {"lang": "拉丁语", "word": "minutus"}],
+  "mobilit": ["移动、流动", ["mobility", "mobilize"], {"lang": "拉丁语", "word": "mobilis"}],
+  "molecul": ["分子", ["molecule", "molecular"], {"lang": "法语", "word": "molecule"}],
+  "moll": ["柔软、柔和", ["mollify", "mollusk"], {"lang": "拉丁语", "word": "mollis"}],
+  "moralit": ["道德", ["morality", "moral"], {"lang": "拉丁语", "word": "mos"}],
+  "morb": ["疾病", ["morbid", "morbidity"], {"lang": "拉丁语", "word": "morbus"}],
+  "morpholog": ["形态学", ["morphology", "morphological"], {"lang": "希腊语", "word": "morphe"}],
+  "multitudin": ["众多", ["multitudinous"], {"lang": "拉丁语", "word": "multitudo"}],
+  "mur": ["墙", ["mural", "intramural"], {"lang": "拉丁语", "word": "munus"}],
+  "my": ["肌肉", ["myalgia", "myocardium"], {"lang": "希腊语", "word": "mys"}],
+  "myel": ["髓、脊髓", ["myeloma", "myelitis"], {"lang": "希腊语", "word": "myelos"}],
+  "nativit": ["出生、诞生", ["nativity", "native"], {"lang": "拉丁语", "word": "nasci"}],
+  "nauseat": ["恶心、厌恶", ["nauseate", "nausea"], {"lang": "希腊语", "word": "nausia"}],
+  "navigat": ["航行、驾驶船舶", ["navigator", "navigation", "navigate"], {"lang": "拉丁语", "word": "navigare"}],
+  "neb": ["雾、云", ["nebulous", "nebula"], {"lang": "拉丁语", "word": "nebula"}],
+  "necess": ["必需、必然", ["necessity", "necessary"], {"lang": "拉丁语", "word": "necesse"}],
+  "nephr": ["肾", ["nephritis", "nephrology"], {"lang": "希腊语", "word": "nephros"}],
+  "neur": ["神经(neuro的变体)", ["neural", "neurasthenia"], {"lang": "希腊语", "word": "neuron"}],
+  "nitr": ["氮", ["nitrogen", "nitrate", "nitric"], {"lang": "希腊语", "word": "nitron"}],
+  "noct": ["夜", ["nocturnal", "nocturne"], {"lang": "拉丁语", "word": "nox"}],
+  "nub": ["云、雾", ["nebula", "nubilous"], {"lang": "拉丁语", "word": "nubes"}],
+  "numerat": ["数", ["numerator", "numerable"], {"lang": "拉丁语", "word": "numerus"}],
+  "obligat": ["义务、强制", ["obligatory", "obligation"], {"lang": "拉丁语", "word": "obligare"}],
+  "obscur": ["黑暗、模糊", ["obscure", "obscurity"], {"lang": "拉丁语", "word": "obscurus"}],
+  "obstetric": ["产科、助产", ["obstetrician", "obstetrics"], {"lang": "拉丁语", "word": "obstetrix"}],
+  "ocean": ["海洋", ["ocean", "oceanic", "oceanography"], {"lang": "希腊语", "word": "okeanos"}],
+  "ochr": ["赭色、土黄", ["ochre", "ochraceous"], {"lang": "希腊语", "word": "ochra"}],
+  "ocul": ["眼睛", ["ocular", "monocle"], {"lang": "拉丁语", "word": "oculus"}],
+  "odont": ["牙齿", ["odontology", "orthodontist"], {"lang": "希腊语", "word": "odous"}],
+  "odor": ["气味", ["odorous", "odorless"], {"lang": "拉丁语", "word": "odor"}],
+  "offens": ["进攻、冒犯", ["offensive", "offense"], {"lang": "拉丁语", "word": "offendere"}],
+  "olfact": ["嗅觉", ["olfactory", "olfaction"], {"lang": "拉丁语", "word": "olfacere"}],
+  "olig": ["少、寡", ["oligarchy", "oligopoly"], {"lang": "希腊语", "word": "oligos"}],
+  "onto": ["存在、实体", ["ontology", "ontological"], {"lang": "希腊语", "word": "on"}],
+  "onym": ["名字", ["synonym", "anonymous", "acronym"], {"lang": "希腊语", "word": "onyma"}],
+  "ophthalm": ["眼", ["ophthalmology", "ophthalmic"], {"lang": "希腊语", "word": "ophthalmos"}],
+  "opportun": ["机会、合适", ["opportune", "opportunity"], {"lang": "拉丁语", "word": "opportunus"}],
+  "ornith": ["鸟", ["ornithology"], {"lang": "希腊语", "word": "ornis"}],
+  "orth": ["直、正", ["orthodox", "orthopedic", "orthography"], {"lang": "希腊语", "word": "orthos"}],
+  "oscill": ["摆动", ["oscillate", "oscillation"], {"lang": "拉丁语", "word": "oscillum"}],
+  "ostens": ["显示、表面", ["ostensible", "ostentation"], {"lang": "拉丁语", "word": "ostendere"}],
+  "osteo": ["骨", ["osteoporosis", "osteology"], {"lang": "希腊语", "word": "osteon"}],
+  "ot": ["耳", ["otitis", "otology"], {"lang": "希腊语", "word": "ous"}],
+  "ovari": ["卵巢", ["ovary", "ovarian", "ovariectomy"], {"lang": "拉丁语", "word": "ovarium"}],
+  "ovin": ["羊", ["ovine", "ovine"], {"lang": "拉丁语", "word": "ovis"}],
+  "oxyg": ["氧", ["oxygen", "oxygenate", "oxidize"], {"lang": "希腊语", "word": "oxys"}],
+  "ozon": ["臭氧", ["ozone", "ozonize"], {"lang": "希腊语", "word": "ozein"}],
+  "pac": ["和平", ["pacify", "pacific", "pacifist"], {"lang": "拉丁语", "word": "pax"}],
+  "palat": ["腭、味觉", ["palate", "palatable"], {"lang": "拉丁语", "word": "palatum"}],
+  "pancre": ["胰腺", ["pancreas", "pancreatic", "pancreatitis"], {"lang": "希腊语", "word": "pancreas"}],
+  "paradis": ["天堂、乐园", ["paradise", "paradisiacal"], {"lang": "古法语", "word": "paradis"}],
+  "parasit": ["寄生", ["parasite", "parasitic", "parasitism"], {"lang": "希腊语", "word": "parasitos"}],
+  "particula": ["微粒、细部", ["particle", "particular"], {"lang": "拉丁语", "word": "particula"}],
+  "paternit": ["父亲、父系", ["paternity", "paternal"], {"lang": "拉丁语", "word": "pater"}],
+  "patholog": ["病理学", ["pathology", "pathological", "pathologist"], {"lang": "希腊语", "word": "pathos"}],
+  "paucit": ["少数、缺乏", ["paucity"], {"lang": "拉丁语", "word": "paucus"}],
+  "pedagog": ["教育学", ["pedagogy", "pedagogical", "pedagogue"], {"lang": "希腊语", "word": "paideia"}],
+  "pedi": ["儿童(ped的变体)", ["pediatrics", "pediatrician", "pedagogue"], {"lang": "希腊语", "word": "pais"}],
+  "percuss": ["敲打、撞击", ["percussive", "percussion"], {"lang": "拉丁语", "word": "percutere"}],
+  "perpetuit": ["永恒、永久", ["perpetuity", "perpetual"], {"lang": "拉丁语", "word": "perpetuus"}],
+  "persuas": ["说服、劝服", ["persuasive", "persuasion"], {"lang": "拉丁语", "word": "persuadere"}],
+  "pestilentia": ["瘟疫、恶疫", ["pestilence", "pestilential"], {"lang": "拉丁语", "word": "pestilentia"}],
+  "phag": ["吃、吞噬", ["phagocyte", "anthropophagous"], {"lang": "希腊语", "word": "phagein"}],
+  "phant": ["幻象、显现", ["phantom", "phantasm"], {"lang": "希腊语", "word": "phantasma"}],
+  "phantasma": ["幻象、幽灵", ["phantasmagoria", "phantasm"], {"lang": "希腊语", "word": "phantasma"}],
+  "pharmac": ["药学", ["pharmaceutical", "pharmacology", "pharmacy"], {"lang": "希腊语", "word": "pharmakon"}],
+  "philo": ["爱、喜爱(phil的变体)", ["philanthropy", "philosophy"], {"lang": "希腊语", "word": "philos"}],
+  "philolog": ["语文学", ["philology", "philological"], {"lang": "希腊语", "word": "philos"}],
+  "phonet": ["语音", ["phonetics", "phonetic", "phonologist"], {"lang": "希腊语", "word": "phone"}],
+  "phosphor": ["磷", ["phosphorus", "phosphate", "phosphorescent"], {"lang": "希腊语", "word": "phosphoros"}],
+  "physica": ["物理、自然(phys的变体)", ["physical", "physician"], {"lang": "希腊语", "word": "physis"}],
+  "phyt": ["植物", ["phytology", "hydrophyte"], {"lang": "希腊语", "word": "phyton"}],
+  "pila": ["柱、堆", ["pilaster", "pile"], {"lang": "拉丁语", "word": "pila"}],
+  "pillar": ["柱子", ["pillar"], {"lang": "拉丁语", "word": "pila"}],
+  "pisc": ["鱼", ["piscine", "pisciculture", "Pisces"], {"lang": "拉丁语", "word": "piscis"}],
+  "plaus": ["拍手、赞同", ["plausible", "applause"], {"lang": "拉丁语", "word": "plaudere"}],
+  "pleon": ["过多、冗余", ["pleonasm"], {"lang": "希腊语", "word": "pleion"}],
+  "plumb": ["铅", ["plumber", "plumb"], {"lang": "拉丁语", "word": "plumbum"}],
+  "pluv": ["雨", ["pluvial", "pluviometer"], {"lang": "拉丁语", "word": "pluvia"}],
+  "pneum": ["肺、气", ["pneumonia", "pneumatic"], {"lang": "希腊语", "word": "pneumon"}],
+  "politic": ["政治", ["politics", "political", "politician"], {"lang": "希腊语", "word": "polis"}],
+  "pollin": ["花粉", ["pollinate", "pollination", "pollen"], {"lang": "拉丁语", "word": "pollen"}],
+  "pome": ["苹果、果", ["pomegranate"], {"lang": "拉丁语", "word": "pomum"}],
+  "porc": ["猪", ["porcupine", "porcine"], {"lang": "拉丁语", "word": "porcus"}],
+  "porcin": ["猪", ["porcine"], {"lang": "拉丁语", "word": "porcus"}],
+  "porphyr": ["紫", ["porphyry"], {"lang": "希腊语", "word": "porphyra"}],
+  "possibilit": ["可能", ["possibility", "possible"], {"lang": "拉丁语", "word": "posse"}],
+  "possibl": ["可能", ["possible", "possibility"], {"lang": "拉丁语", "word": "posse"}],
+  "posterit": ["后代、后世", ["posterity"], {"lang": "拉丁语", "word": "posterus"}],
+  "potass": ["钾", ["potassium", "potash"], {"lang": "英语", "word": "potash"}],
+  "pragmat": ["实用、实践", ["pragmatism", "pragmatic", "pragmatist"], {"lang": "希腊语", "word": "pragma"}],
+  "primo": ["第一、首要(prim的变体)", ["primogeniture", "primordial"], {"lang": "拉丁语", "word": "primus"}],
+  "primogeni": ["长子、头胎", ["primogeniture"], {"lang": "拉丁语", "word": "primogenitus"}],
+  "pris": ["抓、捕获", ["prise", "imprison"], {"lang": "古法语", "word": "pris"}],
+  "prismat": ["棱柱", ["prismatic", "prism"], {"lang": "希腊语", "word": "prisma"}],
+  "probabil": ["概率", ["probability", "probabilistic"], {"lang": "拉丁语", "word": "probabilis"}],
+  "probl": ["问题、难题", ["problem", "problematic"], {"lang": "希腊语", "word": "problema"}],
+  "profes": ["宣称、专业", ["profess", "profession"], {"lang": "拉丁语", "word": "profiteri"}],
+  "prosa": ["散文、平淡", ["prosaic"], {"lang": "拉丁语", "word": "prosa"}],
+  "pubert": ["青春期", ["puberty", "pubescent"], {"lang": "拉丁语", "word": "pubertas"}],
+  "pulmon": ["肺", ["pulmonary", "pulmonologist"], {"lang": "拉丁语", "word": "pulmo"}],
+  "pulv": ["粉末、灰尘", ["pulverize", "pulver"], {"lang": "拉丁语", "word": "pulvis"}],
+  "purpur": ["紫色", ["purple", "purpurin"], {"lang": "拉丁语", "word": "purpura"}],
+  "quadr": ["四、方形", ["quadrant", "quadruple", "quadriceps"], {"lang": "拉丁语", "word": "quattuor"}],
+  "quiet": ["安静", ["quiet", "quiescent", "quietude"], {"lang": "拉丁语", "word": "quies"}],
+  "quint": ["第五、五", ["quintet", "quintuple", "quintessence"], {"lang": "拉丁语", "word": "quintus"}],
+  "rapaci": ["掠夺、贪婪", ["rapacious", "rapacity"], {"lang": "拉丁语", "word": "rapax"}],
+  "recondit": ["隐藏、深奥", ["recondite"], {"lang": "拉丁语", "word": "recondere"}],
+  "reduct": ["减少、还原(duc的变体)", ["reduction", "reductive"], {"lang": "拉丁语", "word": "reducere"}],
+  "remors": ["悔恨、良心谴责", ["remorse", "remorseful"], {"lang": "拉丁语", "word": "remordere"}],
+  "ren": ["肾", ["renal", "adrenal", "renin"], {"lang": "拉丁语", "word": "ren"}],
+  "rept": ["爬行", ["reptile", "reptilian"], {"lang": "拉丁语", "word": "repere"}],
+  "residu": ["剩余、残余", ["residue", "residual"], {"lang": "拉丁语", "word": "residuum"}],
+  "respit": ["缓刑、喘息", ["respite"], {"lang": "拉丁语", "word": "respectare"}],
+  "rhetor": ["修辞", ["rhetoric", "rhetorical", "rhetorician"], {"lang": "希腊语", "word": "rhetor"}],
+  "rhin": ["鼻", ["rhinoceros", "rhinitis", "rhinology"], {"lang": "希腊语", "word": "rhis"}],
+  "rhod": ["玫瑰红", ["rhododendron", "rhodium"], {"lang": "希腊语", "word": "rhodon"}],
+  "rigor": ["僵硬、严格", ["rigorous", "rigor"], {"lang": "拉丁语", "word": "rigor"}],
+  "rip": ["河岸", ["riparian", "river"], {"lang": "拉丁语", "word": "ripa"}],
+  "ror": ["露水", ["rorid", "rorqual"], {"lang": "拉丁语", "word": "ros"}],
+  "rota": ["轮、旋转", ["rotary", "rotate"], {"lang": "拉丁语", "word": "rota"}],
+  "rotat": ["旋转", ["rotary", "rotation", "rotate"], {"lang": "拉丁语", "word": "rota"}],
+  "rub": ["红色", ["ruby", "rubicund"], {"lang": "拉丁语", "word": "ruber"}],
+  "ruin": ["毁坏、废墟", ["ruin", "ruination", "ruinous"], {"lang": "拉丁语", "word": "ruere"}],
+  "sabbath": ["安息日", ["sabbath"], {"lang": "希伯来语", "word": "shabbat"}],
+  "sanat": ["治愈、健康", ["sanatorium", "sanative"], {"lang": "拉丁语", "word": "sanare"}],
+  "sangui": ["血(sanguin的变体)", ["sanguine", "sanguinary"], {"lang": "拉丁语", "word": "sanguis"}],
+  "sart": ["裁缝", ["sartorial"], {"lang": "拉丁语", "word": "sartor"}],
+  "sax": ["岩石", ["saxophone", "saxifrage"], {"lang": "拉丁语", "word": "saxum"}],
+  "scalr": ["标量", ["scalar", "scalariform"], {"lang": "拉丁语", "word": "scala"}],
+  "scen": ["舞台、场景", ["scene", "scenario"], {"lang": "希腊语", "word": "skene"}],
+  "schol": ["学校、学者", ["scholar", "scholastic"], {"lang": "希腊语", "word": "schole"}],
+  "scop": ["看、观察", ["telescope", "microscope", "endoscopy"], {"lang": "希腊语", "word": "skopein"}],
+  "sec": ["切、割", ["section", "dissect", "sector"], {"lang": "拉丁语", "word": "secare"}],
+  "secr": ["秘密、分离", ["secrecy", "secretary"], {"lang": "拉丁语", "word": "secernere"}],
+  "seism": ["地震", ["seismic", "seismology", "seismograph"], {"lang": "希腊语", "word": "seismos"}],
+  "sema": ["信号、符号", ["semaphore", "semantics"], {"lang": "希腊语", "word": "sema"}],
+  "semant": ["语义", ["semantics", "semantic"], {"lang": "希腊语", "word": "semantikos"}],
+  "sept": ["七", ["September", "septet", "septuagenarian"], {"lang": "拉丁语", "word": "septem"}],
+  "sermo": ["讲道、谈话", ["sermon", "sermonize"], {"lang": "拉丁语", "word": "sermo"}],
+  "serpentin": ["蛇", ["serpentine", "serpent"], {"lang": "拉丁语", "word": "serpens"}],
+  "sider": ["星、铁", ["sideral", "consider"], {"lang": "拉丁语", "word": "sidus"}],
+  "silvicultur": ["林业", ["silviculture", "silvicultural"], {"lang": "拉丁语", "word": "silva"}],
+  "simia": ["猴子", ["simian", "simian"], {"lang": "拉丁语", "word": "simia"}],
+  "simul": ["同时、相似", ["simultaneous", "simulate", "simulation"], {"lang": "拉丁语", "word": "simul"}],
+  "sine": ["无、没有", ["sinecure", "sine die"], {"lang": "拉丁语", "word": "sine"}],
+  "sipho": ["虹吸、管", ["siphon", "siphon"], {"lang": "希腊语", "word": "siphon"}],
+  "siti": ["渴", ["situation", "site"], {"lang": "拉丁语", "word": "situs"}],
+  "sociolog": ["社会学", ["sociology", "sociological"], {"lang": "拉丁语", "word": "socius"}],
+  "sod": ["钠", ["sodium", "soda"], {"lang": "拉丁语", "word": "sodanum"}],
+  "somat": ["身体", ["somatic", "psychosomatic"], {"lang": "希腊语", "word": "soma"}],
+  "soph": ["智慧", ["philosophy", "sophisticated", "sophomore"], {"lang": "希腊语", "word": "sophos"}],
+  "sopor": ["睡眠", ["soporific", "sopor"], {"lang": "拉丁语", "word": "sopor"}],
+  "soror": ["姐妹", ["sorority", "sororal"], {"lang": "拉丁语", "word": "soror"}],
+  "specus": ["洞穴", ["specular", "speleology"], {"lang": "拉丁语", "word": "specus"}],
+  "sper": ["种子", ["sperm", "spermatogenesis"], {"lang": "希腊语", "word": "sperma"}],
+  "spin": ["脊柱、刺", ["spine", "spinal", "spina"], {"lang": "拉丁语", "word": "spina"}],
+  "splen": ["脾", ["spleen", "splenetic", "splenectomy"], {"lang": "希腊语", "word": "splen"}],
+  "spr": ["枝、嫩枝", ["sprig", "sprightly"], {"lang": "古英语", "word": "sprig"}],
+  "statist": ["统计", ["statistics", "statistical", "statistician"], {"lang": "德语", "word": "Statistik"}],
+  "statut": ["规定、法规", ["statute", "statutory"], {"lang": "拉丁语", "word": "statutum"}],
+  "stigmat": ["标记(stigma的变体)", ["stigmatize", "stigmata"], {"lang": "希腊语", "word": "stigma"}],
+  "stinct": ["刺、激发", ["distinct", "instinct", "extinct"], {"lang": "拉丁语", "word": "stinguere"}],
+  "strang": ["勒紧、窒息", ["strangle", "strangulate"], {"lang": "希腊语", "word": "strangale"}],
+  "submers": ["沉没、淹没", ["submersible", "submerse"], {"lang": "拉丁语", "word": "submergere"}],
+  "substantia": ["实体、实质", ["substance", "substantiate", "substantial"], {"lang": "拉丁语", "word": "substantia"}],
+  "sulfur": ["硫", ["sulfur", "sulfuric", "sulfate"], {"lang": "拉丁语", "word": "sulfur"}],
+  "summa": ["总结、总额", ["summary", "summation"], {"lang": "拉丁语", "word": "summa"}],
+  "surmis": ["推测、猜测", ["surmise", "surmised"], {"lang": "古法语", "word": "surmettre"}],
+  "symptomat": ["症状", ["symptom", "symptomatic"], {"lang": "希腊语", "word": "symptoma"}],
+  "syntact": ["句法", ["syntax", "syntactic"], {"lang": "希腊语", "word": "syntaxis"}],
+  "tabula": ["板、表格", ["tabulate", "tabular"], {"lang": "拉丁语", "word": "tabula"}],
+  "tant": ["相等、同等", ["tantamount"], {"lang": "古法语", "word": "tant"}],
+  "tenaci": ["紧握、坚持", ["tenacious", "tenacity"], {"lang": "拉丁语", "word": "tenax"}],
+  "termin": ["界限、终点", ["terminal", "determine", "terminate"], {"lang": "拉丁语", "word": "terminus"}],
+  "terra": ["土地(terr的变体)", ["territory", "terrain"], {"lang": "拉丁语", "word": "terra"}],
+  "thalass": ["海洋", ["thalassocracy", "thalassemia"], {"lang": "希腊语", "word": "thalassa"}],
+  "theorem": ["定理", ["theorem", "theorematic"], {"lang": "希腊语", "word": "theorema"}],
   "tide": ["潮汐、浪潮", ["tide", "tidal", "tidemark"]],
   "tid": ["潮汐、时间", ["tidal", "tidy"]],
   "hab": ["居住、拥有", ["habitat", "inhabit", "rehab"]],
@@ -718,14 +1309,18 @@ const ROOTS = {
   "omni": ["全部、所有", ["omnibus", "omnipotent", "omnipresent"]],
   "algor": ["算法", ["algorithm", "algorithmic"]],
   "hibit": ["拿、持", ["prohibit", "exhibit", "inhibit"]],
+  "histor": ["历史（希腊语 historia）", ["history", "historic", "historical", "historian"], { "lang": "希腊语", "word": "historia" }],
   "hum": ["土、地;人", ["humble", "human", "humidity"]],
   "hydr": ["水", ["hydrogen", "hydraulic", "dehydrate"]],
+  "hydro": ["水(hydr的变体)", ["hydrofoil", "hydroponics", "hydroelectric"], { "lang": "希腊语", "word": "hydor" }],
+  "intuit": ["看、直观", ["intuit", "intuitive", "intuition"], { "lang": "拉丁语", "word": "intueri" }],
   "ject": ["投、掷", ["project", "inject", "reject", "subject"]],
   "jud": ["判断、法律", ["judge", "judgment", "judicial"]],
   "jur": ["法律、发誓", ["jury", "injury", "jurisdiction"]],
   "jure": ["法律、正义", ["de jure", "injure", "perjure"]],
   "junct": ["连接", ["junction", "conjunction"]],
   "lat": ["带来、运载", ["translate", "relate", "latitude"]],
+  "lamina": ["薄片、层", ["laminate", "laminated", "lamination"], { "lang": "拉丁语", "word": "lamina" }],
   "leg": ["读、法律;选择", ["legal", "legislate"]],
   "lect": ["选择、读、说(leg的变体)", ["collect", "select", "lecture"]],
   "lev": ["举起、轻", ["elevate", "lever", "levity"]],
@@ -733,6 +1328,7 @@ const ROOTS = {
   "lingu": ["语言", ["linguist", "language"]],
   "liter": ["文字", ["literature", "literary", "illiterate"]],
   "loc": ["地方", ["location", "locate", "local"]],
+  "loco": ["地方(loc的变体)", ["locomotion", "locomotive"], { "lang": "拉丁语", "word": "locus" }],
   "log": ["说话、理性、学科", ["dialogue", "logic", "catalog"]],
   "logue": ["说话、言语(log的变体)", ["dialogue", "monologue", "prologue"]],
   "luc": ["光、明亮", ["lucid", "elucidate"]],
@@ -740,6 +1336,7 @@ const ROOTS = {
   "magn": ["大", ["magnify", "magnificent", "magnitude"]],
   "maj": ["大、主要", ["major", "majority"]],
   "man": ["手", ["manual", "manufacture", "manage", "manuscript"]],
+  "manu": ["手(man的变体)", ["manufacture", "manuscript", "manual"], { "lang": "拉丁语", "word": "manus" }],
   "mand": ["命令、委托", ["command", "demand"]],
   "mend": ["命令、委托(mand的变体)", ["recommend"]],
   "mani": ["手(man的变体)", ["manipulate"]],
@@ -756,6 +1353,7 @@ const ROOTS = {
   "metr": ["测量(meter的变体)", ["symmetry", "geometry"]],
   "migr": ["迁移", ["migrate", "immigrate", "emigrate"]],
   "milit": ["士兵、战争", ["military", "militant"]],
+  "millen": ["千年（拉丁语 mille 千 + annus 年 缩合）", ["millenary", "millenarian", "millennium"], { "lang": "拉丁语", "word": "mille annus", "note": "千+年" }],
   "min": ["小", ["minimum", "minimal", "minor"]],
   "mir": ["惊奇、看", ["mirror", "miracle", "admire"]],
   "miss": ["发送、放开", ["mission", "missile", "dismiss"]],
@@ -769,12 +1367,14 @@ const ROOTS = {
   "mort": ["死", ["mortal", "immortal", "mortgage"]],
   "mount": ["山、登上", ["mountain", "mount", "amount"]],
   "mut": ["变化", ["mutate", "mutation", "mute"]],
+  "narrat": ["叙述、讲述", ["narrative", "narrator", "narration"], { "lang": "拉丁语", "word": "narrare" }],
   "nat": ["出生、天生", ["nation", "native", "nature", "international"]],
   "nation": ["民族、国家", ["nation", "national", "international"]],
   "nav": ["船、航行", ["navy", "naval", "navigate"]],
   "naut": ["航海者、宇航员", ["astronaut", "nautical"]],
   "nect": ["连接", ["connect", "disconnect"]],
   "neg": ["否定", ["negative", "neglect"]],
+  "nihil": ["无、虚无", ["nihilism", "nihilist", "nihilistic"], { "lang": "拉丁语", "word": "nihil" }],
   "nom": ["名字", ["nominate", "nominal", "anonymous"]],
   "nomy": ["法则、学科", ["astronomy", "economy"]],
   "norm": ["规则、标准", ["normal", "enormous", "norm"]],
@@ -783,6 +1383,7 @@ const ROOTS = {
   "nunci": ["报告(nounce的变体)", ["annunciation"]],
   "nov": ["新", ["novel", "novice", "innovate"]],
   "numer": ["数", ["number", "numerous", "numerate"]],
+  "nupt": ["婚姻、婚礼（拉丁语 nubere 结婚）", ["nuptial", "prenuptial", "postnuptial"], { "lang": "拉丁语", "word": "nuptiae", "note": "婚礼" }],
   "nutri": ["营养、养育", ["nutrition", "nutrient"]],
   "oper": ["工作", ["operate", "operation", "cooperate"]],
   "opt": ["视力;选择", ["optic", "option", "adopt", "optical"]],
@@ -792,6 +1393,7 @@ const ROOTS = {
   "orn": ["装饰", ["ornament", "adorn"]],
   "pan": ["全部、泛", ["pandemic", "panorama"]],
   "par": ["相等、产生、准备", ["compare", "parity", "prepare"]],
+  "pars": ["部分(part的变体)", ["parse", "parsimony"], { "lang": "拉丁语", "word": "pars" }],
   "part": ["部分、分开", ["part", "partition", "particular", "apartment"]],
   "pass": ["通过;感情、感受", ["passage", "passenger", "passion", "compassion"]],
   "path": ["感情、疾病、疗法", ["sympathy", "pathology", "apathy", "pathetic"]],
@@ -836,7 +1438,9 @@ const ROOTS = {
   "prob": ["试验、证明", ["probe", "probable", "approve"]],
   "proxim": ["接近", ["proximity", "approximate"]],
   "psych": ["心理、灵魂", ["psychology", "psychiatry", "psychic"]],
+  "psycho": ["心理、精神(psych的变体)", ["psychoactive", "psychoanalysis", "psychology"], { "lang": "希腊语", "word": "psyche" }],
   "punct": ["点、刺", ["punctuate", "punctual", "puncture"]],
+  "purgat": ["净化、清洗", ["purgative", "purgatory", "purge"], { "lang": "拉丁语", "word": "purgare" }],
   "quaint": ["知道、认识（拉丁语 cognitus）", ["acquaintance", "acquaint", "quaint"]],
   "quart": ["第四", ["quart", "quarter", "quartile", "quartet"], { "lang": "拉丁语", "word": "quartus", "note": "第四" }],
   "quartz": ["石英", ["quartz", "quartzite", "quartzose"], { "lang": "德语", "word": "Quarz", "note": "石英" }],
@@ -849,10 +1453,13 @@ const ROOTS = {
   "qui": ["安静", ["quiet", "quietude"]],
   "quit": ["自由、放弃", ["quit"]],
   "radi": ["光线、辐射", ["radiant", "radiation", "radius"]],
+  "radio": ["辐射、无线电(radi的变体)", ["radioactive", "radiograph", "radio"], { "lang": "拉丁语", "word": "radius" }],
+  "respons": ["回应、回答", ["response", "responsible", "responsive"], { "lang": "拉丁语", "word": "respondere" }],
   "rap": ["抓、夺、迅速", ["rapid", "rapt"]],
   "rat": ["计算、理性", ["ratio", "rational", "rate"]],
   "rect": ["直、正", ["correct", "direct", "erect", "rectangle"]],
   "reg": ["统治、管理、王", ["regulate", "region", "regime"]],
+  "regula": ["规则、标准(reg的变体)", ["regulate", "regulation", "regulatory"], { "lang": "拉丁语", "word": "regula" }],
   "rid": ["笑", ["ridicule", "ridiculous"]],
   "riv": ["河流", ["river", "rival"]],
   "rog": ["问、要求", ["arrogate", "interrogate"]],
@@ -870,9 +1477,35 @@ const ROOTS = {
   "mot": ["移动", ["motor", "motion", "automobile"]],
   "motor": ["发动机、马达", ["motor", "motorcycle", "motorway"]],
   "anglo": ["英格兰、英国", ["Anglo", "anglophile", "Anglo-Saxon"]],
+  "constitut": ["建立、构成", ["constitution", "constitutive", "constitute"], { "lang": "拉丁语", "word": "constituere" }],
   "construct": ["建造、结构", ["construct", "construction", "deconstruction"]],
+  "contemplat": ["凝视、沉思", ["contemplation", "contemplative", "contemplate"], { "lang": "拉丁语", "word": "contemplari" }],
   "phot": ["光", ["photo", "photograph", "photovoltaic"]],
   "photo": ["光、摄影", ["photo", "photograph", "photovoltaic"]],
+  "tissu": ["织物、组织", ["tissue"], {"lang": "法语", "word": "tissu"}],
+  "toad": ["蟾蜍", ["toady", "toadstool"], {"lang": "古英语", "word": "tadige"}],
+  "topolog": ["拓扑", ["topology", "topological"], {"lang": "希腊语", "word": "topos"}],
+  "torture": ["折磨、扭", ["torture", "tortuous"], {"lang": "拉丁语", "word": "torquere"}],
+  "toupee": ["假发", ["toupee"], {"lang": "法语", "word": "toupet"}],
+  "toxicolog": ["毒理学", ["toxicology", "toxicologist"], {"lang": "希腊语", "word": "toxikon"}],
+  "traumat": ["创伤", ["traumatize", "trauma"], {"lang": "希腊语", "word": "trauma"}],
+  "tresse": ["发辫、辫子", ["tresses"], {"lang": "古法语", "word": "tresse"}],
+  "trigonometr": ["三角学", ["trigonometry", "trigonometric"], {"lang": "希腊语", "word": "trigonon"}],
+  "tutela": ["监护、保护", ["tutelage", "tutelary"], {"lang": "拉丁语", "word": "tutela"}],
+  "twi": ["二、双", ["twilight", "twice"], {"lang": "古英语", "word": "twi"}],
+  "unct": ["油膏、涂油", ["unction", "anoint"], {"lang": "拉丁语", "word": "ungere"}],
+  "ursin": ["熊", ["ursine", "ursid"], {"lang": "拉丁语", "word": "ursus"}],
+  "uteri": ["子宫", ["uterus", "uterine", "uteritis"], {"lang": "拉丁语", "word": "uterus"}],
+  "vagar": ["漫游、漂泊", ["vagary", "vagaries"], {"lang": "拉丁语", "word": "vagari"}],
+  "vall": ["山谷", ["valley", "vallum"], {"lang": "拉丁语", "word": "vallis"}],
+  "vectr": ["向量", ["vector", "vectorial"], {"lang": "拉丁语", "word": "vehere"}],
+  "vena": ["静脉", ["venous", "venule", "intravenous"], {"lang": "拉丁语", "word": "vena"}],
+  "vertebr": ["椎骨", ["vertebra", "vertebrate", "vertebral"], {"lang": "拉丁语", "word": "vertebra"}],
+  "vesper": ["傍晚、黄昏", ["vespers", "vespertine"], {"lang": "拉丁语", "word": "vesper"}],
+  "veterin": ["兽医", ["veterinary", "veterinarian"], {"lang": "拉丁语", "word": "veterinarius"}],
+  "virid": ["绿色", ["viridian", "verdant"], {"lang": "拉丁语", "word": "viridis"}],
+  "vocat": ["呼叫、职业(voc的变体)", ["vocation", "vocational"], {"lang": "拉丁语", "word": "vocare"}],
+  "volcan": ["火山", ["volcano", "volcanic", "volcanology"], {"lang": "拉丁语", "word": "Vulcanus"}],
   "volt": ["电、电压", ["voltage", "photovoltaic"]],
   "urb": ["城市", ["urban", "suburb", "urbane"]],
   "plot": ["地块、情节", ["plot", "subplot"]],
@@ -882,6 +1515,7 @@ const ROOTS = {
   "sal": ["跳", ["assault", "salient"]],
   "salu": ["健康、平安", ["salute", "salutary"]],
   "san": ["健康", ["sanity", "insane", "sanitary"]],
+  "sculpt": ["雕刻", ["sculpt", "sculptor", "sculpture"], { "lang": "拉丁语", "word": "sculpere" }],
   "sanguin": ["血", ["sanguine"]],
   "satis": ["足够、满足", ["satisfy", "satisfaction", "saturate"]],
   "sci": ["知道", ["science", "conscious", "omniscient"]],
@@ -920,6 +1554,7 @@ const ROOTS = {
   "stal": ["站立、固定", ["install", "installment"]],
   "stall": ["站立(stal的变体)", ["stall", "forestall"]],
   "stat": ["站立、稳定", ["status", "static", "statue", "station"]],
+  "stigma": ["标记、烙印", ["stigma", "stigmata", "stigmatize"], { "lang": "希腊语", "word": "stigma" }],
   "stice": ["站立、止住（拉丁语 sistere 的变体）", ["solstice", "solstices"], { "lang": "拉丁语", "word": "sistere", "note": "站立" }],
   "stell": ["星", ["stellar", "constellation"]],
   "strain": ["拉紧、束缚", ["constrain", "strain", "restraint"]],
@@ -957,6 +1592,7 @@ const ROOTS = {
   "ton": ["声音、调", ["tonality", "tone", "monotone"]],
   "tort": ["扭、折磨", ["torture", "distort", "contortion"]],
   "tox": ["毒", ["toxic", "detoxify"]],
+  "trac": ["拉、拖(tract的变体)", ["track", "tractor", "attract"]],
   "tract": ["拉、拖", ["attract", "extract", "contract", "tractor"]],
   "trop": ["转向、转动（希腊语 tropos）", ["tropism", "tropic", "isotropic", "geotropism", "phototropism", "entropy"], { "lang": "希腊语", "word": "tropos", "note": "转向" }],
   "troph": ["营养、滋养（希腊语 trophe）", ["trophic", "atrophy", "dystrophy", "trophism"], { "lang": "希腊语", "word": "trophe", "note": "营养" }],
@@ -999,6 +1635,7 @@ const ROOTS = {
   "vok": ["声音、呼喊(voc的变体)", ["evoke", "provoke", "revoke"]],
   "voke": ["声音、呼喊(voc的拉丁尾变体)", ["evoke", "provoke", "invoke"]],
   "vol": ["意愿;卷、转", ["volunteer", "voluntary", "revolve", "evolve"]],
+  "volupt": ["愉悦、享乐", ["voluptuous", "voluptuary"], {"lang": "拉丁语", "word": "voluptas"}],
   "vor": ["吃", ["carnivore", "herbivore"]],
   "vulg": ["大众、普通", ["vulgar"]],
 
@@ -1010,6 +1647,9 @@ const ROOTS = {
   "take": ["拿、取", ["take", "mistake", "undertake"]],
   "stand": ["站立", ["stand", "understand", "withstand"]],
   "hold": ["持有", ["hold", "behold", "uphold"]],
+  "vultur": ["秃鹫", ["vulture", "vulturine"], {"lang": "拉丁语", "word": "vultur"}],
+  "wan": ["苍白、缺乏", ["wanton", "wan"], {"lang": "古英语", "word": "wan"}],
+  "wester": ["西方", ["westerly", "western"], {"lang": "古英语", "word": "west"}],
   "write": ["写", ["write", "rewrite", "writing"]],
   "read": ["读", ["read", "reread", "reader"]],
   "speak": ["说、讲", ["speak", "speaker"]],
@@ -1032,6 +1672,7 @@ const ROOTS = {
   "inter": ["在…之间", ["internet", "international", "interact", "interrupt"]],
   "net": ["网络", ["internet", "network", "net"]],
   "tele": ["远", ["telephone", "television", "telegram", "telescope"]],
+  "teleo": ["目的、终点", ["teleology", "teleological", "teleologist"], {"lang": "希腊语", "word": "telos"}],
   "phone": ["声音、电话", ["telephone", "microphone", "headphone", "phone"]],
   "uni": ["单一", ["university", "uniform", "universe", "unique"]],
   "vers": ["转、改变", ["version", "reverse", "universe", "conversation"]],
@@ -1066,6 +1707,9 @@ const ROOTS = {
   "load": ["装载", ["download", "upload", "load", "unload"]],
   "user": ["用户", ["username", "user", "usage"]],
   "name": ["名字", ["username", "name", "rename"]],
+  "xanth": ["黄色", ["xanthophyll", "xanthine"], {"lang": "希腊语", "word": "xanthos"}],
+  "xer": ["干燥", ["xerox", "xerophyte", "xerograph"], {"lang": "希腊语", "word": "xeros"}],
+  "zo": ["动物", ["zoo", "zoology", "protozoa"], {"lang": "希腊语", "word": "zoon"}],
   "zoon": ["动物（希腊语 zoon）", ["zoonosis", "protozoon", "epizoon"], { "lang": "希腊语", "word": "zoon", "note": "动物" }],
   "zoa": ["动物（希腊语 zoon 的复数）", ["protozoa", "metazoa", "protozoan"], { "lang": "希腊语", "word": "zoon", "note": "动物" }],
   "zoo": ["动物（希腊语 zoon）", ["zoo", "zoology", "zoological"], { "lang": "希腊语", "word": "zoon", "note": "动物" }],
@@ -1076,11 +1720,17 @@ const ROOTS = {
   "trit": ["摩擦、磨损（拉丁语 terere）", ["attrition", "contrition", "triturate"], { "lang": "拉丁语", "word": "terere", "note": "摩擦" }],
   "bin": ["二、成双（拉丁语 bini）", ["combination", "combine", "binary"], { "lang": "拉丁语", "word": "bini", "note": "成双" }],
   "triev": ["找到、发现（古法语 trouver）", ["retrieval", "retrieve"], { "lang": "古法语", "word": "trouver", "note": "找到" }],
-  "ciss": ["切、割（拉丁语 caedere 的变体）", ["abscission", "scission"], { "lang": "拉丁语", "word": "caedere", "note": "切" }]};
+  "ciss": ["切、割（拉丁语 caedere 的变体）", ["abscission", "scission"], { "lang": "拉丁语", "word": "caedere", "note": "切" }],
+  "zym": ["发酵、酶", ["enzyme", "zymology"], {"lang": "希腊语", "word": "zyme"}]
+};
 
 /* 增强词表：word -> 该词的现成分解（由导入脚本注入，未注入时为 { }） */
 const ENHANCED = {};
 const ECDICT = {};          // 全量词典，运行时从 ecdict.json 加载
+const OXFORD = {};          // 牛津9 数据层，运行时从 oxford.json 加载
+const ETYM = {};            // Etymonline 英文词源，运行时从 etym.json 加载
+const THES = {};            // 近义词/反义词，运行时从 thes.json 加载
+const EX = {};              // 补充例句(朗文英英/柯林斯中英)，运行时从 ex.json 加载
 let DATA_READY = false;     // 数据是否加载完成;
 
 /* ============================================================
@@ -1124,7 +1774,7 @@ function buildIndex() {
         SRC_INDEX.get(key).add(w);
       }
       const mm = m.m;
-      if (mm && mm.length >= 2 && !SUFFIX_KEYS.has(mm)) {
+      if (mm && mm.length >= 2) {
         if (!MORPH_INDEX.has(mm)) MORPH_INDEX.set(mm, new Set());
         MORPH_INDEX.get(mm).add(w);
       }
@@ -1153,6 +1803,8 @@ function findCognates(word) {
       const allRoots = (bd.roots || []).map(r => r.m);
       // 前缀也参与同根查询（如 binary 的 bi-、automatic 的 auto-）
       if (bd.prefix) allRoots.push(bd.prefix.m.replace(/-.*$/, ''));
+      // 后缀也参与"同缀"查询（≥3字符如 -arian/-ism/-ation）；2字符弱后缀太泛不查
+      if (bd.suffixes) for (const s of bd.suffixes) if (s.m.length >= 3) allRoots.push(s.m);
       // 动态补录：把当前词加入其拆解词根的索引，让查过的词互相可见（渐进式双向）
       // 解决"查 A 能看到 B、查 B 看不到 A"：MORPH_INDEX 静态只含词根例词+考试词演变链，
       // 76 万 ecdict 词的动态拆解不进索引；查询时补录后，同根词查询随使用渐进收敛。
@@ -1185,7 +1837,7 @@ function findCognates(word) {
         }
       }
       const mm = m.m;
-      if (mm && mm.length >= 2 && !SUFFIX_KEYS.has(mm)) {
+      if (mm && mm.length >= 2 && (!SUFFIX_KEYS.has(mm) || mm.length >= 3)) {
         const mates = MORPH_INDEX.get(mm);
         if (mates) {
           const list = [...mates].filter(x => x !== word);
@@ -1224,10 +1876,11 @@ const BASEWORDS = {
   "common": "普通的", "continue": "继续", "cook": "烹饪", "cool": "凉爽的",
   "count": "数数", "cover": "覆盖", "cow": "牛", "cut": "切",
   "dance": "跳舞", "dark": "黑暗的", "daughter": "女儿", "day": "白天、一天",
+  "deacon": "执事",
   "decide": "决定", "deep": "深的", "develop": "发展", "differ": "不同", "digit": "数字、手指",
   "dirty": "脏的", "discover": "发现", "discuss": "讨论",
   "diverse": "多样的", "dog": "狗", "door": "门", "draw": "画",
-  "drink": "喝", "drive": "驾驶", "dry": "干燥的", "ear": "耳朵",
+  "drink": "喝", "drive": "驾驶", "dry": "干燥的", "duke": "公爵", "ear": "耳朵",
   "early": "早的", "earth": "地球、泥土", "easy": "容易的", "eat": "吃",
   "empty": "空的", "end": "末端、结束", "engineer": "工程师", "enjoy": "享受",
   "enter": "进入", "escape": "逃脱", "every": "每个", "explain": "解释",
@@ -1258,7 +1911,7 @@ const BASEWORDS = {
   "light": "光、轻的", "like": "喜欢", "listen": "听", "live": "生活、居住",
   "lock": "锁", "long": "长的", "look": "看", "lose": "失去",
   "loud": "响亮的", "love": "爱", "low": "低的", "mail": "邮件",
-  "main": "主要的", "make": "制作", "manage": "管理", "market": "市场",
+  "main": "主要的", "make": "制作", "manage": "管理", "manner": "举止、方式", "market": "市场",
   "marry": "结婚", "mean": "意味、意思是", "meat": "肉", "meet": "遇见",
   "mention": "提到", "middle": "中间", "milk": "牛奶", "miss": "错过、想念",
   "mix": "混合", "money": "钱", "moon": "月亮", "mother": "母亲",
@@ -1303,7 +1956,7 @@ const BASEWORDS = {
   "teach": "教、讲授", "tell": "告诉", "thank": "感谢", "thing": "东西、事情",
   "think": "思考", "throw": "扔", "tired": "疲倦的", "to": "到、向、对于",
   "toe": "脚趾",
-  "top": "顶部", "touch": "触摸", "town": "城镇", "train": "火车、训练",
+  "top": "顶部", "touch": "触摸", "town": "城镇", "track": "轨道、追踪", "train": "火车、训练",
   "travel": "旅行", "tree": "树", "true": "真实的", "try": "尝试",
   "turn": "转动", "type": "打字、类型", "use": "使用", 
   "visit": "参观、拜访", "wait": "等待", "wake": "醒来", "walk": "步行",
@@ -1375,7 +2028,12 @@ const ROOT_BLOCK = {
   /* biopsy 族：正确是 bio+opsy（生命+看），被 bi-(二)+ops 抢先 */
   'biopsy': ['ops'], 'biopsied': ['ops'], 'biopsying': ['ops'],
   /* zoon 误伤：ose/otic 非后缀，zoonose/zoonotic 被拆成 zoo+nose/zoo+not（回退 partial 显示 zoon+未识别） */
-  'zoonose': ['zoo'], 'zoonotic': ['zoo'],
+  'zoonose': ['zoo', 'zo'], 'zoonotic': ['zoo', 'zo'],
+  /* dec(十)误伤 decis：decision 应 de-cis-ion（cis 切），非 dec(十) */
+  'decision': ['dec'], 'decisions': ['dec'], 'decisive': ['dec'], 'decisively': ['dec'],
+  'decade': ['cad'],
+  /* ampl(大)误伤 example：examples 整词显示，非 ampl+es */
+  'example': ['ampl'], 'examples': ['ampl'],
   /* zoom 过去式：zoomed 被拆成 zoo+med（医药），应整词 zoom 变形 */
   'zoomed': ['zoo'],
   /* proton 族：protonated/protonation 是质子(proton)派生，拆 proto+nat(出生) 误导 */
@@ -1385,7 +2043,9 @@ const ROOT_BLOCK = {
   /* bin 误伤：albin(白化病 alb+in)、arabin(阿拉伯糖)、拉丁短语等，均非"二" */
   'albin': ['bin'], 'albinal': ['bin'], 'albine': ['bin'], 'albiness': ['bin'], 'albinic': ['bin'], 'albinism': ['bin'], 'albinismus': ['bin'], 'albinistic': ['bin'], 'albinson': ['bin'], 'albinus': ['bin'],
   'arabin': ['bin'], 'arabinal': ['bin'], 'arabine': ['bin'], 'arabinoside': ['bin'], 'arabinosis': ['bin'],
-  'abinitio': ['bin'], 'anabin': ['bin'], 'anatabine': ['bin'], 'antimicrobin': ['bin']
+  'abinitio': ['bin'], 'anabin': ['bin'], 'anatabine': ['bin'], 'antimicrobin': ['bin'],
+  /* millen 误伤：millenson 是人名，拆 millen+son(儿子) 误导 */
+  'millenson': ['millen']
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -1680,11 +2340,59 @@ function suggestWord(w) {
   return null;
 }
 
-function analyze(raw) {
-  const w = raw.toLowerCase().replace(/[^a-z]/g, '');
-  if (w.length < 2) return { found: false, reason: '请输入至少两个字母的单词' };
+/* 归一化 key：与 analyze 的清洗规则一致（仅小写字母） */
+function normKey(s) {
+  return String(s).toLowerCase().replace(/[^a-z]/g, '');
+}
+/* 牛津9 查询：跟随 LINK 重定向链到最终主词条。
+   返回 { o: 主词条, cur: 最终 key } 或 null（未命中/环）。 */
+function oxfordLookup(w) {
+  let o = OXFORD[w], cur = w, guard = 0;
+  while (o && o.link) {
+    if (++guard > 8) return null;
+    const t = normKey(o.link);
+    o = OXFORD[t];
+    if (!o) return null;
+    cur = t;
+  }
+  return o ? { o, cur } : null;
+}
+
+/* 词形还原：变形词查不到时，规则还原原形（复数/时态/比较级）。
+   只返回能命中词表的原形，否则回退原词——无副作用。 */
+function lemmaOf(w) {
+  const cands = [];
+  if (w.length > 4 && w.endsWith('ies')) cands.push(w.slice(0, -3) + 'y');          // studies→study
+  if (w.endsWith('es') && w.length > 3) cands.push(w.slice(0, -2), w.slice(0, -1)); // boxes→box, buses→bus
+  else if (w.endsWith('s') && !w.endsWith('ss')) cands.push(w.slice(0, -1));        // dogs→dog
+  if (w.endsWith('ing')) {                                                          // running→run
+    cands.push(w.slice(0, -3), w.slice(0, -3) + 'e');
+    const d = w.slice(0, -3);
+    if (d.length > 2 && d[d.length - 1] === d[d.length - 2]) cands.push(d.slice(0, -1));
+  }
+  if (w.endsWith('ed')) {                                                           // stopped→stop
+    cands.push(w.slice(0, -2), w.slice(0, -1));
+    const d = w.slice(0, -2);
+    if (d.length > 2 && d[d.length - 1] === d[d.length - 2]) cands.push(d.slice(0, -1));
+  }
+  if (w.endsWith('er') || w.endsWith('est')) cands.push(w.slice(0, -2));            // bigger→bigg→big
+  for (const c of cands) if (ENHANCED[c] || OXFORD[c] || ECDICT[c]) return c;
+  return w;
+}
+
+/* 查词内核：不含 query 字段，供 analyze 复用（原词 + 词形还原双路径） */
+function lookup(w) {
   if (ENHANCED && ENHANCED[w]) {
     return { found: true, word: w, source: 'enhanced', enhanced: ENHANCED[w], breakdown: null };
+  }
+  // 三级查词：牛津9 数据层（音标/中英释义/例句/词源，比 ecdict 全）
+  const ox = oxfordLookup(w);
+  if (ox) {
+    // 重定向指向考试词（dogs→dog）：展示更丰富的增强卡
+    if (ENHANCED && ENHANCED[ox.cur]) {
+      return { found: true, word: ox.cur, source: 'enhanced', enhanced: ENHANCED[ox.cur], breakdown: null };
+    }
+    return { found: true, word: w, source: 'oxford', oxford: ox.o, headword: ox.cur, breakdown: null };
   }
   // 二级查词：全量词典兜底
   if (ECDICT && ECDICT[w]) {
@@ -1703,6 +2411,20 @@ function analyze(raw) {
     return { found: true, word: w, source: 'builtin', breakdown: { ...partial, cognates: [] }, suggestion: suggestWord(w) };
   }
   return { found: false, reason: '未发现明显的词根词缀结构', word: w, suggestion: suggestWord(w) };
+}
+
+function analyze(raw) {
+  const w = raw.toLowerCase().replace(/[^a-z]/g, '');
+  if (w.length < 2) return { found: false, reason: '请输入至少两个字母的单词', query: raw };
+  const r0 = lookup(w);
+  if (r0.found) return Object.assign({ query: raw }, r0);
+  // 词形还原：原词查不到，还原原形再查（命中词表才生效，失败回退原 miss）
+  const lm = lemmaOf(w);
+  if (lm !== w) {
+    const r1 = lookup(lm);
+    if (r1.found) return Object.assign({ query: raw }, r1);
+  }
+  return Object.assign({ query: raw }, r0);
 }
 
 /* 构成逻辑：把各部分含义拼成一句话 */
@@ -1790,9 +2512,10 @@ function enhancedMorphFallback(w) {
   if (rootsum / w.length < 0.5) return '';                       // 8. 词根占比≥50%（防前后缀撑腰）
   return morphBlockHTML(w, bd);
 }
-</script>
 
+</script>
 <script>
+
 /* ============================================================
    UI 逻辑
    ============================================================ */
@@ -1803,14 +2526,36 @@ async function loadData() {
   const setProg = p => { if (fillEl) fillEl.style.width = Math.min(100, p) + '%'; };
   try {
     textEl.textContent = '正在加载考试词库…';
-    const enh = await fetchJSON('enhanced.json', setProg, 0, 28);
+    const enh = await fetchJSON('enhanced.json', setProg, 0, 15);
     Object.assign(ENHANCED, enh);
-    textEl.textContent = '考试词库完成，正在加载全量词典…';
-    const dict = await fetchJSON('ecdict.json', setProg, 28, 100);
+    textEl.textContent = '考试词库完成，正在加载牛津9词库…';
+    try {
+      const oxf = await fetchJSON('oxford.json', setProg, 15, 35);
+      Object.assign(OXFORD, oxf);
+    } catch (e) { console.warn('oxford.json 加载失败', e); }
+    textEl.textContent = '牛津词库完成，正在加载词源…';
+    try {
+      const etm = await fetchJSON('etym.json', setProg, 35, 48);
+      Object.assign(ETYM, etm);
+    } catch (e) { console.warn('etym.json 加载失败', e); }
+    textEl.textContent = '词源完成，正在加载近反义词…';
+    try {
+      const th = await fetchJSON('thes.json', setProg, 48, 53);
+      Object.assign(THES, th);
+    } catch (e) { console.warn('thes.json 加载失败', e); }
+    textEl.textContent = '近反义词完成，正在加载补充例句…';
+    try {
+      const exx = await fetchJSON('ex.json', setProg, 53, 62);
+      Object.assign(EX, exx);
+    } catch (e) { console.warn('ex.json 加载失败', e); }
+    textEl.textContent = '例句完成，正在加载全量词典…';
+    const dict = await fetchJSON('ecdict.json', setProg, 62, 100);
     // ecdict 数据源的 \n 是字面反斜杠+n，归一化为真实换行，界面渲染才正常
     for (const k in dict) { const e = dict[k]; if (e.t) e.t = e.t.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n'); if (e.d) e.d = e.d.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n'); }
     Object.assign(ECDICT, dict);
     buildIndex();
+    buildExamples();
+    buildSuggest();
     DATA_READY = true;
     setProg(100);
     textEl.textContent = '加载完成 ✓';
@@ -1856,16 +2601,95 @@ function dp(s) {
   return (s || '').replace(/指?小后缀/g, '小后缀：小的…（像中文的儿字）');
 }
 
+/* 例句关键词高亮：把例句里当前词（及常见词形变体）标亮 */
+function hlWord(word, en) {
+  if (!word || !en) return escapeHtml(en);
+  const w = word.toLowerCase();
+  const base = w.replace(/(ies)$/, 'y').replace(/s$/, '');
+  const forms = [w];
+  if (w.length > 3) forms.push(w + 's', w + 'es', base + 'es', base + 'ing', base + 'ed', base + 'ies');
+  const re = new RegExp('\\b(' + forms.filter(Boolean).sort((a, b) => b.length - a.length).join('|') + ')\\b', 'gi');
+  return escapeHtml(decodeEntities(en)).replace(re, '<mark class="ex-hl">$1</mark>');
+}
+/* 例句区块（合并）：主例句（enhanced "en / zh" 或 oxford [en,zh]）+ 补充例句（朗文/柯林斯，来源徽章） */
+function examplesBlock(word, primary) {
+  const exs = [];
+  if (primary && primary.length) {
+    primary.slice(0, 3).forEach(ex => {
+      if (Array.isArray(ex)) exs.push({ en: ex[0] || '', zh: ex[1] || '', src: null });
+      else {
+        const sep = ex.indexOf(' / ');
+        if (sep > -1) exs.push({ en: ex.slice(0, sep), zh: ex.slice(sep + 3), src: null });
+        else exs.push({ en: '', zh: ex, src: null });
+      }
+    });
+  }
+  (EX[word] || []).slice(0, 6).forEach(x => exs.push({ en: x.en || '', zh: x.zh || '', src: x.s }));
+  if (!exs.length) return '';
+  let h = `<div class="meaning"><div class="label">例句</div>`;
+  exs.forEach(x => {
+    h += `<div class="ex"><div class="ex-en">`;
+    if (x.src) h += `<span class="ex-src">${x.src === 'ldoce' ? '朗文' : '柯林斯'}</span>`;
+    if (x.en) h += `<span class="ex-en-txt">${hlWord(word, x.en)}</span>` +
+      `<button class="tts-btn ex-tts" data-text="${escapeHtml(x.en).replace(/"/g, '&quot;')}" title="朗读英文例句">🔊</button>`;
+    h += `</div>`;
+    if (x.zh) h += `<div class="ex-zh">${escapeHtml(x.zh)}</div>`;
+    h += `</div>`;
+  });
+  return h + `</div>`;
+}
+
+/* 近义词/反义词区块（来自 thes.json）：查词卡片通用，无数据返回空串 */
+function synAntBlock(word) {
+  const th = THES[word];
+  if (!th || !((th.s && th.s.length) || (th.a && th.a.length))) return '';
+  let h = `<div class="cognates"><div class="label">近义词 / 反义词</div>`;
+  if (th.s && th.s.length) {
+    const tags = th.s.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${escapeHtml(w)}</span>`).join('');
+    h += `<div class="cog-row"><span class="cog-lbl">近义</span>：${tags}</div>`;
+  }
+  if (th.a && th.a.length) {
+    const tags = th.a.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${escapeHtml(w)}</span>`).join('');
+    h += `<div class="cog-row"><span class="cog-lbl">反义</span>：${tags}</div>`;
+  }
+  return h + `</div>`;
+}
+
+/* 同源词/同根词区块（单独，供 relBlock 两栏合并） */
+function cogBlockHTML(word, cog) {
+  const srcs = (cog && cog.srcs) || [];
+  const morphs = (cog && cog.morphs) || [];
+  if (!srcs.length && !morphs.length) return '';
+  let h = `<div class="cognates"><div class="label">同源 / 同根词</div>`;
+  srcs.forEach(s => {
+    const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
+    h += `<div class="cog-row"><span class="cog-lbl">${s.lang} ${s.word}</span>：${tags}</div>`;
+  });
+  morphs.forEach(s => {
+    const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
+    h += `<div class="cog-row"><span class="cog-lbl">${SUFFIX_KEYS.has(s.m) ? '同缀 -' : '同根 '}${s.m}</span>：${tags}</div>`;
+  });
+  return h + `</div>`;
+}
+/* 最近一次查词的相关词汇（供左侧 sticky 侧边栏显示） */
+let lastRel = '';
+/* 相关词汇区：近反义词 + 同源同根词 两栏并排（挂两边） */
+function relBlock(word, cog) {
+  const cols = [synAntBlock(word), cogBlockHTML(word, cog)].filter(Boolean);
+  if (!cols.length) return '';
+  return `<div class="rel-wrap">` + cols.map(c => `<div class="rel-col">${c}</div>`).join('') + `</div>`;
+}
+
 /* 生成完整卡片 HTML（单查词 render 与右侧面板共用） */
 function cardHTML(r) {
   let html = '';
 
   if (r.found && r.source === 'enhanced') {
     const e = r.enhanced;
+    const viaRedir = r.query && normKey(r.query) !== r.word;
     html += `<div class="card">
       <div class="word-line">
-        <span class="word">${r.word}</span>
-        <span class="badge enhanced">增强词表</span>
+        <span class="word">${r.word}</span>${viaRedir ? `<span class="badge redir">← ${escapeHtml(r.query)}</span>` : ''}<span class="badge enhanced">增强词表</span>
         <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
         <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
       </div>`;
@@ -1895,34 +2719,34 @@ function cardHTML(r) {
       html += `</div></div>`;
     }
     if (e.etymology) html += `<div class="meaning"><div class="label">词源</div>${e.etymology}</div>`;
-    if (e.examples && e.examples.length) {
-      html += `<div class="meaning"><div class="label">例句</div>`;
-      e.examples.slice(0, 3).forEach(ex => {
-        const sep = ex.indexOf(' / ');
-        if (sep > -1) {
-          const enTxt = ex.slice(0, sep);
-          html += `<div class="ex"><div class="ex-en"><span class="ex-en-txt">${enTxt}</span>` +
-            `<button class="tts-btn ex-tts" data-text="${escapeHtml(enTxt).replace(/"/g, '&quot;')}" title="朗读英文例句">🔊</button></div>` +
-            `<div class="ex-zh">${ex.slice(sep + 3)}</div></div>`;
-        } else {
-          html += `<div class="ex"><div class="ex-zh">${ex}</div></div>`;
-        }
-      });
-      html += `</div>`;
+    html += examplesBlock(r.word, e.examples);
+    html += (lastRel = relBlock(r.word, findCognates(r.word)));
+    html += `</div>`;
+  } else if (r.source === 'oxford') {
+    const o = r.oxford;
+    const hw = r.headword || r.word;
+    const viaRedir = hw !== r.word || (r.query && normKey(r.query) !== r.word);
+    const redirSrc = hw !== r.word ? r.word : (r.query || '');
+    html += `<div class="card">
+      <div class="word-line">
+        <span class="word">${escapeHtml(hw)}</span>${viaRedir ? `<span class="badge redir">← ${escapeHtml(redirSrc)}</span>` : ''}<span class="badge">牛津9</span>
+        <button class="tts-btn" data-w="${escapeHtml(hw)}" title="发音">🔊</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+      </div>`;
+    const prons = [];
+    if (o.bre) prons.push(`BrE /${o.bre}/`);
+    if (o.name) prons.push(`NAmE /${o.name}/`);
+    if (prons.length) html += `<div class="meaning"><div class="label">音标</div>${prons.join(' · ')}</div>`;
+    if (o.pos) html += `<div class="meaning"><div class="label">词性</div>${escapeHtml(o.pos)}</div>`;
+    if (o.def_zh) html += `<div class="meaning"><div class="label">释义</div>${escapeHtml(o.def_zh)}</div>`;
+    if (o.def_en) {
+      html += `<div class="meaning"><div class="label">英文释义</div><div class="ex-en def-line"><span class="ex-en-txt">${escapeHtml(o.def_en)}</span>` +
+        `<button class="tts-btn ex-tts" data-text="${escapeHtml(o.def_en).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div></div>`;
     }
-    const cog = findCognates(r.word);
-    if (cog.srcs.length || cog.morphs.length) {
-      html += `<div class="cognates"><div class="label">同源词 / 同根词</div>`;
-      cog.srcs.forEach(s => {
-        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
-        html += `<div class="cog-row"><span class="cog-lbl">${s.lang} ${s.word}</span>：${tags}</div>`;
-      });
-      cog.morphs.forEach(s => {
-        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
-        html += `<div class="cog-row"><span class="cog-lbl">同根 ${s.m}</span>：${tags}</div>`;
-      });
-      html += `</div>`;
-    }
+    html += morphBlockHTML(hw, decompose(hw, 0) || partialDecompose(hw));
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label">词源(Etymonline)</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
+    html += examplesBlock(hw, o.examples);
+    html += (lastRel = relBlock(hw, findCognates(hw)));
     html += `</div>`;
   } else if (r.source === 'ecdict') {
     const d = r.ecdict;
@@ -1947,15 +2771,9 @@ function cardHTML(r) {
     // 全量词：先拆解（完整优先，失败退回部分拆解，如 binary→bi-+??nary），
     // 再据此生成分解区块与词源演变链（渲染逻辑与 enhanced 兜底共用 morphBlockHTML）
     html += morphBlockHTML(r.word, decompose(r.word, 0) || partialDecompose(r.word));
-    const cog2 = findCognates(r.word);
-    if (cog2.morphs.length) {
-      html += `<div class="cognates"><div class="label">同根词</div>`;
-      cog2.morphs.forEach(s => {
-        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
-        html += `<div class="cog-row"><span class="cog-lbl">同根 ${s.m}</span>：${tags}</div>`;
-      });
-      html += `</div>`;
-    }
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label">词源(Etymonline)</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
+    html += (lastRel = relBlock(r.word, findCognates(r.word)));
+    html += examplesBlock(r.word, null);
     html += `</div>`;
   } else if (r.found) {
     const b = r.breakdown;
@@ -2000,14 +2818,8 @@ function cardHTML(r) {
     if (!cogMorphs.length && b.cognates && b.cognates.length) {
       cogMorphs = [{ m: b.roots[0] && b.roots[0].m, words: b.cognates }];
     }
-    if (cogMorphs.length) {
-      html += `<div class="cognates"><div class="label">同根词</div>`;
-      cogMorphs.forEach(s => {
-        const tags = s.words.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${w}</span>`).join('');
-        html += `<div class="cog-row"><span class="cog-lbl">同根 ${s.m}</span>：${tags}</div>`;
-      });
-      html += `</div>`;
-    }
+    html += examplesBlock(r.word, null);
+    html += (lastRel = relBlock(r.word, { srcs: [], morphs: cogMorphs }));
     html += `</div>`;
   } else {
     html += `<div class="card"><div class="miss">
@@ -2026,6 +2838,35 @@ function render(r) {
   result.innerHTML = cardHTML(r);
   result.classList.add('show');
   if (r.found) saveHistory(r);
+  const side = document.getElementById('side-rel');
+  if (side) side.innerHTML = lastRel;
+}
+
+/* 搜索联想：enhanced + oxford 主词条，前缀匹配 */
+const SUGGEST = [];
+function buildSuggest() {
+  const s = new Set();
+  for (const w in ENHANCED) if (w.length >= 2) s.add(w);
+  for (const w in OXFORD) if (!OXFORD[w].link && w.length >= 2) s.add(w);
+  SUGGEST.length = 0;
+  SUGGEST.push(...[...s].sort());
+}
+let sgIndex = -1;
+function showSuggest(q) {
+  const el = document.getElementById('suggest');
+  const key = (q || '').toLowerCase().replace(/[^a-z]/g, '');
+  if (!key || key.length < 2) { hideSuggest(); return; }
+  const hits = [];
+  for (const w of SUGGEST) { if (w.startsWith(key)) { hits.push(w); if (hits.length >= 10) break; } }
+  if (!hits.length) { hideSuggest(); return; }
+  if (sgIndex >= hits.length) sgIndex = -1;
+  el.innerHTML = hits.map((w, i) => `<div class="sg-item${i === sgIndex ? ' cur' : ''}" data-w="${w}">${escapeHtml(w)}</div>`).join('');
+  el.style.display = 'block';
+}
+function hideSuggest() {
+  const el = document.getElementById('suggest');
+  if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+  sgIndex = -1;
 }
 
 function search() {
@@ -2121,6 +2962,15 @@ function toggleFav(w) {
   saveFavs(f);
   return f.includes(w);
 }
+/* 收藏/历史摘要：enhanced → oxford(跟随重定向) → ecdict */
+function summaryFor(w) {
+  if (ENHANCED[w]) return (ENHANCED[w].meaning || '').split('\n')[0] || '';
+  const ox = oxfordLookup(w);
+  if (ox && ox.o) return ((ox.o.pos || '') + ' ' + (ox.o.def_zh || '').split('\n')[0]).trim();
+  if (ECDICT[w]) return (ECDICT[w].t || '').split('\n')[0] || '';
+  return '';
+}
+
 function renderFavs() {
   const el = document.getElementById('favlist');
   if (!el) return;
@@ -2134,7 +2984,7 @@ function renderFavs() {
   f.forEach(w => {
     h += '<div class="h-item" data-word="' + w + '">' +
       '<span class="h-w">' + w + '</span>' +
-      '<span class="h-s">' + (ENHANCED[w] ? (ENHANCED[w].meaning || '').split('\n')[0] : (ECDICT[w] ? (ECDICT[w].t || '').split('\n')[0] : '')) + '</span>' +
+      '<span class="h-s">' + summaryFor(w) + '</span>' +
       '<span class="fav-rm" data-del="' + w + '">✕</span>' +
       '</div>';
   });
@@ -2145,10 +2995,57 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   posTabInd();
   const showFav = name === 'fav';
+  const showEx = name === 'ex';
   document.getElementById('favlist').style.display = showFav ? 'block' : 'none';
-  document.getElementById('result').style.display = showFav ? 'none' : '';
-  document.getElementById('history').style.display = showFav ? 'none' : '';
+  document.getElementById('exsearch').style.display = showEx ? 'block' : 'none';
+  document.getElementById('result').style.display = (showFav || showEx) ? 'none' : '';
+  document.getElementById('history').style.display = (showFav || showEx) ? 'none' : '';
   if (showFav) renderFavs();
+  if (showEx) {
+    const iv = document.getElementById('ex-input').value.trim();
+    if (iv) searchExamples(iv);
+  }
+}
+
+/* 例句索引：loadData 时从 oxford + enhanced 扁平化一次（≈14 万条） */
+const EXAMPLES = [];
+function buildExamples() {
+  for (const w in OXFORD) {
+    const o = OXFORD[w];
+    if (o && !o.link) for (const ex of o.examples || []) EXAMPLES.push({ w, en: ex[0] || '', zh: ex[1] || '' });
+  }
+  for (const w in ENHANCED) {
+    const e = ENHANCED[w];
+    for (const ex of e.examples || []) {
+      const s = ex.split(' / ');
+      EXAMPLES.push({ w, en: s[0] || '', zh: s.slice(1).join(' / ') || '' });
+    }
+  }
+  for (const w in EX) {
+    for (const x of EX[w] || []) EXAMPLES.push({ w, en: x.en || '', zh: x.zh || '' });
+  }
+}
+
+/* 例句搜索：子串匹配英文例句，展示中英对照 + 词头跳转 + 朗读 */
+function searchExamples(q) {
+  const el = document.getElementById('ex-list');
+  const cnt = document.getElementById('ex-count');
+  const key = (q || '').toLowerCase();
+  if (!key) { el.innerHTML = ''; if (cnt) cnt.textContent = ''; return; }
+  const hits = [];
+  for (let i = 0; i < EXAMPLES.length && hits.length < 60; i++) {
+    if (EXAMPLES[i].en.toLowerCase().includes(key)) hits.push(EXAMPLES[i]);
+  }
+  if (cnt) cnt.textContent = hits.length ? `匹配 ${hits.length}+ 条例句` : '';
+  if (!hits.length) { el.innerHTML = '<div class="card"><div class="miss">没有找到包含「' + escapeHtml(q) + '」的例句</div></div>'; return; }
+  let h = '<div class="card">';
+  hits.slice(0, 30).forEach(x => {
+    h += `<div class="ex"><div class="ex-en"><span class="cog" data-w="${x.w}" style="margin-right:6px">${x.w}</span><span class="ex-en-txt">${escapeHtml(x.en)}</span>` +
+      `<button class="tts-btn ex-tts" data-text="${escapeHtml(x.en).replace(/"/g, '&quot;')}" title="朗读英文例句">🔊</button></div>` +
+      (x.zh ? `<div class="ex-zh">${escapeHtml(x.zh)}</div>` : '') + `</div>`;
+  });
+  h += '</div>';
+  el.innerHTML = h;
 }
 
 /* 让滑动指示条对准当前激活的 Tab */
@@ -2165,6 +3062,10 @@ function historySummary(r) {
     let s = (e.meaning || '').split('\n')[0].trim() || '';
     if (e.breakdown) s = (e.breakdown.split('\n')[0].trim() + ' · ' + s).replace(/^· /, '');
     return s;
+  }
+  if (r.source === 'oxford' && r.oxford) {
+    const o = r.oxford;
+    return ((o.pos || '') + ' ' + (o.def_zh || '').split('\n')[0].trim()).trim() || '';
   }
   const b = r.breakdown;
   if (b) {
@@ -2450,6 +3351,11 @@ result.addEventListener('click', (e) => {
       return;
     }
   });
+// 左侧相关词汇侧边栏：近反义词/同根词点击跳转
+document.getElementById('side-rel').addEventListener('click', (e) => {
+    const t = e.target.closest('.cog');
+    if (t) { input.value = t.dataset.w; search(); }
+  });
 // 面板事件：关闭、遮罩点击关闭、同根词跳转、收藏
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('panel-mask').addEventListener('click', closePanel);
@@ -2497,7 +3403,36 @@ document.addEventListener('click', (e) => {
   if (fc) { saveFavs([]); renderFavs(); }
 });
 btn.addEventListener('click', search);
-input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+/* 搜索联想：输入防抖 + ↑↓导航 + Enter选中 + 点击 */
+let sgTimer = null;
+input.addEventListener('input', (e) => { clearTimeout(sgTimer); sgTimer = setTimeout(() => showSuggest(e.target.value), 180); });
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const cur = document.querySelector('#suggest .sg-item.cur');
+    if (cur) input.value = cur.dataset.w;
+    hideSuggest(); search();
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const items = document.querySelectorAll('#suggest .sg-item');
+    if (items.length) {
+      e.preventDefault();
+      sgIndex = e.key === 'ArrowDown' ? (sgIndex + 1) % items.length : (sgIndex - 1 + items.length) % items.length;
+      items.forEach((it, i) => it.classList.toggle('cur', i === sgIndex));
+    }
+  } else if (e.key === 'Escape') hideSuggest();
+});
+document.getElementById('suggest').addEventListener('mousedown', (e) => {
+  const item = e.target.closest('.sg-item');
+  if (item) { input.value = item.dataset.w; hideSuggest(); search(); }
+});
+/* 例句搜索：防抖 + 按钮/回车 */
+let exTimer = null;
+document.getElementById('ex-input').addEventListener('input', (e) => {
+  clearTimeout(exTimer);
+  const v = e.target.value.trim();
+  exTimer = setTimeout(() => searchExamples(v), 300);
+});
+document.getElementById('ex-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchExamples(e.target.value.trim()); });
+document.getElementById('ex-btn').addEventListener('click', () => searchExamples(document.getElementById('ex-input').value.trim()));
 /* 拖拽搜索：从外部把词拖进输入框 → 直接替换内容（默认行为是插入，需拦截） */
 input.addEventListener('dragover', (e) => { e.preventDefault(); input.classList.add('drag-over'); });
 input.addEventListener('dragleave', () => input.classList.remove('drag-over'));
@@ -2510,6 +3445,7 @@ input.addEventListener('drop', (e) => {
     search();   // 拖入即分析，无需再点"分析"
   }
 });
+
 </script>
 </body>
 </html>
