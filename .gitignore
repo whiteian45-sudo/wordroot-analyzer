@@ -30,3 +30,6 @@ thes.json
 ex.json
 us_ipa.json
 *.bak
+
+# 用户查词历史（本地服务自动写入项目目录，属个人数据，勿提交）
+history.json

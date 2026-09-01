@@ -10,6 +10,10 @@ import os
 import webbrowser
 import threading
 import socket
+import json
+import time
+import urllib.request
+import urllib.error
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 PORT = 8756
@@ -24,6 +28,15 @@ MIME = {
     '.ico': 'image/x-icon',
 }
 
+# 历史记录文件：直接存在项目目录，浏览器前端通过 /history 端点读写（静默、免弹窗选位置）
+HISTORY_FILE = os.path.join(DIR, 'history.json')
+
+# 本地翻译（Ollama）：默认模型可用环境变量 OLLAMA_MODEL 覆盖
+OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434')
+# 本机 GPU(1060 6GB) 在 Ollama 上默认推理会崩(0xc0000005)，改小模型强制 CPU，速度可用(约3-4秒/句)
+OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen3:1.7b')
+_IO_LOCK = threading.Lock()
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIR, **kwargs)
@@ -36,6 +49,166 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def guess_type(self, path):
         ext = os.path.splitext(path)[1].lower()
         return MIME.get(ext, 'application/octet-stream')
+
+    def _send_json(self, obj, status=200):
+        data = json.dumps(obj, ensure_ascii=False).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        # /history：把历史记录直接读自项目目录下的 history.json（静默，前端无需选文件）
+        if self.path.split('?')[0] == '/history':
+            try:
+                with _IO_LOCK:
+                    with open(HISTORY_FILE, encoding='utf-8') as f:
+                        items = json.load(f).get('items', [])
+            except (FileNotFoundError, json.JSONDecodeError):
+                items = []
+            self._send_json({'version': 1, 'items': items})
+            return
+        super().do_GET()
+
+    def do_POST(self):
+        path = self.path.split('?')[0]
+        # /translate：本地 Ollama 翻译整段英文。流式返回增量译文（前端逐字显示）。
+        if path == '/translate':
+            try:
+                ln = int(self.headers.get('Content-Length', 0))
+                body = json.loads(self.rfile.read(ln) or b'{}')
+            except Exception:
+                body = {}
+            text = (body.get('text') or '').strip()
+            if not text:
+                self._send_json({'ok': False, 'err': '没有要翻译的文本'}, 400)
+                return
+            model = body.get('model') or OLLAMA_MODEL
+            think = bool(body.get('think', False))   # 难句更精准：开启 qwen3 思考
+            try:
+                it = iter_chat_stream(text, model, think)   # 连接/加载失败会抛异常（此时头还没发）
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.send_header('Cache-Control', 'no-store')
+                self.end_headers()
+                for chunk in it:
+                    self.wfile.write(chunk.encode('utf-8'))
+                    self.wfile.flush()
+            except urllib.error.HTTPError as e:
+                try:
+                    err = json.loads(e.read().decode('utf-8')).get('error', str(e))
+                except Exception:
+                    err = str(e)
+                if 'not found' in err.lower():
+                    err = '本地还没装这个模型，请先在命令行运行：ollama pull ' + model
+                self._send_json({'ok': False, 'err': err}, 502)
+            except Exception as e:
+                # 连接失败（如 Ollama 未启动）：头还没发，可正常回 JSON
+                self._send_json({'ok': False, 'err': '无法连接本地 Ollama（' + str(e) + '）。请确认它已启动。'}, 502)
+            return
+        # /history：把前端发来的历史全量写入项目目录下的 history.json
+        if self.path.split('?')[0] == '/history':
+            try:
+                ln = int(self.headers.get('Content-Length', 0))
+                body = json.loads(self.rfile.read(ln) or b'{}')
+            except Exception:
+                body = {}
+            items = body.get('items', body) if isinstance(body, dict) else body
+            if isinstance(items, list):
+                try:
+                    with _IO_LOCK:
+                        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+                            json.dump({'version': 1, 'exportedAt': time.strftime('%Y-%m-%d %H:%M:%S'), 'items': items},
+                                      f, ensure_ascii=False, indent=2)
+                    self._send_json({'ok': True})
+                except Exception as e:
+                    self._send_json({'ok': False, 'err': str(e)}, 500)
+            else:
+                self._send_json({'ok': False, 'err': 'bad items'}, 400)
+            return
+        self.send_error(405)
+
+
+def iter_chat_stream(text, model, think=False):
+    """流式调本地 Ollama 翻译整段，逐块 yield 译文增量。
+       连接/加载失败抛异常（此时 HTTP 头未发，调用方可回 JSON 错误）。"""
+    payload = {
+        'model': model,
+        'stream': True,
+        'think': think,   # 难句更精准：qwen3 开思考(更准但更慢)
+        'messages': [
+            {'role': 'system', 'content': '你是一位专业中英翻译。把用户提供的英文翻译成简体中文。严格遵循：忠实原文、语言自然通顺；只输出译文本身，不要任何解释、注释或额外文字；若原文有多段，逐段对应翻译。'},
+            {'role': 'user', 'content': text},
+        ],
+        'options': {'num_gpu': 0},   # 本机 GPU 推理崩(0xc0000005)，强制 CPU
+    }
+    req = urllib.request.Request(
+        OLLAMA_URL + '/api/chat',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+    resp = urllib.request.urlopen(req, timeout=300)
+    for raw in resp:
+        line = raw.decode('utf-8').strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if obj.get('error'):
+            raise RuntimeError(obj['error'])
+        c = (obj.get('message') or {}).get('content', '') or ''
+        if c:
+            yield c
+        if obj.get('done'):
+            break
+
+
+def translate_to_chinese(text, model):
+    """调本地 Ollama 把英文翻成简体中文。返回 {'ok': True, 'text': ...} 或 {'ok': False, 'err': ...}"""
+    payload = {
+        'model': model,
+        'stream': False,
+        # qwen3 默认会先"思考"再答，关掉以免思考内容混进译文、还拖慢速度
+        'think': False,
+        # 本机 GPU 推理崩(0xc0000005)，强制 CPU；小模型很快
+        'options': {'num_gpu': 0},
+        'messages': [
+            {'role': 'system', 'content': '你是一位专业中英翻译。把用户提供的英文翻译成简体中文。严格遵循：忠实原文、语言自然通顺；只输出译文本身，不要任何解释、注释或额外文字；若原文有多段，逐段对应翻译。'},
+            {'role': 'user', 'content': text},
+        ],
+    }
+    req = urllib.request.Request(
+        OLLAMA_URL + '/api/chat',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+        content = (data.get('message') or {}).get('content', '').strip()
+        if not content and data.get('error'):
+            return {'ok': False, 'err': data['error']}
+        return {'ok': True, 'text': content}
+    except urllib.error.HTTPError as e:
+        try:
+            err = json.loads(e.read().decode('utf-8')).get('error', str(e))
+        except Exception:
+            err = str(e)
+        if 'not found' in err.lower():
+            err = '本地还没装这个模型，请先在命令行运行：ollama pull ' + model
+        return {'ok': False, 'err': err}
+    except Exception as e:
+        return {'ok': False, 'err': '无法连接本地 Ollama（' + str(e) + '）。请确认它已启动，或已运行 ollama pull ' + model}
+
+
+class _Server(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+    daemon_threads = True
 
 
 def get_ip():
@@ -55,7 +228,7 @@ def main():
     ip = get_ip()
     url = f'http://localhost:{PORT}/index.html'
     try:
-        httpd = socketserver.TCPServer(('0.0.0.0', PORT), Handler)
+        httpd = _Server(('0.0.0.0', PORT), Handler)
     except OSError as e:
         # 端口已被占用：多半是之前启动的服务还开着
         if e.errno == 10048:

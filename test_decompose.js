@@ -22,11 +22,29 @@ const currentCore = loadCore(fs.readFileSync(DIR + '/index.html', 'utf8'));
 if (args.includes('--diff')) {
   const oldCore = loadCore(execSync(`git -C "${DIR}" show HEAD:index.html`).toString('utf8'));
   const dict = JSON.parse(fs.readFileSync(DIR + '/ecdict.json', 'utf8'));
-  // 可选子串过滤：node test_decompose.js --diff proto zoa zoo stice
+  // 默认定向子串：没传子串时自动对比 git HEAD 与当前，取词根/前缀/后缀表【新增或删减】的词素当子串过滤。
+  // 裸 --diff 不再全扫 75.7 万词——那是每词跑一遍 decompose 的计算开销（数据本就全在内存，换数据库提速不了）；
+  // 对"仅增删词素"的改动，子串过滤是受影响词的精确超集。评分 SCORE 或拆解算法改变才牵连任意词→需全量。
+  // 也可手动传子串（优先用自选）：node test_decompose.js --diff proto zoa zoo stice
   const subs = args.filter(a => a !== '--diff');
-  const ws = Object.keys(dict).filter(w => w.length < 40 && /[a-z]{3}/.test(w)
-    && (subs.length === 0 || subs.some(s => w.includes(s))));
-  console.log('扫描词数:', ws.length, subs.length ? '(过滤: ' + subs.join(',') + ')' : '');
+  const tableKeys = core => {
+    const load = `JSON.stringify({r:Object.keys(ROOTS),p:Object.keys(PREFIXES),s:Object.keys(SUFFIXES)})`;
+    return JSON.parse(eval(core + load));
+  };
+  const o = tableKeys(oldCore), n = tableKeys(currentCore);
+  const os = new Set([...o.r, ...o.p, ...o.s]), ns = new Set([...n.r, ...n.p, ...n.s]);
+  const diffs = [...ns].filter(k => !os.has(k)).concat([...os].filter(k => !ns.has(k)));
+  const sc = c => (c.match(/const SCORE\s*=\s*\{[^}]*\}/) || [''])[0];
+  const scoreChanged = sc(oldCore) !== sc(currentCore);
+  const useSubs = subs.length ? subs : (scoreChanged ? [] : diffs);
+  const notes = subs.length ? '手动: ' + subs.join(',')
+    : (scoreChanged ? '评分/算法改动→需全量' : (diffs.length ? '定向: ' + diffs.join(',') : '词素表无增减'));
+  const skip = !scoreChanged && !useSubs.length;
+  const ws = skip ? [] : Object.keys(dict).filter(w => w.length < 40 && /[a-z]{3}/.test(w)
+    && (useSubs.length === 0 || useSubs.some(s => w.includes(s))));
+  console.log(skip
+    ? '词根/前缀/后缀表无增减——无结构变化可跳过；若只改了释义/词源文案，diff 不反映，可忽略。'
+    : '扫描词数: ' + ws.length + ' (' + notes + ')');
   const probe = `
 function sig(w) {
   const d = decompose(w);
