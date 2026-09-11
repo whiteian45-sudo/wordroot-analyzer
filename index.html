@@ -687,6 +687,7 @@ const PREFIXES = {
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
   "ation": "名词后缀，表行为、过程(为-tion的扩展)",
+  "istic": "形容词后缀，…主义的/…的(-ist + -ic 的缩合)",
   "ization": "名词后缀，表…化(为-ize+-ation)",
   "isation": "名词后缀，表…化(为-ise+-ation，英式)",
   "s": "复数/第三人称单数后缀",
@@ -729,6 +730,7 @@ const SUFFIXES = {
   "en": "动词后缀，使…",
   "able": "形容词后缀，可…的",
   "ible": "形容词后缀，可…的",
+  "icle": "名词后缀，指小、小的（-ic + -le）",
   "ic": "形容词后缀，…的",
   "ical": "形容词后缀，…的",
   "ous": "形容词后缀，…的",
@@ -799,6 +801,7 @@ const ROOTS = {
   "allerg": ["过敏", ["allergy", "allergic", "allergen"], {"lang": "希腊语", "word": "allos"}],
   "allo": ["异、其他", ["allotrope", "allopathy"], {"lang": "希腊语", "word": "allos"}],
   "alter": ["其他、改变", ["alternative", "alter"]],
+  "ambrosia": ["神肴、仙馔；不朽的", ["ambrosia", "ambrosial", "ambrosian"], {"lang": "希腊语", "word": "ambrosios"}],
   "ambul": ["行走", ["ambulance", "amble"]],
   "ampl": ["大、广阔", ["ample", "amplify", "amplitude"], {"lang": "拉丁语", "word": "amplus"}],
   "ancien": ["古老、古代", ["ancient", "anciently"], {"lang": "古法语", "word": "ancien"}],
@@ -830,6 +833,7 @@ const ROOTS = {
   "barbar": ["野蛮、粗鲁", ["barbarian", "barbaric", "barbarous"], {"lang": "希腊语", "word": "barbaros"}],
   "bath": ["深", ["bathos", "batholith"], {"lang": "希腊语", "word": "bathys"}],
   "benef": ["好、善(bene的变体)", ["benefit", "beneficial"], {"lang": "拉丁语", "word": "bene"}],
+  "bibl": ["书", ["bible", "biblical", "bibliography"], {"lang": "希腊语", "word": "biblos"}],
   "bigot": ["偏执的人（法语 bigot，旧为贬称；加 -ry 构成“偏执、偏见的品质”）", ["bigot", "bigotry", "bigoted", "bigots"], {"lang": "法语", "word": "bigot"}],
   "biochem": ["生物化学", ["biochemistry", "biochemical"], {"lang": "希腊语", "word": "bios"}],
   "blast": ["胚、芽", ["blast", "gastrula"], {"lang": "希腊语", "word": "blastos"}],
@@ -905,7 +909,9 @@ const ROOTS = {
   "crump": ["褶皱、碎裂", ["crumple", "crump"], {"lang": "古英语", "word": "crimp"}],
   "cry": ["冷、冰", ["crystal", "cryogenics"], {"lang": "希腊语", "word": "kryos"}],
   "crypt": ["隐藏、秘密、加密(希腊语 kryptos)", ["encrypt", "decrypt", "encrypted", "encryption", "cryptic", "cryptography", "crypt"], {"lang": "希腊语", "word": "kryptos"}],
+  "cucumber": ["黄瓜", ["cucumber", "cucumbers"], {"lang": "拉丁语", "word": "cucumis"}],
   "cultura": ["文化、耕作(cult的变体)", ["culture", "cultural"], {"lang": "拉丁语", "word": "cultura"}],
+  "cumber": ["阻碍、妨害", ["cumber", "encumber", "cumbersome", "encumbrance"], {"lang": "古法语", "word": "combrer"}],
   "curvi": ["弯曲(curv的变体)", ["curvilinear", "curve"], {"lang": "拉丁语", "word": "curvus"}],
   "cyan": ["蓝色", ["cyanide", "cyanosis"], {"lang": "希腊语", "word": "kyanos"}],
   "cyber": ["网络、控制", ["cyberspace", "cybernetics"], {"lang": "希腊语", "word": "kybernetes"}],
@@ -1028,6 +1034,7 @@ const ROOTS = {
   "ess": ["存在", ["essence", "essential"]],
   "etern": ["永恒", ["eternity", "eternal"], {"lang": "拉丁语", "word": "aeternus"}],
   "eu": ["好、善、优良", ["eulogy", "euphoria", "euphemism"], {"lang": "希腊语", "word": "eu"}],
+  "eureka": ["我发现了、找到了（阿基米德悟出浮力定律时的欢呼）", ["eureka"], {"lang": "希腊语", "word": "heureka"}],
   "experientia": ["经验", ["experiential", "experience"], {"lang": "拉丁语", "word": "experientia"}],
   "explos": ["爆炸", ["explosive", "explode"], {"lang": "拉丁语", "word": "explodere"}],
   "exponent": ["指数", ["exponent", "exponential"], {"lang": "拉丁语", "word": "exponere"}],
@@ -1062,6 +1069,7 @@ const ROOTS = {
   "fract": ["断裂", ["fracture", "fraction"]],
   "frag": ["断裂(fract的变体)", ["fragile", "fragment"]],
   "frater": ["兄弟", ["fraternity", "fraternal"]],
+  "fratern": ["兄弟、手足", ["fraternal", "fraternity", "fraternize"], {"lang": "拉丁语", "word": "fraternus"}],
   "fraternit": ["兄弟、友爱", ["fraternity", "fraternal"], {"lang": "拉丁语", "word": "frater"}],
   "frig": ["冷", ["frigid", "refrigerator", "frigidity"], {"lang": "拉丁语", "word": "frigus"}],
   "fruct": ["果实、成果", ["fruition", "fructose", "fruit"], {"lang": "拉丁语", "word": "fructus"}],
@@ -1155,6 +1163,7 @@ const ROOTS = {
   "logarithm": ["对数", ["logarithm", "logarithmic"], {"lang": "希腊语", "word": "logos"}],
   "loqu": ["说话", ["eloquent", "loquacious", "colloquial"], {"lang": "拉丁语", "word": "loqui"}],
   "lud": ["玩耍、嘲弄", ["illusion", "elude", "allude"], {"lang": "拉丁语", "word": "ludere"}],
+  "lumber": ["木材；笨重地移动", ["lumber", "lumbering", "lumberyard", "lumberjack"], {"lang": "中古英语", "word": "lomeren"}],
   "lumin": ["光", ["luminous", "illuminate"], {"lang": "拉丁语", "word": "lumen"}],
   "luna": ["月亮", ["lunar", "lunatic"], {"lang": "拉丁语", "word": "luna"}],
   "lupin": ["狼", ["lupine", "lupus"], {"lang": "拉丁语", "word": "lupus"}],
@@ -1166,6 +1175,8 @@ const ROOTS = {
   "marin": ["海", ["marine", "maritime", "marinate"], {"lang": "拉丁语", "word": "mare"}],
   "masculin": ["男性、雄性", ["masculine", "masculinity"], {"lang": "拉丁语", "word": "masculus"}],
   "masquer": ["面具、假面", ["masquerade", "masque"], {"lang": "意大利语", "word": "maschera"}],
+  "materi": ["物质、材料", ["material", "materialism", "immaterial", "materialize"], {"lang": "拉丁语", "word": "materia"}],
+  "matern": ["母亲、母系", ["maternal", "maternity", "maternalism"], {"lang": "拉丁语", "word": "maternus"}],
   "matrice": ["母体、模", ["matrix", "matrices"], {"lang": "拉丁语", "word": "matrix"}],
   "matricula": ["登记、注册", ["matriculate", "matriculation"], {"lang": "拉丁语", "word": "matricula"}],
   "medic": ["医学、治疗", ["medical", "medicine", "medicate"], {"lang": "拉丁语", "word": "medicus"}],
@@ -1190,6 +1201,7 @@ const ROOTS = {
   "mur": ["墙", ["mural", "intramural"], {"lang": "拉丁语", "word": "munus"}],
   "my": ["肌肉", ["myalgia", "myocardium"], {"lang": "希腊语", "word": "mys"}],
   "myel": ["髓、脊髓", ["myeloma", "myelitis"], {"lang": "希腊语", "word": "myelos"}],
+  "myrmidon": ["迈尔弥顿人(阿喀琉斯麾下的蚁人)；忠实的追随者", ["myrmidon", "myrmidons"], {"lang": "希腊语", "word": "Myrmidon"}],
   "nativit": ["出生、诞生", ["nativity", "native"], {"lang": "拉丁语", "word": "nasci"}],
   "nauseat": ["恶心、厌恶", ["nauseate", "nausea"], {"lang": "希腊语", "word": "nausia"}],
   "navigat": ["航行、驾驶船舶", ["navigator", "navigation", "navigate"], {"lang": "拉丁语", "word": "navigare"}],
@@ -1199,7 +1211,9 @@ const ROOTS = {
   "neur": ["神经(neuro的变体)", ["neural", "neurasthenia"], {"lang": "希腊语", "word": "neuron"}],
   "nitr": ["氮", ["nitrogen", "nitrate", "nitric"], {"lang": "希腊语", "word": "nitron"}],
   "noct": ["夜", ["nocturnal", "nocturne"], {"lang": "拉丁语", "word": "nox"}],
+  "nomenclat": ["命名、名称表", ["nomenclature", "nomenclator", "nomenclatural"], {"lang": "拉丁语", "word": "nomenclator"}],
   "nub": ["云、雾", ["nebula", "nubilous"], {"lang": "拉丁语", "word": "nubes"}],
+  "number": ["数、数目、编号", ["number", "numbers", "outnumber", "renumber"], {"lang": "拉丁语", "word": "numerus"}],
   "numerat": ["数", ["numerator", "numerable"], {"lang": "拉丁语", "word": "numerus"}],
   "obligat": ["义务、强制", ["obligatory", "obligation"], {"lang": "拉丁语", "word": "obligare"}],
   "obscur": ["黑暗、模糊", ["obscure", "obscurity"], {"lang": "拉丁语", "word": "obscurus"}],
@@ -1232,6 +1246,7 @@ const ROOTS = {
   "paradis": ["天堂、乐园", ["paradise", "paradisiacal"], {"lang": "古法语", "word": "paradis"}],
   "parasit": ["寄生", ["parasite", "parasitic", "parasitism"], {"lang": "希腊语", "word": "parasitos"}],
   "particula": ["微粒、细部", ["particle", "particular"], {"lang": "拉丁语", "word": "particula"}],
+  "patern": ["父亲、父系", ["paternal", "paternity", "paternalism"], {"lang": "拉丁语", "word": "paternus"}],
   "paternit": ["父亲、父系", ["paternity", "paternal"], {"lang": "拉丁语", "word": "pater"}],
   "patholog": ["病理学", ["pathology", "pathological", "pathologist"], {"lang": "希腊语", "word": "pathos"}],
   "paucit": ["少数、缺乏", ["paucity"], {"lang": "拉丁语", "word": "paucus"}],
@@ -1328,6 +1343,7 @@ const ROOTS = {
   "sine": ["无、没有", ["sinecure", "sine die"], {"lang": "拉丁语", "word": "sine"}],
   "sipho": ["虹吸、管", ["siphon", "siphon"], {"lang": "希腊语", "word": "siphon"}],
   "siti": ["渴", ["situation", "site"], {"lang": "拉丁语", "word": "situs"}],
+  "slumber": ["睡眠、打盹", ["slumber", "slumbering", "slumberous"], {"lang": "中古英语", "word": "slumen"}],
   "sociolog": ["社会学", ["sociology", "sociological"], {"lang": "拉丁语", "word": "socius"}],
   "sod": ["钠", ["sodium", "soda"], {"lang": "拉丁语", "word": "sodanum"}],
   "somat": ["身体", ["somatic", "psychosomatic"], {"lang": "希腊语", "word": "soma"}],
@@ -1336,6 +1352,8 @@ const ROOTS = {
   "soror": ["姐妹", ["sorority", "sororal"], {"lang": "拉丁语", "word": "soror"}],
   "specus": ["洞穴", ["specular", "speleology"], {"lang": "拉丁语", "word": "specus"}],
   "sper": ["种子", ["sperm", "spermatogenesis"], {"lang": "希腊语", "word": "sperma"}],
+  "spher": ["球体、天体", ["sphere", "spherical", "spheroid", "spherule"], {"lang": "希腊语", "word": "sphaira"}],
+  "sphere": ["球体、天体", ["sphere", "spherical", "hemisphere", "atmosphere", "spheroid"], {"lang": "希腊语", "word": "sphaira"}],
   "spin": ["脊柱、刺", ["spine", "spinal", "spina"], {"lang": "拉丁语", "word": "spina"}],
   "splen": ["脾", ["spleen", "splenetic", "splenectomy"], {"lang": "希腊语", "word": "splen"}],
   "spr": ["枝、嫩枝", ["sprig", "sprightly"], {"lang": "古英语", "word": "sprig"}],
@@ -1356,6 +1374,7 @@ const ROOTS = {
   "tenaci": ["紧握、坚持", ["tenacious", "tenacity"], {"lang": "拉丁语", "word": "tenax"}],
   "termin": ["界限、终点", ["terminal", "determine", "terminate"], {"lang": "拉丁语", "word": "terminus"}],
   "terra": ["土地(terr的变体)", ["territory", "terrain"], {"lang": "拉丁语", "word": "terra"}],
+  "tetris": ["俄罗斯方块（tetra 四 + tennis 生造词）", ["tetris"], {"lang": "希腊语", "word": "tetra"}],
   "thalass": ["海洋", ["thalassocracy", "thalassemia"], {"lang": "希腊语", "word": "thalassa"}],
   "theorem": ["定理", ["theorem", "theorematic"], {"lang": "希腊语", "word": "theorema"}],
   "tide": ["潮汐、浪潮", ["tide", "tidal", "tidemark"]],
@@ -1399,7 +1418,6 @@ const ROOTS = {
   "mani": ["手(man的变体)", ["manipulate"]],
   "mar": ["海", ["marine", "maritime"]],
   "matr": ["母亲、母", ["maternal", "matrimony"]],
-  "mater": ["母亲、母", ["maternal"]],
   "med": ["中间", ["medium", "median", "immediate"]],
   "medi": ["中间(med的变体)", ["mediate", "media"]],
   "memor": ["记忆", ["memory", "memorial", "remember"]],
@@ -1550,6 +1568,7 @@ const ROOTS = {
   "trigonometr": ["三角学", ["trigonometry", "trigonometric"], {"lang": "希腊语", "word": "trigonon"}],
   "tutela": ["监护、保护", ["tutelage", "tutelary"], {"lang": "拉丁语", "word": "tutela"}],
   "twi": ["二、双", ["twilight", "twice"], {"lang": "古英语", "word": "twi"}],
+  "umber": ["棕土、赭色颜料", ["umber", "umbers", "umbery"], {"lang": "拉丁语", "word": "umbra"}],
   "unct": ["油膏、涂油", ["unction", "anoint"], {"lang": "拉丁语", "word": "ungere"}],
   "ursin": ["熊", ["ursine", "ursid"], {"lang": "拉丁语", "word": "ursus"}],
   "uteri": ["子宫", ["uterus", "uterine", "uteritis"], {"lang": "拉丁语", "word": "uterus"}],
@@ -2159,7 +2178,13 @@ const ROOT_BLOCK = {
   'euphorbia lunulata': ['phor'], 'euphorbia marginata': ['phor'], 'euphorbia medusae': ['phor'], 'euphorbia milii': ['phor'],
   'euphorbia peplus': ['phor'], 'euphorbia pulcherrima': ['phor'], 'euphorbia resinifera': ['phor'], 'euphorbiaceae': ['phor'],
   'euphorbiaceous': ['phor'], 'euphorbiales': ['phor'], 'euphorbias': ['phor'], 'euphorbin': ['phor'],
-  'euphorbism': ['phor'], 'euphorbium': ['phor'], 'euphorbol': ['phor'], 'euphorbon': ['phor']
+  'euphorbism': ['phor'], 'euphorbium': ['phor'], 'euphorbol': ['phor'], 'euphorbon': ['phor'],
+  /* -icle 指小后缀误伤：词干是引擎词根但语义假拆（testis非test、cutis非cut、ice才是、panicula非pan） */
+  'testicle': ['test'], 'testicles': ['test'],
+  'cuticle': ['cut'], 'cuticles': ['cut'],
+  'endocuticle': ['cut'], 'epicuticle': ['cut'], 'procuticle': ['cut'], 'subcuticle': ['cut'],
+  'icicle': ['ic'], 'icicles': ['ic'],
+  'panicle': ['pan'], 'panicles': ['pan'], 'bibless': ['bibl'], 'renumber': ['ren', 'umber'], 'renumbered': ['ren', 'umber'], 'renumbering': ['ren', 'umber'], 'renumbers': ['ren', 'umber'],
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -2440,17 +2465,25 @@ function editDistance(a, b) {
    首字母不同重罚（避免 finery 顶替 binery→binary）；
    距离 2 的长词若末尾不同再半罚（排除 meaningless 类）。 */
 function suggestWord(w) {
-  if (!ENHANCED || w.length < 3) return null;
+  if (w.length < 3 || (!ENHANCED && !OXFORD)) return null;
   const MAX_DIST = w.length <= 5 ? 1 : 2;
-  let best = null, bestDist = 99;
-  for (const cand of Object.keys(ENHANCED)) {
-    if (Math.abs(cand.length - w.length) > 2) continue;
-    let d = editDistance(w, cand);
-    if (w[0] !== cand[0]) d += 2;                       // 首字母不同 → 重罚
-    else if (d === 2 && w.length > 5 && w[w.length - 1] !== cand[cand.length - 1]) d += 0.5;
-    if (d < bestDist) { bestDist = d; best = cand; }
+  /* 两级候选：先考试词库(13910)；那里没有可用的再查牛津9(147090)，
+     救回 semitone 这类常见、但不在考试大纲里的词。第一级有结果时不碰第二级，
+     故既有建议完全不变，只新增原本一个都不提示的情况。 */
+  for (const db of [ENHANCED, OXFORD]) {
+    if (!db) continue;
+    let best = null, bestDist = 99;
+    for (const cand of Object.keys(db)) {
+      /* 首字母预过滤：首字母不同的候选被罚 +2，而阈值上限恰是 2，恒选不上，
+         直接跳过省掉大量无用计算（实测 3000 例结果与原写法完全一致）。 */
+      if (!cand || cand[0] !== w[0]) continue;
+      if (Math.abs(cand.length - w.length) > 2) continue;
+      let d = editDistance(w, cand);
+      if (d === 2 && w.length > 5 && w[w.length - 1] !== cand[cand.length - 1]) d += 0.5;
+      if (d < bestDist) { bestDist = d; best = cand; }
+    }
+    if (best && bestDist <= MAX_DIST) return best;
   }
-  if (best && bestDist <= MAX_DIST) return best;
   return null;
 }
 
@@ -2590,7 +2623,7 @@ function morphBlockHTML(w, bd) {
     h += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
     chainParts.forEach((cp, idx) => {
       if (cp.src) {
-        const note = cp.src.note ? `<span class="note">（${cp.src.note}）</span>` : '';
+        const note = (cp.src.note && cp.src.note !== cp.meaning) ? `<span class="note">（${cp.src.note}）</span>` : '';
         h += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${cp.m}</span>` +
           `<span class="chain-arrow">←</span>` +
           `<span class="chain-src"><span class="lang">${cp.src.lang}</span><span class="w">${cp.src.word}</span>${note}</span>` +
@@ -2820,7 +2853,7 @@ function cardHTML(r) {
       e.chain.forEach((m, idx) => {
         const mm = dp(m.meaning);
         if (m.source && m.source.lang) {
-          const note = m.source.note ? `<span class="note">（${m.source.note}）</span>` : '';
+          const note = (m.source.note && m.source.note !== m.meaning) ? `<span class="note">（${m.source.note}）</span>` : '';
           html += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${m.m}</span>` +
             `<span class="chain-arrow">←</span>` +
             `<span class="chain-src"><span class="lang">${m.source.lang}</span><span class="w">${m.source.word}</span>${note}</span>` +
