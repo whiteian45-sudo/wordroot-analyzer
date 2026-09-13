@@ -9,11 +9,19 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const DIR = 'D:/Program Files/词根词缀';
 
+/* core 块里的渲染函数（morphBlockHTML 等）会调用 UI 块的 gl()/EN_MODE()，
+   测试环境只挂 core，得先补上这三个名字，否则查词模式直接 ReferenceError。
+   测试环境固定中文模式（英文释义表 MORPH_EN 在 core 里，不受影响）。 */
+const UI_SHIM = "var LANG='zh';" +
+  "function EN_MODE(){return false;}" +
+  "function gl(m,zh){return zh||'';}" +
+  "function langEn(s){return s;}\n";
+
 function loadCore(content) {
   const lines = content.split('\n');
   const start = lines.findIndex(l => l.includes('<script id="core">')) + 1;
   const end = lines.findIndex((l, i) => l.trim() === '</script>' && i > start);
-  return lines.slice(start, end).join('\n');
+  return UI_SHIM + lines.slice(start, end).join('\n');
 }
 
 const args = process.argv.slice(2);
