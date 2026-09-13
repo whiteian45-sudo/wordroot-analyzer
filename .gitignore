@@ -33,3 +33,14 @@ us_ipa.json
 
 # 用户查词历史（本地服务自动写入项目目录，属个人数据，勿提交）
 history.json
+
+# ecdict 分片（由 split_ecdict.py 生成，派生物不入库）
+dict/
+
+# 词素参考数据（affixes.org 派生，本地查阅用，勿提交）
+affixes.json
+_affcache/
+
+# 全量融入实验产物（对照用，勿提交）
+index_fullmerge.html
+index_merged5.html
