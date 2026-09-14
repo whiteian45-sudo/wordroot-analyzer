@@ -2548,6 +2548,7 @@ const ROOTS = {
   "magneto": ["磁、磁体", []],
   "malaco": ["软", []],
   "malayo": ["马来", []],
+  "mallard": ["绿头鸭、雄野鸭", ["mallard", "mallards"], {"lang": "法语", "word": "malart", "note": "由 male（雄性）加 -ard 构成，与 mal-（坏）无关"}],
   "mamm": ["乳房、哺乳", ["mammal", "mammary"], {"lang": "拉丁语", "word": "mamma"}],
   "mangan": ["锰", []],
   "marin": ["海", ["marine", "maritime", "marinate"], {"lang": "拉丁语", "word": "mare"}],
@@ -4079,7 +4080,7 @@ const ROOT_BLOCK = {
   'cuticle': ['cut'], 'cuticles': ['cut'],
   'endocuticle': ['cut'], 'epicuticle': ['cut'], 'procuticle': ['cut'], 'subcuticle': ['cut'],
   'icicle': ['ic'], 'icicles': ['ic'],
-  'panicle': ['pan'], 'panicles': ['pan'], 'bibless': ['bibl'], 'renumber': ['ren', 'umber'], 'renumbered': ['ren', 'umber'], 'renumbering': ['ren', 'umber'], 'renumbers': ['ren', 'umber'],
+  'panicle': ['pan'], 'panicles': ['pan'], 'bibless': ['bibl'], 'renumber': ['ren', 'umber'], 'renumbered': ['ren', 'umber'], 'renumbering': ['ren', 'umber'], 'renumbers': ['ren', 'umber'], 'mallardite': ['mallard'],
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -4743,7 +4744,7 @@ const MORPH_EN = {
   "lumber":"timber; move heavily","lumbo":"loin, lower back","lumin":"light","luna":"moon","lupin":"wolf","lut":"mud","lute":"yellow; corpus luteum",
   "ly":"adverb or adjective suffix","lymph":"lymph","lyo":"dispersion, dissolution","lys":"dissolve, break down","lysis":"disintegration, decomposition",
   "machy":"fighting","macro":"large, long","magistrat":"magistrate","magn":"great","magnet":"magnet","magneto":"magnet, magnetism","maj":"great, major",
-  "make":"make","mal":"bad, evil","malacia":"abnormal softening","malaco":"soft","malayo":"Malay","mamm":"breast, mammal","man":"hand",
+  "make":"make","mal":"bad, evil","malacia":"abnormal softening","malaco":"soft","malayo":"Malay","mallard":"wild duck","mamm":"breast, mammal","man":"hand",
   "mancy":"divination","mand":"order, entrust","mangan":"manganese","mani":"hand (variant of man)","mania":"mental disorder; obsession",
   "manship":"skill in an activity","manu":"hand (variant of man)","mar":"sea","marin":"sea","mark":"mark","masculin":"masculine, male",
   "masquer":"mask, masquerade","mast":"breast","materi":"matter, material","matern":"mother, maternal","matr":"mother","matrice":"matrix, mother",
@@ -5275,7 +5276,9 @@ function hlWord(word, en) {
   const base = w.replace(/(ies)$/, 'y').replace(/s$/, '');
   const forms = [w];
   if (w.length > 3) forms.push(w + 's', w + 'es', base + 'es', base + 'ing', base + 'ed', base + 'ies');
-  const re = new RegExp('\\b(' + forms.filter(Boolean).sort((a, b) => b.length - a.length).join('|') + ')\\b', 'gi');
+  // 查询串里可能有正则元字符（c++、a.b、(bus)）：不转义的话 new RegExp 直接抛错，
+  // renderExList 会在写 innerHTML 前中断——列表停在旧内容、计数却已经变了
+  const re = new RegExp('\\b(' + forms.filter(Boolean).sort((a, b) => b.length - a.length).map(escapeRegex).join('|') + ')\\b', 'gi');
   return escapeHtml(decodeEntities(en)).replace(re, '<mark class="ex-hl">$1</mark>');
 }
 /* 例句区块（合并）：主例句（enhanced "en / zh" 或 oxford [en,zh]）+ 补充例句（朗文/柯林斯，来源徽章） */
@@ -5387,9 +5390,9 @@ function cardHTML(r) {
       <div class="word-line">
         <span class="word">${r.word}</span>${viaRedir ? `<span class="badge redir">← ${escapeHtml(r.query)}</span>` : ''}<span class="badge enhanced">增强词表</span>
         <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
       </div>`;
-    if (e.pron) html += `<div class="meaning"><div class="label">音标</div>${e.pron}</div>`;
+    if (e.pron) html += `<div class="meaning"><div class="label">音标</div>${ipaNorm(e.pron)}</div>`;
     // 释义：英文模式优先取牛津 def_en / 全量词典 d（数据层本身就有英文）
     if (EN_MODE()) {
       const ox = oxfordLookup(r.word);
@@ -5445,11 +5448,11 @@ function cardHTML(r) {
       <div class="word-line">
         <span class="word">${escapeHtml(hw)}</span>${viaRedir ? `<span class="badge redir">← ${escapeHtml(redirSrc)}</span>` : ''}<span class="badge">牛津9</span>
         <button class="tts-btn" data-w="${escapeHtml(hw)}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
       </div>`;
     const prons = [];
-    if (o.bre) prons.push(`BrE /${o.bre}/`);
-    if (o.name) prons.push(`NAmE /${o.name}/`);
+    if (o.bre) prons.push(`BrE /${fixIpaSeg(o.bre)}/`);
+    if (o.name) prons.push(`NAmE /${fixIpaSeg(o.name)}/`);
     if (prons.length) html += `<div class="meaning"><div class="label">音标</div>${prons.join(' · ')}</div>`;
     if (o.pos) html += `<div class="meaning"><div class="label">词性</div>${escapeHtml(o.pos)}</div>`;
     // 中文释义：def_zh 为空（牛津交叉引用条目，如 polygraph = lie detector）
@@ -5477,7 +5480,7 @@ function cardHTML(r) {
         <span class="word">${r.word}</span>
         <span class="badge">全量词典</span>
         <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
       </div>`;
     if (d.p) html += `<div class="meaning"><div class="label">音标</div>${ipa(d.p)}</div>`;
     if (d.g) html += `<div class="meaning"><div class="label">词性</div>${d.g}</div>`;
@@ -5513,7 +5516,7 @@ function cardHTML(r) {
         <span class="word">${r.word}</span>
         <span class="badge">词根拆解</span>
         <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">☆ 收藏</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
       </div>`;
     if (r.suggestion && r.suggestion !== r.word) {
       html += `<div class="spell-suggest">疑似拼写错误？你想查的是 <span class="cog" data-w="${r.suggestion}">${r.suggestion}</span> 吗？（点击跳转）</div>`;
@@ -5700,7 +5703,9 @@ function phraseExamples(phr) {
   for (const x of EXAMPLES) {
     if (x.en && re.test(x.en)) { out.push({ en: decodeEntities(x.en), zh: decodeEntities(x.zh || '') }); if (out.length >= 3) break; }
   }
-  phrExCache.set(phr, out);
+  // 空结果不缓存：EXAMPLES 是 loadData 末尾在空闲回调里才建好的，若在它建好之前查了某个短语，
+  // 会把"没例句"永久钉在缓存里（刷新才恢复）；索引没就绪时也一样不缓存
+  if (out.length && EXAMPLES_READY) phrExCache.set(phr, out);
   return out;
 }
 
@@ -5929,7 +5934,7 @@ function summaryFor(w) {
   if (ENHANCED[w]) return (ENHANCED[w].meaning || '').split('\n')[0] || '';
   const ox = oxfordLookup(w);
   if (ox && ox.o) return ((ox.o.pos || '') + ' ' + (ox.o.def_zh || '').split('\n')[0]).trim();
-  if (ECDICT[w]) return (ECDICT[w].t || '').split('\n')[0] || '';
+  if (ECDICT[w]) return (nl(ECDICT[w].t) || '').split('\n')[0] || '';   // ecdict 的 t 用字面 \n 分隔多行，必须先过 nl()
   return '';
 }
 
@@ -5944,10 +5949,10 @@ function renderFavs() {
   let h = '<div class="h-head">收藏（' + f.length + '）';
   h += '<button class="h-btn" id="fav-clear">清空收藏</button></div>';
   f.forEach(w => {
-    h += '<div class="h-item" data-word="' + w + '">' +
-      '<span class="h-w">' + w + '</span>' +
-      '<span class="h-s">' + summaryFor(w) + '</span>' +
-      '<span class="fav-rm" data-del="' + w + '">✕</span>' +
+    h += '<div class="h-item" data-word="' + escapeHtml(w) + '">' +
+      '<span class="h-w">' + escapeHtml(w) + '</span>' +
+      '<span class="h-s">' + escapeHtml(summaryFor(w)) + '</span>' +   // 词典释义里有 <英> 这类标记，不转义会被当标签吞掉
+      '<span class="fav-rm" data-del="' + escapeHtml(w) + '">✕</span>' +
       '</div>';
   });
   el.innerHTML = h;
@@ -6130,6 +6135,7 @@ function buildExamples() {
     }
   }
   for (const w in EX) {
+    if (w.charAt(0) === '_') continue;   // ex.json 里混着 _er/_ful/_y/_ory 这类后缀键，不是词头
     for (const x of EX[w] || []) EXAMPLES.push({ w, en: x.en || '', zh: x.zh || '', src: x.s || '' });
   }
 }
@@ -6153,7 +6159,21 @@ function exFindTarget(x, prefer) {
    （per se → p\\: 'sei、about-turn → әbajt't\\:n），渲染时还原。
    刻意不改数据文件：ecdict.json 是 66MB 单行 JSON，动一个字符 git diff 就是整个文件。 */
 const IPA_BAD = '\\'.repeat(4);   // 4 个字面反斜杠
-const ipa = s => (s == null) ? s : String(s).split(IPA_BAD).join('ә');
+/* 美音数据源（English-IPA/openDictUS，12.6 万条）把重音符写在**音节的元音前面**：
+   krˈɪpt、sˈɪstəm、strˈit、blˈæk，标准写法该在整个音节（含起首辅音簇）之前 → ˈkrɪpt。
+   规则只挪「重音符前面没有任何元音」（即处在词首音节内）且后面紧跟元音的那些：
+   中段重音（gymnasium ʤɪmnˈeɪziəm、photograph 的 ˌ）前面都有元音，规则自然不碰；
+   元音符号不在表里的（生僻音标）也不会误动——前后两个判断用的是同一个音素集合。
+   实测 12.6 万条里 8.8 万条是这种写法，重写 enhanced/ecdict 数据动静太大，在渲染层归一。 */
+const IPA_VOWEL = /[aeiouɑɒæʌəɛɪʊɔɜɐøœy]/;
+function fixIpaSeg(seg) {
+  const m = /^([^ˈˌ\s]*)([ˈˌ])(.*)$/.exec(seg);
+  if (!m || !m[1] || IPA_VOWEL.test(m[1]) || !IPA_VOWEL.test(m[3].charAt(0))) return seg;
+  return m[2] + m[1] + m[3];
+}
+// 音标串里每个 /…/ 段各修一遍（"UK /krɪpt/ · US /krˈɪpt/" 两段都过）
+const ipaNorm = s => (s == null) ? s : String(s).replace(/\/([^/]+)\//g, (all, seg) => '/' + fixIpaSeg(seg) + '/');
+const ipa = s => (s == null) ? s : ipaNorm(String(s).split(IPA_BAD).join('ә'));
 
 // 当前模式下该拿哪个词当挖空 / 高亮的目标
 function exFocus(x) {
@@ -6221,7 +6241,7 @@ function renderExList() {
       (exHits.length - shown) + ' 条）</button></div>';
   }
   h += '<div class="rd-more"><button class="h-btn" id="ex-practice-all">✏️ 把这批做成练习（' +
-    exHits.filter(exFindTarget).length + ' 句可挖空）</button></div>';
+    exHits.filter(x => exFindTarget(x, exFocus(x))).length + ' 句可挖空）</button></div>';
   el.innerHTML = h;
   translateDOM(el);
 }
@@ -6238,6 +6258,8 @@ function searchExamples(q) {
   exTitle = '';
   exQuery = (q || '').trim();
   exShown = 0;
+  exSrc = 'all';    // 否则上次点过的来源筛选会跟着新查询走：明明有例句却显示"没找到"，
+                    // 而且新结果只剩一个来源时 chip 整块被隐藏，连"全部"都点不回来
   const el = document.getElementById('ex-list');
   const cnt = document.getElementById('ex-count');
   if (!exQuery) { exAll = []; exHits = []; el.innerHTML = ''; if (cnt) cnt.textContent = ''; renderExList(); return; }
@@ -6269,7 +6291,7 @@ function searchExamplesByWords(words, title) {
   const hits = [];
   for (let i = 0; i < EXAMPLES.length; i++) {
     const x = EXAMPLES[i];
-    if (x.en && x.w && x.w.length <= 400 && set.has(x.w)) hits.push(x);
+    if (x.en && x.w && x.en.length <= 400 && set.has(x.w)) hits.push(x);   // 超长句不展示（同 searchExamples 的口径）
   }
   hits.sort((a, b) => a.en.length - b.en.length);
   exMode = 'words';
@@ -6601,6 +6623,7 @@ function renderReview() {
     h += '</div>';
     el.innerHTML = h;
     el.classList.add('show');
+    translateDOM(el);   // 句子挖空分支也得过翻译层，否则英文模式下这几张卡还是中文
     return;
   }
 
@@ -6881,6 +6904,10 @@ function applyLang() {
   document.documentElement.dataset.lang = LANG;
   // 浏览器标签页标题：<title> 在 body 之外，翻译层走不到它
   document.title = EN_MODE() ? (UI_EN['词根词缀分析器'] || document.title) : '词根词缀分析器';
+  // 启动时也要过一遍翻译层：否则带着 wr_lang='en' 刷新页面，tab/搜索框/发音栏还是中文，
+  // 得先查一次词才整体变英文
+  translateDOM(document.body);
+  retranslateSelects();
 }
 if (langBtn) {
   langBtn.addEventListener('click', () => {
@@ -6896,7 +6923,9 @@ applyLang();
 function rerenderAll() {
   const v = input.value.trim();
   if (v) search();
-  renderFavs(); renderHistory();
+  renderFavs();
+  // 复习进行中就别用查词记录列表把它顶掉（会把闪卡顶没、进度看不见）
+  if (reviewState && !reviewState.finished) renderReview(); else renderHistory();
   if (document.getElementById('rootsview').style.display === 'block') paintRoots();
   const exl = document.getElementById('ex-list');
   if (document.getElementById('exsearch').style.display === 'block' && exl) { /* 例句列表按需重搜 */ }
