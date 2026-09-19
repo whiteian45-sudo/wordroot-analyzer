@@ -655,6 +655,10 @@
     cursor: pointer; transition: background .15s; }
   .rd-head:hover { background: var(--glass-card); }
   .rd-m { font-weight: 700; color: var(--accent); font-size: 15px; min-width: 86px; }
+  /* 词根目录的词素名也用三色（与词卡、闪卡同一套色值）：前缀靛青 / 词根琥珀 / 后缀薄荷 */
+  .rd-m.pf { color: var(--pf-c); }
+  .rd-m.rt { color: var(--rt-c); }
+  .rd-m.sf { color: var(--sf-c); }
   .rd-mean { color: var(--text); flex: 1; font-size: 13px; opacity: .82;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rd-n { color: var(--sub); font-size: 11.5px; flex-shrink: 0; }
@@ -3577,6 +3581,36 @@ const MORPH_SRC = {};           // 词素 -> {lang, word, note} 词根来源（�
 // "使…、进入"（encrypt=使进入隐藏→加密；enable=en+able；enact；enlarge）。
 const MORPH_SRC_PATCH = {
   en: { lang: '拉丁语', word: 'in-', note: '', meaning: '使…、进入' },
+  /* 变体词根归族：同一个拉丁词的不同词干（现在分词/过去分词/变体）在 SRC_INDEX 里
+     分成好几组，查 accept 看得到 concept、查 deceive 却看不到——把它们指到同一个
+     「来源」key，同源词区块就会自动合并成一族（跨 cept/ceiv/capt… 的贯通靠这张表）。
+     word 必须与 enhanced 词源里已有的键完全一致，否则反查不到（键名以 SRC_INDEX 为准）。 */
+  cap: { lang: '拉丁语', word: 'capere', note: '', meaning: '抓、取' },
+  capt: { lang: '拉丁语', word: 'capere', note: 'cap 的过去分词词干', meaning: '抓、取' },
+  ceiv: { lang: '拉丁语', word: 'capere', note: 'cept/ceiv 的变体', meaning: '抓、取' },
+  cess: { lang: '拉丁语', word: 'cedere', note: 'ced 的过去分词词干', meaning: '走、让' },
+  duit: { lang: '拉丁语', word: 'ducere', note: 'duc 的变体', meaning: '引导' },
+  tent: { lang: '拉丁语', word: 'tenere', note: 'tain 的过去分词词干', meaning: '握、持' },
+  volv: { lang: '拉丁语', word: 'volvere', note: '', meaning: '转、卷' },
+  lat: { lang: '拉丁语', word: 'ferre', note: 'fer 的过去分词词干（-latus）', meaning: '带、拿' },
+  late: { lang: '拉丁语', word: 'ferre', note: 'lat 的变体（translate/relate）', meaning: '带、拿' },
+  ren: { lang: '拉丁语', word: 'reddere', note: '经古法语 rendre（render 的 ren）', meaning: '归还、呈交' },
+  port: { lang: '拉丁语', word: 'portare', note: '搬运（与「港口 portus」同形异源）', meaning: '搬运、携带' },
+  grad: { lang: '拉丁语', word: 'gradi', note: '', meaning: '走、步' },
+  gress: { lang: '拉丁语', word: 'gradi', note: 'grad 的过去分词词干', meaning: '走、步' },
+  pon: { lang: '拉丁语', word: 'ponere', note: '', meaning: '放置' },
+  scrib: { lang: '拉丁语', word: 'scribere', note: '', meaning: '写' },
+  tact: { lang: '拉丁语', word: 'tangere', note: 'tang 的过去分词词干', meaning: '触摸' },
+  trah: { lang: '拉丁语', word: 'tractus', note: 'trahere（拉）的分词词干', meaning: '拉、拖' },
+  voc: { lang: '拉丁语', word: 'vocare', note: '', meaning: '叫、呼' },
+  vok: { lang: '拉丁语', word: 'vocare', note: '', meaning: '叫、呼' },
+  pris: { lang: '拉丁语', word: 'prehendere', note: 'prehend 的过去分词词干', meaning: '抓住' },
+  leg: { lang: '拉丁语', word: 'legere', note: '', meaning: '读、选' },
+  lect: { lang: '拉丁语', word: 'legere', note: 'leg 的过去分词词干', meaning: '读、选' },
+  nasc: { lang: '拉丁语', word: 'natus', note: 'nasci（出生）的分词词干', meaning: '出生' },
+  secut: { lang: '拉丁语', word: 'sequi', note: 'sequ 的过去分词词干', meaning: '跟随' },
+  strict: { lang: '拉丁语', word: 'stringere', note: 'string 的过去分词词干', meaning: '拉紧' },
+  plex: { lang: '拉丁语', word: 'plicare', note: 'plic 的变体', meaning: '折、叠' },
 };
 const SUFFIX_KEYS = new Set(Object.keys(SUFFIXES));
 function buildIndex() {
@@ -3593,8 +3627,16 @@ function buildIndex() {
   for (const [w, e] of Object.entries(ENHANCED)) {
     if (!e.chain) continue;
     for (const m of e.chain) {
-      const src = m.source;
-      if (src && src.lang && src.word) {
+      // 来源优先级：MORPH_SRC_PATCH（权威覆盖，修被泛化/张冠李戴的值，如 ren←re-、de←decem）
+      // → chain 自带 source（考试词人工核对过）→ MORPH_SRC（上轮提取的）→ 词根表显式来源。
+      // chain 常只有词素和含义、没有 source（如 concept 的 cept），那时就得靠后两级；
+      // 而 patch 必须最优先，否则改不动 chain 里已经写错的 source。
+      const src = MORPH_SRC_PATCH[m.m]
+        || ((m.source && m.source.lang && m.source.word)
+          ? m.source
+          : (MORPH_SRC[m.m] || (ROOTS[m.m] && ROOTS[m.m][2])));
+      // 同源只认「词根」：纯前缀/后缀的来源条目是泛化值（re- 363 词、in 405 词、-io 295 词），进族就是噪音
+      if (src && src.lang && src.word && ROOTS[m.m]) {
         const key = src.lang + '\u0001' + src.word;
         if (!SRC_INDEX.has(key)) SRC_INDEX.set(key, new Set());
         SRC_INDEX.get(key).add(w);
@@ -3652,12 +3694,35 @@ function findCognates(word) {
           if (list.length) morphs.push({ m: rm, words: list });
         }
       }
+      /* 同源词：非考试词也走这条路——用词的「来源」反查 SRC_INDEX。
+         这是 cept / ceiv / capt 能聚到 capere 同一族的原因（此前只有 enhanced 词查同源，
+         所以 receive 拆不出、直接整词显示时就与 concept 割裂了）。 */
+      const seenSrc = new Set();
+      // 只查词根的同源（allRoots 里还混着前缀/后缀，它们的来源条目太泛，列出来是噪音）
+      for (const rm of (bd.roots || []).map(x => x.m)) {
+        const src = MORPH_SRC[rm] || (ROOTS[rm] && ROOTS[rm][2]);
+        if (!src || !src.lang || !src.word) continue;
+        const key = src.lang + '\u0001' + src.word;
+        if (seenSrc.has(key)) continue;
+        seenSrc.add(key);
+        const mates = SRC_INDEX.get(key);
+        if (!mates) continue;
+        const list = [...mates].filter(x => x !== word);
+        if (list.length) srcs.push({ lang: src.lang, word: src.word, words: list });
+      }
     }
     return { srcs, morphs };
   }
   if (e && e.chain) {
     for (const m of e.chain) {
-      const src = m.source;
+      // 来源优先级：MORPH_SRC_PATCH（权威覆盖，修被泛化/张冠李戴的值，如 ren←re-、de←decem）
+      // → chain 自带 source（考试词人工核对过）→ MORPH_SRC（上轮提取的）→ 词根表显式来源。
+      // chain 常只有词素和含义、没有 source（如 concept 的 cept），那时就得靠后两级；
+      // 而 patch 必须最优先，否则改不动 chain 里已经写错的 source。
+      const src = MORPH_SRC_PATCH[m.m]
+        || ((m.source && m.source.lang && m.source.word)
+          ? m.source
+          : (MORPH_SRC[m.m] || (ROOTS[m.m] && ROOTS[m.m][2])));
       if (src && src.lang && src.word) {
         const key = src.lang + '\u0001' + src.word;
         const mates = SRC_INDEX.get(key);
@@ -4625,14 +4690,31 @@ function enhancedMorphBlock(chain) {
   return chunks.length ? morphChunksHTML(chunks) : '';
 }
 
-function morphBlockHTML(w, bd) {
-  if (!bd) return '';
-  let h = '';
+/* 拆解结果 → 三色词素块的数据（morphBlockHTML、builtin 卡片、复习闪卡三处共用） */
+function bdToChunks(bd) {
   const chunks = [];
   if (bd.prefix) chunks.push({ cls: 'pf', label: '前缀', m: bd.prefix.m + '-', mtext: gl(bd.prefix.m, prefMeaning(bd.prefix, bd.roots[0] && bd.roots[0].m)) });
   bd.roots.forEach(rr => chunks.push({ cls: 'rt', label: '词根', m: rr.m, mtext: gl(rr.m, rr.meaning) }));
   if (bd.suffixes) bd.suffixes.forEach(s => chunks.push({ cls: 'sf', label: '后缀', m: '-' + s.m, mtext: gl(s.m, s.meaning) }));
   if (bd.unknown) chunks.push({ cls: 'uk', label: '未识别', m: bd.unknown, mtext: EN_MODE() ? 'unknown' : '词源待考' });
+  return chunks;
+}
+/* 复习闪卡揭晓时只要「拆解块」——卡壳那一秒要的是结构提示，不是演变链那一段长篇 */
+function reviewMorphHTML(r) {
+  if (r.enhanced && r.enhanced.chain && r.enhanced.chain.length) return enhancedMorphBlock(r.enhanced.chain);
+  let b = r.breakdown;
+  if (!b) {
+    const head = r.headword || r.word;
+    b = decompose(head, 0) || partialDecompose(head);
+  }
+  if (!b || b.unknown) return '';   // 带「未识别」的不在闪卡里添乱（与助记同一口径）
+  return morphChunksHTML(bdToChunks(b));
+}
+
+function morphBlockHTML(w, bd) {
+  if (!bd) return '';
+  let h = '';
+  const chunks = bdToChunks(bd);
   if (chunks.length) h += morphChunksHTML(chunks);
   const chainParts = [];
   const allMorphs = []
@@ -5714,11 +5796,7 @@ function cardHTML(r) {
     html += `</div>`;
   } else if (r.found) {
     const b = r.breakdown;
-    const chunks = [];
-    if (b.prefix) chunks.push({ cls: 'pf', label: '前缀', m: b.prefix.m + '-', mtext: gl(b.prefix.m, prefMeaning(b.prefix, b.roots[0] && b.roots[0].m)) });
-    b.roots.forEach(r => chunks.push({ cls: 'rt', label: '词根', m: r.m, mtext: gl(r.m, r.meaning) }));
-    if (b.suffixes) b.suffixes.forEach(s => chunks.push({ cls: 'sf', label: '后缀', m: '-' + s.m, mtext: gl(s.m, s.meaning) }));
-    if (b.unknown) chunks.push({ cls: 'uk', label: '未识别', m: b.unknown, mtext: EN_MODE() ? 'unknown' : '词源待考' });
+    const chunks = bdToChunks(b);
 
     html += `<div class="card">
       <div class="word-line">
@@ -6219,6 +6297,9 @@ const RD_KIND = { prefix: '前缀', root: '词根', suffix: '后缀' };
 
 function buildRoots() {
   if (rootsBuilt) return;
+  // 同一词素可能在两张表里都有（579 个组合形式既是前缀又是词根，如 auto/bio/abdomin），
+  // 只留一条、以词根身份为准——否则三色化之后同名条目会顶着两种颜色出现两次。
+  const seenM = new Set();
   for (const [m, v] of Object.entries(ROOTS)) {
     // ROOTS 里混着一条裸字符串（aic，疑似从后缀表误粘），
     // 不兜的话 v[1]/v[2] 会取到单个汉字，渲染出假含义和假词源。
@@ -6229,9 +6310,18 @@ function buildRoots() {
       examples: (arr && Array.isArray(v[1])) ? v[1] : [],
       src: (arr && v[2]) ? v[2] : null
     });
+    seenM.add(m);
   }
-  for (const [m, mean] of Object.entries(PREFIXES)) ROOT_ENTRIES.push({ m: m, kind: 'prefix', meaning: mean, examples: [], src: null });
-  for (const [m, mean] of Object.entries(SUFFIXES)) ROOT_ENTRIES.push({ m: m, kind: 'suffix', meaning: mean, examples: [], src: null });
+  for (const [m, mean] of Object.entries(PREFIXES)) {
+    if (seenM.has(m)) continue;
+    seenM.add(m);
+    ROOT_ENTRIES.push({ m: m, kind: 'prefix', meaning: mean, examples: [], src: null });
+  }
+  for (const [m, mean] of Object.entries(SUFFIXES)) {
+    if (seenM.has(m)) continue;
+    seenM.add(m);
+    ROOT_ENTRIES.push({ m: m, kind: 'suffix', meaning: mean, examples: [], src: null });
+  }
   ROOT_ENTRIES.sort((a, b) => a.m < b.m ? -1 : a.m > b.m ? 1 : 0);
   rootsBuilt = true;
 }
@@ -6291,9 +6381,12 @@ function paintRoots() {
   if (!chips || !list) return;
   const hits = rootsMatched();
 
+  // chip 上直接标数量——"今天专刷否定前缀"这类用法得先知道各有多少条
+  const cnt = { all: ROOT_ENTRIES.length, prefix: 0, root: 0, suffix: 0 };
+  for (const e of ROOT_ENTRIES) cnt[e.kind] = (cnt[e.kind] || 0) + 1;
   chips.innerHTML = ['all', 'prefix', 'root', 'suffix'].map(k =>
     '<button class="rd-chip' + (rootsKind === k ? ' on' : '') + '" data-rdkind="' + k + '">' +
-    (k === 'all' ? '全部' : RD_KIND[k]) + '</button>').join('') +
+    (k === 'all' ? '全部' : RD_KIND[k]) + ' ' + cnt[k] + '</button>').join('') +
     '<span class="rd-n" style="margin-left:auto">共 ' + hits.length + ' 个</span>';
 
   if (!hits.length) {
@@ -6307,7 +6400,7 @@ function paintRoots() {
     if (L !== lastLetter) { h += '<div class="rd-letter">' + escapeHtml(L) + '</div>'; lastLetter = L; }
     const mates = MORPH_INDEX.get(e.m);
     h += '<div class="rd-item"><div class="rd-head" data-rdm="' + escapeHtml(e.m) + '">' +
-      '<span class="rd-m">' + escapeHtml(e.m) + '</span>' +
+      '<span class="rd-m ' + (e.kind === 'prefix' ? 'pf' : e.kind === 'suffix' ? 'sf' : 'rt') + '">' + escapeHtml(e.m) + '</span>' +
       '<span class="rd-mean">' + escapeHtml(gl(e.m, e.meaning)) + '</span>' +
       '<span class="rd-n">' + (e.examples.length ? e.examples.length + ' 例词' : '') +
       (mates && mates.size ? (e.examples.length ? ' · ' : '') + '已见 ' + mates.size : '') + '</span>' +
@@ -6891,6 +6984,10 @@ function renderReview() {
   h += '<div class="rev-date">' + ts + (cur.b ? ' · 第 ' + (cur.b + 1) + ' 档' : '') + '</div>';
   if (s.shown) {
     h += '<div class="rev-sum">' + escapeHtml(decodeEntities((EN_MODE() ? summaryFor(cur.w) : '') || cur.s || (EN_MODE() ? '(no definition)' : '(暂无释义)'))) + '</div>';
+    // 卡壳揭晓的那一瞬间给钩子：三色拆解 + 口诀（有缓存才显示，没有就给「现场编一句」的入口）
+    const rv = analyze(cur.w);
+    h += reviewMorphHTML(rv);
+    h += memoBlockHTML(rv);
     h += grades;
     h += '<button class="rev-btn" data-rev="full">查看完整卡片</button>';
   } else {
@@ -7005,17 +7102,18 @@ const ttsSpeedSel = document.getElementById('tts-speed');
 const ttsHint = document.getElementById('tts-hint');
 
 // 内置浏览器语音
-function speakBuiltin(text, rate) {
-  if (!('speechSynthesis' in window)) return;
+function speakBuiltin(text, rate, onEnd) {
+  if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = ttsBuiltinLang;
   u.rate = rate;
+  if (onEnd) u.onend = onEnd;
   speechSynthesis.speak(u);
 }
 
 // Kokoro 高音质：请求本地 TTS 服务合成并播放
-async function speakKokoro(text, speed) {
+async function speakKokoro(text, speed, onEnd) {
   const r = await fetch(KOKORO_URL + '/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -7025,19 +7123,21 @@ async function speakKokoro(text, speed) {
   const blob = await r.blob();
   const url = URL.createObjectURL(blob);
   const a = new Audio(url);
-  a.onended = () => URL.revokeObjectURL(url);
+  a.onended = () => { URL.revokeObjectURL(url); if (onEnd) onEnd(); };
   await a.play();
 }
 
 // 统一入口：按当前引擎播放，Kokoro 失败时静默回退内置语音。
 // speed 可选——只在「慢速朗读」快捷键（Shift+空格）时传，不写入设置。
-function speakText(text, speed) {
+// onEnd 可选——播放真正结束时回调（发音按钮的呼吸动画靠它收尾，别再用写死的定时器：
+// 单词 0.5 秒、长例句 5 秒，一个固定值必然对不上）。
+function speakText(text, speed, onEnd) {
   text = decodeEntities(text);   // 还原 &#x27;/&quot; 等实体，朗读才跟原文一致
   const sp = speed || ttsSpeed;
   if (ttsEngine === 'kokoro' && kokoroOk) {
-    speakKokoro(text, sp).catch(() => speakBuiltin(text, sp));
+    speakKokoro(text, sp, onEnd).catch(() => speakBuiltin(text, sp, onEnd));
   } else {
-    speakBuiltin(text, sp);
+    speakBuiltin(text, sp, onEnd);
   }
 }
 // 朗读当前卡片上的词（快捷键用）：卡片里的发音按钮带 data-w，直接借它取词
@@ -7212,9 +7312,12 @@ document.addEventListener('click', (e) => {
   if (tb) {
     const txt = tb.dataset.w || tb.dataset.text;
     if (txt) {
-      speakText(txt);
       tb.classList.add('playing');
-      setTimeout(() => tb.classList.remove('playing'), 800);
+      // 呼吸动画跟着真实播放走：播完（onend/onended）即灭。
+      // 另留 20 秒保险——语音引擎异常不回调时，图标不至于一直转下去。
+      const stop = () => tb.classList.remove('playing');
+      speakText(txt, undefined, stop);
+      setTimeout(stop, 20000);
     }
     return;
   }
