@@ -670,12 +670,22 @@
   .rd-more { margin-top: 12px; text-align: center; }
   /* 词频/词根目录：限制内容宽度与页面主体（搜索框、tab）对齐。
      不限制的话宽屏下列表会比上面宽出一大截、摊成一片，看着发散。 */
-  #freqview, #rootsview { max-width: 680px; margin: 0 auto; }
+  #freqview, #rootsview { max-width: 680px; margin: 20px auto 0; }
+  /* 返回顶部：目录类 tab 滚长了才出现（词频一页上千条，翻到底想回去很费劲） */
+  #to-top {
+    position: fixed; right: 26px; bottom: 26px; z-index: 8;
+    width: 44px; height: 44px; border-radius: 999px; cursor: pointer;
+    background: var(--glass-card-strong); border: 1px solid var(--glass-border);
+    color: var(--text); font-size: 17px;
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    opacity: 0; pointer-events: none; transition: opacity .2s, color .15s, border-color .15s;
+  }
+  #to-top.show { opacity: 1; pointer-events: auto; }
+  #to-top:hover { color: var(--accent); border-color: var(--accent); }
   /* 右侧计数列固定宽度 + 右对齐：否则「1 个变形」和「13 个变形」左边缘参差 */
   #freqview .rd-n, #rootsview .rd-n { min-width: 76px; text-align: right; }
   /* 词频目录：与上方 tab 拉开距离；释义限两行、超出省略；
      每行加分隔线并统一最小高度，免得长释义把行撑得长短不齐 */
-  #freqview { margin-top: 20px; }
   #freqview .rd-item { padding: 7px 0; border-top: 1px solid var(--line-1); }
   #freqview .rd-item:first-child { border-top: none; }
   #freqview .rd-head { align-items: flex-start; }
@@ -793,6 +803,7 @@
   <button class="tab" data-tab="fav" data-en="Favourites">收藏</button>
 </div>
 
+<button id="to-top" title="返回顶部" data-en="Back to top">↑</button>
 <div class="panel-mask" id="panel-mask"></div>
 <div class="panel" id="panel">
   <div class="panel-head">
@@ -6454,6 +6465,7 @@ function switchTab(name) {
   if (showFav) renderFavs();
   if (showRoots) paintRoots();
   if (showFreq) paintFreq();
+  syncToTop();   // 切 tab 后同步「返回顶部」的显隐
   if (showEx) {
     const iv = document.getElementById('ex-input').value.trim();
     if (iv) searchExamples(iv);
@@ -6610,7 +6622,8 @@ function paintFreq() {
   chips.innerHTML = Object.keys(BNC_FAMILIES).map(lv =>
     '<button class="rd-chip' + (fqLevel === lv ? ' on' : '') + '" data-fqlv="' + lv + '">' + lv + 'k</button>').join('') +
     '<span class="rd-n" style="margin-left:auto">第 ' + fqLevel + ' 个千词族 · 共 ' +
-    Object.keys(BNC_FAMILIES[fqLevel]).length + ' 个</span>';
+    Object.keys(BNC_FAMILIES[fqLevel]).length + ' 个</span>' +
+    '<button class="h-btn" id="fq-test" style="margin-left:12px" title="从这一级随机抽 20 个词族，按闪卡的方式自测（空格揭晓、1 忘了 / 2 记住了）">🎯 测这一级</button>';
   const fams = Object.keys(BNC_FAMILIES[fqLevel]).sort();
   const shown = fams.slice(0, fqLimit);
   let h = '';
@@ -6630,6 +6643,9 @@ function paintFreq() {
   translateDOM(list);
 }
 document.getElementById('freqview').addEventListener('click', (e) => {
+  // 点完必须 blur：焦点留在按钮上时，按空格会当成"再点一次按钮"（重新抽题），
+  // 而不是闪卡的"揭晓答案"
+  if (e.target.id === 'fq-test') { e.target.blur(); startFreqTest(fqLevel, 20); return; }
   const chip = e.target.closest('[data-fqlv]');
   if (chip) { fqLevel = chip.dataset.fqlv; fqLimit = 200; paintFreq(); return; }
   if (e.target.id === 'fq-more') { fqLimit += 400; paintFreq(); return; }
@@ -7061,6 +7077,20 @@ function startReview(all) {
     list = due.length ? due : shuffled(h);
   }
   reviewState = { list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0, requeued: 0, finished: false };
+  input.blur();   // 同上：焦点留在搜索框会让空格/评分键失灵
+  renderReview();
+}
+
+/* 按词频级别抽一批测一测：复用复习闪卡的交互（空格揭晓、1/2 自评），不另做一套。
+   评分走同一个 gradeCurrent，所以结果会写进历史并进 SRS 排程——
+   测出来的生词明天自动出现在「复习」里，"测 → 排程 → 巩固"的闭环不用额外写。 */
+function startFreqTest(level, n) {
+  if (!BNC_FAMILIES || !BNC_FAMILIES[level]) return;
+  const pick = shuffled(Object.keys(BNC_FAMILIES[level]).slice()).slice(0, n || 20);
+  const list = pick.map(w => normHistItem({ k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word' }));
+  reviewState = { list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0, requeued: 0, finished: false };
+  input.blur();         // 焦点吸在搜索框上会吞掉空格/1/2（页面 autofocus，用户常直接切过来点测试）
+  switchTab('query');   // 闪卡渲染在 #history，只有查询 tab 显示它
   renderReview();
 }
 
@@ -7663,6 +7693,16 @@ document.addEventListener('click', async (e) => {
   }
   btn.disabled = false;
 });
+
+/* 返回顶部：词根/词频目录一页上千条，滚下去后右下角浮出按钮 */
+const toTopBtn = document.getElementById('to-top');
+function syncToTop() {
+  if (!toTopBtn) return;   // switchTab 可能早于脚本末尾执行，兜一下
+  const inDir = ['rootsview', 'freqview'].some(id => document.getElementById(id).style.display !== 'none');
+  toTopBtn.classList.toggle('show', inDir && window.scrollY > 400);
+}
+window.addEventListener('scroll', syncToTop, { passive: true });
+toTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
 /* 拖拽搜索：从外部把词拖进输入框 → 直接替换内容（默认行为是插入，需拦截） */
 input.addEventListener('dragover', (e) => { e.preventDefault(); input.classList.add('drag-over'); });
