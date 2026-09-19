@@ -55,6 +55,7 @@ Kokoro 没装或启动失败时，页面会自动退回浏览器内置发音，�
 | 数据 | 规模 | 内容 | 在仓库里？ |
 |---|---|---|---|
 | `enhanced.json` | 约 1.4 万词 | 考试常见词：音标、中英释义、词根分解、词源、例句 | ✅ 14MB |
+| `bnc.json` | 约 4.3 万词形 | BNC-COCA 词频分级（1k–9k 千词族），卡片右上角的 `BNC 3k` 徽章 | ✅ 483KB |
 | `oxford.json` | 约 14.7 万条 | 牛津高阶9：词性、中英释义、例句 | ❌ |
 | `etym.json` | 约 5 万词 | Etymonline 词源 | ❌ |
 | `thes.json` | 约 7.3 万词 | 近义词 / 反义词 | ❌ |
@@ -68,6 +69,7 @@ Kokoro 没装或启动失败时，页面会自动退回浏览器内置发音，�
 - 词根词缀表和拆解引擎是项目自己写的
 - `ecdict.json` 来自 [skywind3000/ECDICT](https://github.com/skywind3000/ECDICT)（MIT）
 - `enhanced.json` 在 ECDICT 基础上整理扩充，词源演变链是自己整理的
+- `bnc.json` 来自 [The BNC-COCA Lists](https://github.com/wen-zhi/the-bnc-coca-lists) —— Paul Nation 编制的学术词频表（按词族分级），公开发布，可随仓库分发
 - **标 ❌ 的几个文件没有放进仓库**：`oxford.json` / `etym.json` / `thes.json` / `ex.json` 都是从商业版权词典（牛津高阶、Etymonline、朗文、柯林斯）派生的，公开分发不合适；`us_ipa.json` 的数据源本身是公开仓库，只是配套脚本没打包。
 
 缺了它们**不影响启动和核心功能** —— 拆解（引擎 + 词根表）、释义与音标（靠 `enhanced` + `ecdict`）、同根词、拼写纠错、段落模式、发音都正常。前端对每个数据文件是单独容错的，缺了只是对应区块不显示：

@@ -90,6 +90,9 @@
     },
     "roughage": {
       "d": "rough-age"
+    },
+    "examples": {
+      "d": "example-s"
     }
   },
   "partial词": {
@@ -107,10 +110,6 @@
     "vehemently": {
       "d": null,
       "p": "-ly|??vehement"
-    },
-    "document": {
-      "d": null,
-      "p": "doc|??ument"
     },
     "coops": {
       "d": null,
@@ -143,9 +142,6 @@
       "d": null
     },
     "services": {
-      "d": null
-    },
-    "examples": {
       "d": null
     },
     "fetter": {
@@ -200,6 +196,9 @@
     },
     "silly": {
       "d": null
+    },
+    "document": {
+      "d": "document"
     }
   }
 }

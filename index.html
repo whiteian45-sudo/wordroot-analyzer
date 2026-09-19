@@ -320,6 +320,8 @@
   }
   .badge.enhanced { color: var(--ok); border-color: rgba(126,226,168,0.3); background: rgba(126,226,168,0.12); }
   .badge.redir { color: var(--sub); border-color: var(--glass-border); background: var(--srf-2); font-weight: 400; }
+  /* 词频徽章：与「增强词表」「牛津9」那些来源徽章区分开，用金色 */
+  .badge.bnc { color: var(--gold); border-color: rgba(255,212,121,0.35); background: var(--gold-soft); font-weight: 600; }
   .ex-src { font-size: 10px; padding: 2px 6px; border-radius: 999px; margin-right: 6px; color: var(--sub); background: var(--srf-2); border: 1px solid var(--line-2); vertical-align: middle; }
   .ex-hl { background: rgba(110,168,255,0.28); color: var(--hl-fg); border-radius: 3px; padding: 0 2px; font-style: normal; }
   .breakdown { display: flex; align-items: stretch; gap: 6px; margin: 18px 0 4px; flex-wrap: wrap; }
@@ -768,6 +770,7 @@
 <div class="tabs">
   <button class="tab active" data-tab="query" data-en="Look up">查询</button>
   <button class="tab" data-tab="roots" data-en="Roots">词根</button>
+  <button class="tab" data-tab="freq" data-en="Frequency">词频</button>
   <button class="tab" data-tab="ex" data-en="Examples">例句</button>
   <button class="tab" data-tab="fav" data-en="Favourites">收藏</button>
 </div>
@@ -785,6 +788,11 @@
 <div id="history"></div>
 <div id="favlist" class="favlist" style="display:none"></div>
 <!-- 词根目录：搜索框与筛选条是静态的（重绘列表不会打断输入、切走再回来还留着），只有列表区被重画 -->
+<div id="freqview" style="display:none">
+  <!-- 词频目录：BNC-COCA 按千词族分级（1k-9k），按词频学单词的经典路径 -->
+  <div class="rd-chips" id="fq-chips"></div>
+  <div id="fq-list"></div>
+</div>
 <div id="rootsview" style="display:none">
   <div class="rd-bar">
     <input id="rd-input" placeholder="搜词素或含义，如 port / 携带" spellcheck="false" autocomplete="off">
@@ -3559,6 +3567,8 @@ const ENHANCED = {};
 const ECDICT = {};          // 全量词典，运行时从 ecdict.json 加载
 const OXFORD = {};          // 牛津9 数据层，运行时从 oxford.json 加载
 const ETYM = {};            // Etymonline 英文词源，运行时从 etym.json 加载
+const BNC_LEVEL = new Map();  // BNC-COCA 词频级别（词形 → "1".."9"），运行时从 bnc.json 加载
+let BNC_FAMILIES = null;      // {级别: {词族首词: [变形...]}}，"词频"目录用
 const THES = {};            // 近义词/反义词，运行时从 thes.json 加载
 const EX = {};              // 补充例句(朗文英英/柯林斯中英)，运行时从 ex.json 加载
 let DATA_READY = false;     // 数据是否加载完成;
@@ -3757,14 +3767,18 @@ function findCognates(word) {
    ============================================================ */
 const BASEWORDS = {
   "able": "能够的", "air": "空气", "all": "全部、都", "allow": "允许",
+  "affair": "事务、风流韵事",
   "aide": "助手",
   "amaze": "使惊奇",
   "amuse": "使发笑",
   "animal": "动物", "answer": "回答", "apple": "苹果", "argue": "争论",
   "ant": "蚂蚁",
   "any": "任何",
+  "approve": "批准",
   "arm": "手臂", "arrive": "到达", "ask": "询问", "baby": "婴儿",
+  "artist": "艺术家",
   "ass": "驴；蠢人",
+  "associate": "联合、交往",
   "athlete": "运动员",
   "awe": "敬畏",
   "awful": "可怕的、糟糕的",
@@ -3801,6 +3815,7 @@ const BASEWORDS = {
   "car": "汽车", "carpet": "地毯",
   "carry": "搬运", "cat": "猫", "catch": "抓住", "center": "中心",
   "case": "情况；箱子",
+  "centre": "中心",
   "chair": "椅子", "change": "改变", "cheap": "便宜的", "check": "检查",
   "chapter": "章节",
   "charge": "收费；指控",
@@ -3816,10 +3831,13 @@ const BASEWORDS = {
   "cloth": "布",
   "cloud": "云",
   "club": "俱乐部；棍棒",
+  "colour": "颜色",
   "common": "普通的", "continue": "继续", "cook": "烹饪", "cool": "凉爽的",
+  "community": "社区",
   "cookie": "饼干",
   "count": "数数", "cover": "覆盖", "cow": "牛", "cut": "切",
   "crazy": "疯狂的",
+  "create": "创造",
   "croft": "小农场",
   "crop": "庄稼；剪短",
   "crowd": "人群",
@@ -3830,8 +3848,12 @@ const BASEWORDS = {
   "date": "日期；枣",
   "deacon": "执事",
   "decide": "决定", "deep": "深的", "develop": "发展", "differ": "不同", "digit": "数字、手指",
+  "designate": "指定、标明",
+  "device": "装置",
   "dirty": "脏的", "discover": "发现", "discuss": "讨论",
   "diverse": "多样的", "dog": "狗", "door": "门", "draw": "画",
+  "document": "文件",
+  "dollar": "美元",
   "draft": "草稿；征兵",
   "dragon": "龙",
   "drama": "戏剧",
@@ -3842,13 +3864,19 @@ const BASEWORDS = {
   "dung": "粪",
   "early": "早的", "earth": "地球、泥土", "easy": "容易的", "eat": "吃",
   "elder": "年长的、长辈",
+  "employee": "雇员",
   "empty": "空的", "end": "末端、结束", "engineer": "工程师", "enjoy": "享受",
   "enter": "进入", "escape": "逃脱", "every": "每个", "explain": "解释",
+  "establish": "建立",
   "esteem": "尊重",
+  "example": "例子",
+  "expect": "期待",
   "eye": "眼睛", "face": "脸", "fall": "落下", "family": "家庭",
   "fairy": "仙女",
   "far": "远的", "farm": "农场", "fast": "快的", "father": "父亲",
   "favor": "恩惠、赞成",
+  "favour": "恩惠、赞成",
+  "feature": "特征",
   "fed": "喂（feed 过去式）",
   "feed": "喂养",
   "feel": "感觉", "field": "田野", "fight": "战斗", "find": "找到",
@@ -3872,6 +3900,7 @@ const BASEWORDS = {
   "gap": "缺口",
   "garden": "花园", "general": "一般的", "gentle": "温和的", "get": "得到",
   "gate": "大门",
+  "generate": "产生",
   "gift": "礼物",
   "gird": "束紧、围绕",
   "girl": "女孩", "give": "给予", "glad": "高兴的", "go": "走、去",
@@ -3907,20 +3936,28 @@ const BASEWORDS = {
   "high": "高的", "hold": "握住", "home": "家", "honest": "诚实的",
   "hill": "小山",
   "hive": "蜂巢",
+  "honour": "荣誉",
   "hope": "希望", "horse": "马", "hot": "热的", "house": "房子",
   "horn": "角；喇叭",
+  "host": "主人、主持",
   "hour": "小时",
   "huge": "巨大的", "hungry": "饥饿的", "hurt": "伤害", "ice": "冰",
   "hunt": "打猎",
   "imagine": "想象", "improve": "改善", "invite": "邀请", "jump": "跳",
+  "increase": "增加",
   "inn": "客栈",
+  "institution": "机构",
+  "instrument": "仪器",
+  "involve": "涉及",
   "jack": "千斤顶",
   "joy": "欢乐",
   "keep": "保持", "kick": "踢", "kill": "杀死", "kind": "善良的、种类",
   "kiss": "亲吻", "knee": "膝盖", "know": "知道", "lake": "湖",
   "knob": "球形把手",
+  "labour": "劳动",
   "lady": "女士",
   "land": "土地", "last": "最后的", "late": "晚的", "laugh": "笑",
+  "large": "大的",
   "law": "法律",
   "lay": "放置；下蛋",
   "lead": "带领", "leaf": "叶子", "learn": "学习", "leave": "离开",
@@ -3929,10 +3966,12 @@ const BASEWORDS = {
   "leg": "腿", "lend": "借出", "lick": "舔", "life": "生活、生命", "lift": "举起",
   "length": "长度",
   "let": "让、允许",
+  "level": "水平",
   "lie": "躺；说谎",
   "light": "光、轻的", "like": "喜欢", "listen": "听", "live": "生活、居住",
   "lily": "百合",
   "list": "清单、列表",
+  "locate": "位于",
   "lock": "锁", "long": "长的", "look": "看", "lose": "失去",
   "loin": "腰肉、腰部",
   "loom": "织布机；隐现",
@@ -3943,13 +3982,16 @@ const BASEWORDS = {
   "mad": "疯的、发怒的",
   "maid": "女仆、少女",
   "main": "主要的", "make": "制作", "manage": "管理", "manner": "举止、方式", "market": "市场",
+  "manufacture": "制造",
   "marry": "结婚", "mean": "意味、意思是", "meat": "肉", "meet": "遇见",
   "mat": "垫子",
+  "match": "比赛、匹配",
   "member": "成员",
   "mention": "提到", "middle": "中间", "milk": "牛奶", "miss": "错过、想念",
   "mesh": "网眼、网状",
   "mile": "英里",
   "mix": "混合", "money": "钱", "moon": "月亮", "mother": "母亲",
+  "modify": "修改",
   "molar": "臼齿",
   "more": "更多",
   "moss": "苔藓",
@@ -3960,12 +4002,14 @@ const BASEWORDS = {
   "near": "近的", "need": "需要", "new": "新的", "news": "新闻",
   "neck": "脖子",
   "neighbor": "邻居",
+  "neighbour": "邻居",
   "never": "从不",
   "next": "下一个", "nice": "好的", "night": "夜晚", "nose": "鼻子", "notice": "注意",
   "nine": "九",
   "ninny": "傻瓜",
   "noon": "正午",
   "nova": "新星",
+  "nurse": "护士",
   "nut": "坚果",
   "odd": "奇怪的；奇数",
   "off": "离开、关掉",
@@ -3974,6 +4018,7 @@ const BASEWORDS = {
   "one": "一",
   "own": "自己的、拥有", "paint": "画画、油漆", "paper": "纸、报纸", "polish": "擦亮、抛光",
   "parent": "父母", "park": "公园", "part": "部分", "pass": "经过",
+  "partner": "伙伴",
   "path": "小路", "pay": "支付", "peace": "和平", "people": "人们",
   "person": "人", "pink": "粉色的", "plane": "飞机", "plant": "植物、种植",
   "piece": "一片、一块",
@@ -3988,6 +4033,7 @@ const BASEWORDS = {
   "power": "力量、权力",
   "press": "按压", "print": "印刷", "produce": "生产", "proper": "适当的",
   "price": "价格",
+  "program": "程序",
   "protect": "保护", "provide": "提供", "public": "公共的", "pull": "拉",
   "publish": "出版",
   "punch": "拳打；冲床",
@@ -3997,8 +4043,12 @@ const BASEWORDS = {
   "rail": "栏杆、铁路",
   "rain": "雨", "reach": "到达", "read": "读", "ready": "准备好的",
   "real": "真实的", "receive": "收到", "red": "红色的", "refuse": "拒绝",
+  "recipe": "食谱",
   "regular": "规则的", "remain": "保持", "remember": "记住", "repeat": "重复",
+  "release": "释放、发布",
   "reply": "回复", "return": "返回", "rice": "米饭", "rich": "富有的",
+  "rest": "休息",
+  "restaurant": "餐馆",
   "rhythm": "节奏",
   "rick": "草堆",
   "ride": "骑", "right": "正确的、右边", "river": "河", "road": "道路",
@@ -4045,9 +4095,11 @@ const BASEWORDS = {
   "snap": "猛咬、快照",
   "sofa": "沙发",
   "some": "一些", "son": "儿子", "song": "歌曲", "sour": "酸的",
+  "sort": "种类、排序",
   "source": "源头",
   "space": "空间",
   "speak": "说话", "special": "特别的", "spend": "花费", "sport": "运动",
+  "specify": "指定、详述",
   "speed": "速度",
   "spill": "洒出",
   "spit": "吐；唾液",
@@ -4062,10 +4114,12 @@ const BASEWORDS = {
   "stir": "搅拌",
   "stock": "存货、股票",
   "storm": "暴风雨", "story": "故事", "street": "街道", "strong": "强壮的",
+  "strategy": "策略",
   "stretch": "伸展",
   "study": "学习", "succeed": "成功", "sugar": "糖", "suggest": "建议",
   "stuff": "东西、材料",
   "stumble": "绊倒",
+  "submit": "提交",
   "suit": "套装；适合",
   "sun": "太阳", "supply": "供应", "support": "支持", "suppose": "假设",
   "sure": "确定的", "surprise": "使惊讶", "sweet": "甜的", "swim": "游泳",
@@ -4078,6 +4132,10 @@ const BASEWORDS = {
   "tasse": "咖啡杯",
   "tattle": "闲谈、告密",
   "teach": "教、讲授", "tell": "告诉", "thank": "感谢", "thing": "东西、事情",
+  "technique": "技术",
+  "technology": "技术",
+  "teen": "十几岁",
+  "theatre": "剧院",
   "thick": "厚的",
   "think": "思考", "throat": "喉咙", "throw": "扔", "tired": "疲倦的", "to": "到、向、对于",
   "thorough": "彻底的",
@@ -4097,6 +4155,7 @@ const BASEWORDS = {
   "truth": "真相",
   "tumor": "肿瘤",
   "turn": "转动", "type": "打字、类型", "use": "使用", 
+  "value": "价值",
   "visit": "参观、拜访", "wait": "等待", "wake": "醒来", "walk": "步行",
   "vote": "投票",
   "waist": "腰",
@@ -4211,6 +4270,7 @@ const ROOT_BLOCK = {
   'baselateral': ['base'], 'basendite': ['base'], 'basedoid': ['base'],
   'bibelots': ['lots'], 'beavertail': ['be'], 'bumfreezer': ['freeze'],
   'bombilate': ['bomb'], 'bombination': ['bomb'], 'bombicesterol': ['bomb'],
+  'hostility': ['host'], 'hostilities': ['host'], 'airhostess': ['host'],
   /* darn 基本词上线后（darned/darning 转正）的专名/外来词误伤：Darnton/Darnall 是人名、darne 是法语鱼片；
      necrosed 被拆出 sed(坐)，应回退 */
   'darnton': ['darn'], 'darnall': ['darn'], 'darne': ['darn'],
@@ -5471,6 +5531,21 @@ async function loadData() {
       const exx = await fetchJSON('ex.json', setProg, 53, 62);
       Object.assign(EX, exx);
     } catch (e) { console.warn('ex.json 加载失败', e); }
+    // BNC-COCA 词频分级（Paul Nation 公开学术词表）：文件小，不占进度条，失败也不影响主体
+    try {
+      const rr = await fetch('bnc.json', { cache: 'no-store' });
+      if (rr.ok) {
+        const j = await rr.json();
+        // j = {级别: {词族首词: [变形...]}}：词形和首词都进查找表，"词频"目录用原始结构
+        for (const lv of Object.keys(j)) {
+          for (const hw of Object.keys(j[lv])) {
+            BNC_LEVEL.set(hw, lv);
+            for (const f of j[lv][hw]) BNC_LEVEL.set(f, lv);
+          }
+        }
+        BNC_FAMILIES = j;
+      }
+    } catch (e) { console.warn('bnc.json 加载失败', e); }
     LOAD_STATE.done = 5; setPill('词库装载中 ' + loadFrac());
     textEl.textContent = '例句完成，正在加载全量词典…';
     // 全量词典优先走分片（dict/ 目录，由 split_ecdict.py 生成）：
@@ -5904,8 +5979,28 @@ function cardHTML(r) {
   return html;
 }
 
+/* 词频徽章：BNC-COCA（Paul Nation 的词族词频表）按「千词族」分 1k–9k 级。
+   查到就把级别挂在标题旁——备考时"这个词值不值得先学"一眼有数。
+   数据是学术机构公开发布的，与牛津/Etymonline 那些不能公开分发的不同，可以随仓库走。 */
+function bncLevelOf(r) {
+  const w = String((r && (r.headword || r.word)) || '').toLowerCase();
+  return w ? (BNC_LEVEL.get(w) || '') : '';
+}
+function decorateBnc(scope, r) {
+  const lv = bncLevelOf(r);
+  if (!lv) return;
+  const wEl = scope.querySelector('.word-line .word');
+  if (!wEl) return;
+  wEl.insertAdjacentHTML('afterend',
+    '<span class="badge bnc" title="' + (EN_MODE()
+      ? 'Word frequency band ' + lv + 'k (BNC/COCA merged list by Paul Nation) — in the ' + lv + 'k most frequent word families'
+      : '词频等级 ' + lv + 'k：属于最常用的第 ' + lv + ' 个千词族。分级依据 BNC（英式）+ COCA（美式）两个语料库合并后的词族频次，Paul Nation 编制') +
+    '">' + (EN_MODE() ? 'Top ' + lv + 'k' : '前 ' + lv + 'k 词') + '</span>');
+}
+
 function render(r) {
   result.innerHTML = cardHTML(r);
+  decorateBnc(result, r);
   result.classList.add('show');
   if (worthRecording(r)) saveHistory(r);
   const side = document.getElementById('side-rel');
@@ -6256,6 +6351,7 @@ function openPanel(word) {
       '）…<br>「' + escapeHtml(word) + '」暂时查不到，不代表它不存在。</div></div>';
   } else {
     body.innerHTML = cardHTML(r);
+    decorateBnc(body, r);
   }
   document.getElementById('panel-title').textContent = word + (EN_MODE() ? ' · details' : ' · 详细');
   document.getElementById('panel-mask').classList.add('show');
@@ -6325,15 +6421,21 @@ function switchTab(name) {
   const showFav = name === 'fav';
   const showEx = name === 'ex';
   const showRoots = name === 'roots';
+  const showFreq = name === 'freq';
   document.getElementById('favlist').style.display = showFav ? 'block' : 'none';
   document.getElementById('exsearch').style.display = showEx ? 'block' : 'none';
   document.getElementById('rootsview').style.display = showRoots ? 'block' : 'none';
+  document.getElementById('freqview').style.display = showFreq ? 'block' : 'none';
   // #result / #history 靠 CSS 的 .show 类显示，这里给 inline '' 会回落到 display:none；
-  // 词根 tab 也必须算进隐藏条件，否则上一次查词卡会留在词根目录上方
-  document.getElementById('result').style.display = (showFav || showEx || showRoots) ? 'none' : '';
-  document.getElementById('history').style.display = (showFav || showEx || showRoots) ? 'none' : '';
+  // 词根/词频 tab 也必须算进隐藏条件，否则上一次查词卡会留在目录上方
+  document.getElementById('result').style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
+  document.getElementById('history').style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
+  // 左侧「相关词汇」栏是 fixed 定位，切到目录类 tab 时要收起来，否则会压在列表上
+  const side = document.getElementById('side-rel');
+  if (side) side.style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
   if (showFav) renderFavs();
   if (showRoots) paintRoots();
+  if (showFreq) paintFreq();
   if (showEx) {
     const iv = document.getElementById('ex-input').value.trim();
     if (iv) searchExamples(iv);
@@ -6473,6 +6575,49 @@ function paintRoots() {
   translateDOM(chips);   // 词根目录是独立渲染路径，不走 render()——翻译层得自己补
   translateDOM(list);    // （切英文后，筛选按钮和「共 N 个 / 已见 N」都在这里生成）
 }
+
+/* 词频目录：按 BNC-COCA 的千词族级别浏览。
+   按词频过单词比按词根更接近"过单词书"的习惯；收藏过的标 ★，方便看这一级走到哪了。
+   数据是词族结构（首词 + 变形），所以 take/took/taken 只占一行。 */
+let fqLevel = '1';
+let fqLimit = 200;
+function paintFreq() {
+  const chips = document.getElementById('fq-chips');
+  const list = document.getElementById('fq-list');
+  if (!chips || !list) return;
+  if (!BNC_FAMILIES) {
+    list.innerHTML = '<div class="card"><div class="miss">词频数据（bnc.json）没加载上。</div></div>';
+    return;
+  }
+  chips.innerHTML = Object.keys(BNC_FAMILIES).map(lv =>
+    '<button class="rd-chip' + (fqLevel === lv ? ' on' : '') + '" data-fqlv="' + lv + '">' + lv + 'k</button>').join('') +
+    '<span class="rd-n" style="margin-left:auto">第 ' + fqLevel + ' 个千词族 · 共 ' +
+    Object.keys(BNC_FAMILIES[fqLevel]).length + ' 个</span>';
+  const fams = Object.keys(BNC_FAMILIES[fqLevel]).sort();
+  const shown = fams.slice(0, fqLimit);
+  let h = '';
+  for (const hw of shown) {
+    const nl = BNC_FAMILIES[fqLevel][hw].length;
+    h += '<div class="rd-item"><div class="rd-head" data-fq="' + escapeHtml(hw) + '">' +
+      '<span class="rd-m rt" style="min-width:110px">' + (isFav(hw) ? '★ ' : '') + escapeHtml(hw) + '</span>' +
+      '<span class="rd-mean">' + escapeHtml(summaryFor(hw) || '') + '</span>' +
+      '<span class="rd-n">' + (nl ? nl + ' 个变形' : '') + '</span>' +
+      '</div></div>';
+  }
+  if (fams.length > shown.length) {
+    h += '<div class="rd-more"><button class="h-btn" id="fq-more">继续加载（还有 ' + (fams.length - shown.length) + ' 个）</button></div>';
+  }
+  list.innerHTML = h;
+  translateDOM(chips);
+  translateDOM(list);
+}
+document.getElementById('freqview').addEventListener('click', (e) => {
+  const chip = e.target.closest('[data-fqlv]');
+  if (chip) { fqLevel = chip.dataset.fqlv; fqLimit = 200; paintFreq(); return; }
+  if (e.target.id === 'fq-more') { fqLimit += 400; paintFreq(); return; }
+  const head = e.target.closest('[data-fq]');
+  if (head) { switchTab('query'); input.value = head.dataset.fq; search(); return; }
+});
 
 let rdTimer = null;
 document.getElementById('rd-input').addEventListener('input', () => {
