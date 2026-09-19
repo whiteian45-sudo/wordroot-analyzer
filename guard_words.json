@@ -1,73 +1,205 @@
 {
   "说明": "回归守护清单：d=期望的 decompose 结果(null=不得完整拆解), p=期望的 partial 结果(可省略)。改拆解引擎/词根表后跑 node test_decompose.js --guard，任何不匹配即回归。",
   "转正词": {
-    "triceratops": { "d": "tri|cerat+ops" },
-    "protoceratops": { "d": "proto+cerat+ops" },
-    "protozoa": { "d": "proto+zoa" },
-    "prototype": { "d": "proto+type" },
-    "solstice": { "d": "sol+stice" },
-    "zoology": { "d": "zoo-logy" },
-    "cyclops": { "d": "cycl+ops" },
-    "autopsy": { "d": "aut+ops-y" },
-    "synopsis": { "d": "syn|ops-is" },
-    "incarceration": { "d": "in|carcer-ation" },
-    "evisceration": { "d": "e|viscer-ation" },
-    "visceral": { "d": "viscer-al" },
-    "complete": { "d": "com|plete" },
-    "apply": { "d": "ap|ply" },
-    "tropism": { "d": "trop-ism" },
-    "trophic": { "d": "troph-ic" },
-    "entropy": { "d": "en|trop-y" },
-    "isometric": { "d": "iso|metr-ic" },
-    "acquaintances": { "d": "ac|quaint-ance-s" },
-    "applications": { "d": "ap|plic-ation-s" },
-    "decisions": { "d": "de|cis-ion-s" },
-    "questions": { "d": "quest-ion-s" },
-    "temperature": { "d": "temper-ature" },
-    "temperance": { "d": "temper-ance" },
-    "quartile": { "d": "quart-ile" },
-    "democracy": { "d": "dem+cracy" },
-    "astrophile": { "d": "astro|phil-e" },
-    "mobile": { "d": "mob-ile" },
-    "graduate": { "d": "grad-uate" },
-    "roughage": { "d": "rough-age" }
+    "triceratops": {
+      "d": "tri|cerat+ops"
+    },
+    "protoceratops": {
+      "d": "proto+cerat+ops"
+    },
+    "protozoa": {
+      "d": "proto+zoa"
+    },
+    "prototype": {
+      "d": "proto+type"
+    },
+    "solstice": {
+      "d": "sol+stice"
+    },
+    "zoology": {
+      "d": "zoo-logy"
+    },
+    "cyclops": {
+      "d": "cycl+ops"
+    },
+    "autopsy": {
+      "d": "auto+opsy"
+    },
+    "synopsis": {
+      "d": "syn|ops-is"
+    },
+    "incarceration": {
+      "d": "in|carcer-ation"
+    },
+    "evisceration": {
+      "d": "e|viscer-ation"
+    },
+    "visceral": {
+      "d": "viscer-al"
+    },
+    "complete": {
+      "d": "com|plete"
+    },
+    "apply": {
+      "d": "ap|ply"
+    },
+    "tropism": {
+      "d": "trop-ism"
+    },
+    "trophic": {
+      "d": "troph-ic"
+    },
+    "entropy": {
+      "d": "en|trop-y"
+    },
+    "isometric": {
+      "d": "iso|metr-ic"
+    },
+    "acquaintances": {
+      "d": "ac|quaint-ance-s"
+    },
+    "applications": {
+      "d": "ap|plic-ation-s"
+    },
+    "decisions": {
+      "d": "de|cis-ion-s"
+    },
+    "questions": {
+      "d": "quest-ion-s"
+    },
+    "temperature": {
+      "d": "temper-ature"
+    },
+    "temperance": {
+      "d": "temper-ance"
+    },
+    "quartile": {
+      "d": "quart-ile"
+    },
+    "democracy": {
+      "d": "dem+cracy"
+    },
+    "astrophile": {
+      "d": "astro|phil-e"
+    },
+    "mobile": {
+      "d": "mob-ile"
+    },
+    "graduate": {
+      "d": "grad-uate"
+    },
+    "roughage": {
+      "d": "rough-age"
+    }
   },
   "partial词": {
-    "binary": { "d": "bin-ary" },
-    "architecture": { "d": null, "p": "arch|??itecture" },
-    "protocol": { "d": null, "p": "proto|??col" },
-    "vehemently": { "d": null, "p": "-ly|??vehement" },
-    "document": { "d": null, "p": "doc|??ument" },
-    "coops": { "d": null, "p": "co||??ops" },
-    "eviscerated": { "d": null, "p": "-ed|??eviscerat" },
-    "isolate": { "d": null, "p": "-ate|??isol" },
-    "willing": { "d": null, "p": "-ing|??will" }
+    "binary": {
+      "d": "bin-ary"
+    },
+    "architecture": {
+      "d": null,
+      "p": "arch|??itecture"
+    },
+    "protocol": {
+      "d": null,
+      "p": "proto|??col"
+    },
+    "vehemently": {
+      "d": null,
+      "p": "-ly|??vehement"
+    },
+    "document": {
+      "d": null,
+      "p": "doc|??ument"
+    },
+    "coops": {
+      "d": null,
+      "p": "co||??ops"
+    },
+    "eviscerated": {
+      "d": null,
+      "p": "-ed|??eviscerat"
+    },
+    "isolate": {
+      "d": null,
+      "p": "-ate|??isol"
+    },
+    "willing": {
+      "d": null,
+      "p": "-ing|??will"
+    }
   },
   "防误伤词": {
-    "cerate": { "d": null },
-    "wallops": { "d": null },
-    "losses": { "d": null },
-    "benches": { "d": null },
-    "services": { "d": null },
-    "examples": { "d": null },
-    "fetter": { "d": null },
-    "spleen": { "d": null },
-    "canary": { "d": null },
-    "dorough": { "d": null },
-    "anastrophe": { "d": null },
-    "retropatellar": { "d": null },
-    "zoomed": { "d": null },
-    "zoonose": { "d": null },
-    "incarcerated": { "d": null }
+    "cerate": {
+      "d": null
+    },
+    "wallops": {
+      "d": null
+    },
+    "losses": {
+      "d": null
+    },
+    "benches": {
+      "d": null
+    },
+    "services": {
+      "d": null
+    },
+    "examples": {
+      "d": null
+    },
+    "fetter": {
+      "d": null
+    },
+    "spleen": {
+      "d": null
+    },
+    "canary": {
+      "d": null
+    },
+    "dorough": {
+      "d": null
+    },
+    "anastrophe": {
+      "d": null
+    },
+    "retropatellar": {
+      "d": null
+    },
+    "zoomed": {
+      "d": null
+    },
+    "zoonose": {
+      "d": null
+    },
+    "incarcerated": {
+      "d": null
+    }
   },
   "基本词整词": {
-    "family": { "d": "family" },
-    "air": { "d": "air" },
-    "bread": { "d": "bread" },
-    "rough": { "d": "rough" },
-    "come": { "d": "come" },
-    "sure": { "d": "sure" },
-    "only": { "d": null },
-    "silly": { "d": null }
+    "family": {
+      "d": "family"
+    },
+    "air": {
+      "d": "air"
+    },
+    "bread": {
+      "d": "bread"
+    },
+    "rough": {
+      "d": "rough"
+    },
+    "come": {
+      "d": "come"
+    },
+    "sure": {
+      "d": "sure"
+    },
+    "only": {
+      "d": null
+    },
+    "silly": {
+      "d": null
+    }
   }
 }

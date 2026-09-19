@@ -37,6 +37,19 @@ OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434')
 OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen3:1.7b')
 _IO_LOCK = threading.Lock()
 
+# 翻译任务的系统提示（整段翻译、逐句对照共用同一套口径）
+TRANSLATE_SYSTEM = ('你是一位专业中英翻译。把用户提供的英文翻译成简体中文。严格遵循：忠实原文、语言自然通顺；'
+                    '只输出译文本身，不要任何解释、注释或额外文字；若原文有多段，逐段对应翻译。')
+# 助记口诀：给的是「单词 + 词根拆解 + 释义」，只要一句话
+MEMO_SYSTEM = ('你是一位幽默的英语词汇老师。用户会给你一个单词、它的词根词缀拆解和中文释义。'
+               '请用一句极短、生动、有画面感的中文（25 字以内）说明这个词为什么是这个意思，'
+               '可以用比喻、联想或玩梗帮助记忆。只输出这一句话，不要引号、编号或任何多余文字。')
+# 英文版助记：界面是中文时用（中文界面给英文钩子、英文界面给中文钩子，换一种语言加深印象）
+MEMO_SYSTEM_EN = ('You are a witty English vocabulary teacher. The user gives you a word, its morpheme breakdown '
+                  'and a Chinese definition. Reply with ONE very short, vivid, memorable English sentence '
+                  '(at most 15 words) explaining why the word means what it means — use a metaphor, image or pun. '
+                  'Output only that sentence: no quotes, no numbering, no extra text.')
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIR, **kwargs)
@@ -107,6 +120,47 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 # 连接失败（如 Ollama 未启动）：头还没发，可正常回 JSON
                 self._send_json({'ok': False, 'err': '无法连接本地 Ollama（' + str(e) + '）。请确认它已启动。'}, 502)
             return
+        # /memo：本地 Ollama 依「单词 + 词根拆解 + 释义」生成一句记忆口诀（流式，做法同 /translate）
+        if path == '/memo':
+            try:
+                ln = int(self.headers.get('Content-Length', 0))
+                body = json.loads(self.rfile.read(ln) or b'{}')
+            except Exception:
+                body = {}
+            word = (body.get('word') or '').strip()
+            morph = (body.get('morph') or '').strip()
+            meaning = (body.get('meaning') or '').strip()
+            if not word:
+                self._send_json({'ok': False, 'err': '没有要助记的单词'}, 400)
+                return
+            prompt = '单词：' + word
+            if morph:
+                prompt += '\n词根词缀拆解：' + morph
+            if meaning:
+                prompt += '\n释义：' + meaning
+            model = body.get('model') or OLLAMA_MODEL
+            # 界面语言与助记语言相反：中文界面出英文口诀、英文界面出中文口诀
+            system = MEMO_SYSTEM_EN if str(body.get('lang') or '').lower() == 'en' else MEMO_SYSTEM
+            try:
+                it = iter_chat_stream(prompt, model, False, system)
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.send_header('Cache-Control', 'no-store')
+                self.end_headers()
+                for chunk in it:
+                    self.wfile.write(chunk.encode('utf-8'))
+                    self.wfile.flush()
+            except urllib.error.HTTPError as e:
+                try:
+                    err = json.loads(e.read().decode('utf-8')).get('error', str(e))
+                except Exception:
+                    err = str(e)
+                if 'not found' in err.lower():
+                    err = '本地还没装这个模型，请先在命令行运行：ollama pull ' + model
+                self._send_json({'ok': False, 'err': err}, 502)
+            except Exception as e:
+                self._send_json({'ok': False, 'err': '无法连接本地 Ollama（' + str(e) + '）。请确认它已启动。'}, 502)
+            return
         # /history：把前端发来的历史全量写入项目目录下的 history.json
         if self.path.split('?')[0] == '/history':
             try:
@@ -130,15 +184,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_error(405)
 
 
-def iter_chat_stream(text, model, think=False):
-    """流式调本地 Ollama 翻译整段，逐块 yield 译文增量。
+def iter_chat_stream(text, model, think=False, system=None):
+    """流式调本地 Ollama，逐块 yield 增量文本（默认按整段翻译任务）。
        连接/加载失败抛异常（此时 HTTP 头未发，调用方可回 JSON 错误）。"""
     payload = {
         'model': model,
         'stream': True,
         'think': think,   # 难句更精准：qwen3 开思考(更准但更慢)
         'messages': [
-            {'role': 'system', 'content': '你是一位专业中英翻译。把用户提供的英文翻译成简体中文。严格遵循：忠实原文、语言自然通顺；只输出译文本身，不要任何解释、注释或额外文字；若原文有多段，逐段对应翻译。'},
+            {'role': 'system', 'content': system or TRANSLATE_SYSTEM},
             {'role': 'user', 'content': text},
         ],
         'options': {'num_gpu': 0},   # 本机 GPU 推理崩(0xc0000005)，强制 CPU
@@ -177,7 +231,7 @@ def translate_to_chinese(text, model):
         # 本机 GPU 推理崩(0xc0000005)，强制 CPU；小模型很快
         'options': {'num_gpu': 0},
         'messages': [
-            {'role': 'system', 'content': '你是一位专业中英翻译。把用户提供的英文翻译成简体中文。严格遵循：忠实原文、语言自然通顺；只输出译文本身，不要任何解释、注释或额外文字；若原文有多段，逐段对应翻译。'},
+            {'role': 'system', 'content': TRANSLATE_SYSTEM},
             {'role': 'user', 'content': text},
         ],
     }
