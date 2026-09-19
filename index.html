@@ -668,6 +668,24 @@
   .rd-sub { color: var(--accent); font-size: 11.5px; font-weight: 600; margin: 10px 0 3px; }
   .rd-sub .rd-n { font-weight: 400; margin-left: 6px; }
   .rd-more { margin-top: 12px; text-align: center; }
+  /* 词频/词根目录：限制内容宽度与页面主体（搜索框、tab）对齐。
+     不限制的话宽屏下列表会比上面宽出一大截、摊成一片，看着发散。 */
+  #freqview, #rootsview { max-width: 680px; margin: 0 auto; }
+  /* 右侧计数列固定宽度 + 右对齐：否则「1 个变形」和「13 个变形」左边缘参差 */
+  #freqview .rd-n, #rootsview .rd-n { min-width: 76px; text-align: right; }
+  /* 词频目录：与上方 tab 拉开距离；释义限两行、超出省略；
+     每行加分隔线并统一最小高度，免得长释义把行撑得长短不齐 */
+  #freqview { margin-top: 20px; }
+  #freqview .rd-item { padding: 7px 0; border-top: 1px solid var(--line-1); }
+  #freqview .rd-item:first-child { border-top: none; }
+  #freqview .rd-head { align-items: flex-start; }
+  #freqview .rd-mean {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; line-height: 1.45; min-height: 2.9em;
+    white-space: normal;   /* 必须覆盖 .rd-mean 的 nowrap，否则永远只显示一行 */
+    text-overflow: clip;
+  }
+  #freqview .rd-m { padding-top: 1px; }
   /* 例句搜索：这个容器原先一条样式都没有，作为 body 的 flex 子项（align-items:center）
      会被压缩成"内容宽度"，导致整块比别的 tab 又窄又右移，还紧贴 tab 没有间距。
      补上和 #history/#favlist/#rootsview 一致的宽度约束。 */
@@ -6616,7 +6634,8 @@ document.getElementById('freqview').addEventListener('click', (e) => {
   if (chip) { fqLevel = chip.dataset.fqlv; fqLimit = 200; paintFreq(); return; }
   if (e.target.id === 'fq-more') { fqLimit += 400; paintFreq(); return; }
   const head = e.target.closest('[data-fq]');
-  if (head) { switchTab('query'); input.value = head.dataset.fq; search(); return; }
+  // 走右侧面板：目录不被打断，关掉面板接着往下看（与段落模式点词一致）
+  if (head) { openPanel(head.dataset.fq); return; }
 });
 
 let rdTimer = null;
