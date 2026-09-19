@@ -5548,16 +5548,48 @@ function memoMeaning(r) {
   if (ec && ec.t) return ec.t.replace(/\\r?\\n/g, '；').slice(0, 80);
   return '';
 }
+/* 助记缓存：localStorage 按「词 + 语言」存一条（中文界面存的是英文助记、英文界面相反，
+   不带语言会串）。清站点数据会丢，但助记可再生（再点一次 1-2 秒），不值得上服务端。 */
+const MEMO_KEY = 'wr_memo';
+function loadMemos() {
+  try { return JSON.parse(localStorage.getItem(MEMO_KEY)) || {}; } catch (e) { return {}; }
+}
+function memoCacheKey(w, lang) { return String(w).toLowerCase() + '|' + lang; }
+function saveMemo(w, lang, text) {
+  const m = loadMemos();
+  m[memoCacheKey(w, lang)] = { t: text, l: lang, ts: Date.now() };
+  const ks = Object.keys(m);
+  if (ks.length > 800) {   // 上限：超了按时间戳删最旧的一批，防无限增长
+    ks.sort((a, b) => (m[a].ts || 0) - (m[b].ts || 0)).slice(0, ks.length - 800).forEach(k => delete m[k]);
+  }
+  try { localStorage.setItem(MEMO_KEY, JSON.stringify(m)); } catch (e) {}
+}
+/* 助记文本上屏：英文助记里的词切成可点 token（复用段落模式的 .ptok，
+   点击由 #result 的委托统一转给右侧面板，这里不用再绑事件）。
+   中文助记直接转义输出——中文没有拆解需求。 */
+function memoTextHTML(text, lang) {
+  if (lang !== 'en') return escapeHtml(text);
+  return String(text).split(/(\s+)/).map(tok => {
+    if (!/^[A-Za-z']+$/.test(tok)) return escapeHtml(tok);
+    const key = tok.toLowerCase().replace(/[^a-z]/g, '');
+    if (!key || !noteHasValue(analyze(key), key)) return escapeHtml(tok);
+    return `<span class="ptok" data-w="${escapeHtml(tok)}">${escapeHtml(tok)}</span>`;
+  }).join('');
+}
+
 function memoBlockHTML(r) {
   if (r.reason) return '';                    // 「查不到」的卡片不挂助记
   const morph = memoMorphText(r);
   if (!morph) return '';
   const q = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const lang = EN_MODE() ? 'zh' : 'en';       // 助记语言与界面相反
+  const cached = loadMemos()[memoCacheKey(r.word, lang)];
   return `<div class="meaning memo-wrap"><button class="memo-btn" data-memo="${q(r.word)}"` +
     ` data-morph="${q(morph)}" data-meaning="${q(memoMeaning(r))}"` +
-    ` title="按词根编一句话助记（中文界面出英文、英文界面出中文）">💡 AI 助记</button>` +
-    `<div class="memo-box" hidden></div></div>`;
+    ` title="按词根编一句话助记（中文界面出英文、英文界面出中文）">` +
+    (cached ? '💡 重新生成' : '💡 AI 助记') + `</button>` +
+    `<div class="memo-box"${cached ? '' : ' hidden'}>${cached ? memoTextHTML(cached.t, cached.l) : ''}</div></div>`;
 }
 
 function cardHTML(r) {
@@ -7289,10 +7321,17 @@ document.addEventListener('click', async (e) => {
         const { value, done } = await reader.read();
         if (done) break;
         acc += dec.decode(value, { stream: true });
-        box.textContent = acc;
+        box.textContent = acc;   // 流式期间保持纯文本：逐字重排 DOM 会闪
       }
-      btn.textContent = acc.trim() ? '💡 重新生成' : label;
-      if (!acc.trim()) box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
+      if (acc.trim()) {
+        const lang = EN_MODE() ? 'zh' : 'en';
+        box.innerHTML = memoTextHTML(acc, lang);   // 出完再切词，英文助记的词就能点开拆解了
+        saveMemo(btn.dataset.memo, lang, acc);
+        btn.textContent = '💡 重新生成';
+      } else {
+        box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
+        btn.textContent = label;
+      }
     }
   } catch (err) {
     box.innerHTML = '<span class="memo-err">请求失败：' + escapeHtml(err.message || String(err)) + '</span>';
