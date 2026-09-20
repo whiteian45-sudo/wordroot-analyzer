@@ -343,6 +343,14 @@
   .morph.sf { border-color: rgba(110,231,183,0.38); background-image: linear-gradient(180deg, rgba(16,185,129,0.18), rgba(16,185,129,0.05)); }
   .morph.sf b { color: var(--sf-c); }
   .morph.uk b { color: var(--sub); }
+  /* 格林法则⚡角标：词素块内的小「认亲」标记，点它去查那个日耳曼表亲。
+     用金色而不用三色，免得和「前缀/词根/后缀」的色义编码打架。 */
+  .grimm {
+    display: inline-block; margin-top: 3px; padding: 1px 6px; border-radius: 999px;
+    font-size: 10.5px; line-height: 1.6; cursor: pointer; white-space: nowrap; font-weight: 600;
+    color: var(--gold); border: 1px solid rgba(255,212,121,0.35); background: var(--gold-soft);
+  }
+  .grimm:hover { filter: brightness(1.3); }
   .plus { color: var(--sub); font-size: 18px; align-self: center; padding-bottom: 0; }
   .breakdown:has(> .morph:only-child) { justify-content: center; }
   .breakdown:has(> .morph:only-child) .morph { flex: 0 1 auto; }
@@ -3598,6 +3606,7 @@ const OXFORD = {};          // 牛津9 数据层，运行时从 oxford.json 加�
 const ETYM = {};            // Etymonline 英文词源，运行时从 etym.json 加载
 const BNC_LEVEL = new Map();  // BNC-COCA 词频级别（词形 → "1".."9"），运行时从 bnc.json 加载
 let BNC_FAMILIES = null;      // {级别: {词族首词: [变形...]}}，"词频"目录用
+const STRESS = {};            // 主重音在「倒数第几音节」，运行时从 stress.json 加载（CMU 发音词典派生）
 const THES = {};            // 近义词/反义词，运行时从 thes.json 加载
 const EX = {};              // 补充例句(朗文英英/柯林斯中英)，运行时从 ex.json 加载
 let DATA_READY = false;     // 数据是否加载完成;
@@ -3656,7 +3665,579 @@ const MORPH_SRC_PATCH = {
   secut: { lang: '拉丁语', word: 'sequi', note: 'sequ 的过去分词词干', meaning: '跟随' },
   strict: { lang: '拉丁语', word: 'stringere', note: 'string 的过去分词词干', meaning: '拉紧' },
   plex: { lang: '拉丁语', word: 'plicare', note: 'plic 的变体', meaning: '折、叠' },
+
+  /* ---------- R 化音变（Rhotacism）归族 ----------
+     公元前 4 世纪前后的古典拉丁语里，处在两个元音之间的 /s/ 系统性地变成了 /r/：
+       corpus → 属格 corporis      flos → floris      genus → generis
+       tempus → temporis           opus → operis      latus → lateris
+     结果是同一个词长成两副面孔，项目里就落成了两个互不相识的词素：
+     查 corporeal 看不到 corporate，查 general 看不到 carcinogen——其实是同一个拉丁词。
+     把它们指到同一个 word，同源词区块就会自动并成一族。       */
+  corp:   { lang: '拉丁语', word: 'corpus', note: '', meaning: '身体' },
+  corpor: { lang: '拉丁语', word: 'corpus', note: 'R 化音变：corpus 的属格词干 corporis', meaning: '身体' },
+  gen:    { lang: '拉丁语', word: 'genus', note: '', meaning: '出生、种类' },
+  gener:  { lang: '拉丁语', word: 'genus', note: 'R 化音变：genus 的属格词干 generis', meaning: '出生、种类' },
+  temp:   { lang: '拉丁语', word: 'tempus', note: '', meaning: '时间' },
+  tempor: { lang: '拉丁语', word: 'tempus', note: 'R 化音变：tempus 的属格词干 temporis', meaning: '时间' },
 };
+
+/* ============================================================
+   格林法则（Grimm's Law）认亲表
+   ------------------------------------------------------------
+   公元前 1 世纪前后，日耳曼语族发生了一次系统性的辅音推移，把同一批
+   印欧语词根推成了两副面孔：一支进了拉丁语/希腊语（后来变成英语里的
+   「高难词根」），另一支留在日耳曼语（就是英语里的「小学词汇」）。
+   所以 pedal 和 foot 是同一个词的两支后代——这不是巧合，是规律。
+
+     第一组（清爆破音 → 清擦音）：p→f、t→th、k→h、kʷ→f
+     第二组（浊爆破音 → 清爆破音）：d→t、g→k
+     第三组（送气浊音 → 浊音）：拉丁走 f，日耳曼走 b/d。前两组是「拉丁像老词、
+     日耳曼像新词」，这一组方向相反，反差反而最大：
+       ferre→bear（承受=携带）、frangere→break、frater→brother、
+       flare→blow、facere→do
+
+   命中时在词素块里挂一个 ⚡ 角标，点它直接查那个「表亲」。
+   这不是多背一个知识点，是把高难词根和小学词汇接通，记忆阻力归零。
+
+   ------------------------------------------------------------
+   表项格式：[日耳曼表亲, 音变规律, 含义闸门(可选)]
+   含义闸门：必须出现在该词素此次释义里的关键词，命中任一即可。
+
+   为什么需要闸门——同一个词素串在不同词里含义并不一样，全量扫过一遍
+   enhanced 词库后发现的真实反例：
+     corn → acorn(谷物) corn(谷物) corny(谷物) vs corner/cornet/unicorn(角)
+     cent → accent(唱) incentive(歌唱) reminiscent(后缀占位) vs century(百)
+     cord → cord(绳索)  vs  accord/cordial/record(心)
+     ped  → pedagogy/pedant(儿童、教导，源自希腊 pais) vs pedal/pediment(脚)
+     dent → prudent(只是后缀占位)  pod → pod(豆荚)  patr → patrol(巡逻)
+   没有闸门的话，查 acorn 会跳出「⚡horn」，那不是教学是误导。
+   所以宁可少亮，也不亮错。
+
+   key 必须能被引擎产出（在 ROOTS / PREFIXES 里，或出现在 enhanced 的 chain 里），
+   否则是死条目。含义本身就不吻合的一律不收——pur 在本表里是「向前、出、离」
+   而非希腊 pyr 火，所以 pyr 收、pur 不收。
+
+   这张表是拿 82 个经典对应逐个过筛后的结果，筛掉的大宗是三类：
+     · 项目数据里含义对不上：tres 在本表是「穿过」不是三、teg 是「接触」不是覆盖、
+       dec 在 enhanced 链里从来没有「十」（全是 decency/decent/decor）
+     · 假朋友：pull 在本表就是英语动词「拉」，不是拉丁 pullus（雏鸟）
+     · 词源对但学习者无感：duc→tow、gen→kin、dom→timber，挂了只是噪音
+   想再加条目，先照这三类自查一遍。
+   ============================================================ */
+const GRIMM = {
+  /* p → f（唇音） */
+  ped:    ['foot', 'p→f', ['脚', '足']],
+  pod:    ['foot', 'p→f', ['脚', '足']],
+  pater:  ['father', 'p→f'],
+  patern: ['father', 'p→f'],
+  patr:   ['father', 'p→f', ['父亲']],
+  pisc:   ['fish', 'p→f'],
+  plen:   ['full', 'p→f'],
+  plet:   ['full', 'p→f'],
+  plete:  ['full', 'p→f'],
+  pluv:   ['flow', 'p→f'],
+  prim:   ['first', 'p→f', ['第一', '首要', '初']],
+  pyr:    ['fire', 'p→f'],
+  /* t → th（齿音） */
+  tenu:   ['thin', 't→th'],
+  trans:  ['through', 't→th'],
+  tri:    ['three', 't→th', ['三']],
+  ton:    ['thunder', 't→th', ['雷']],
+  /* k → h（软腭音） */
+  cord:   ['heart', 'k→h', ['心']],
+  cardi:  ['heart', 'k→h'],
+  cardio: ['heart', 'k→h'],
+  /* 角的词形分得很散：unicorn 的链给 corn、cornucopia 给 cornu、cornea 给 corne，三个都得挂。
+     corn 另有「谷物」义（corn/acorn/corny），靠含义闸门挡掉。 */
+  corn:   ['horn', 'k→h', ['角']],
+  cornu:  ['horn', 'k→h'],
+  corne:  ['horn', 'k→h'],
+  capit:  ['head', 'k→h'],
+  canin:  ['hound', 'k→h'],
+  /* 抓取 → 拥有：capere 一族是英语最能产的词根之一，而它的日耳曼表亲就是最基础的 have。
+     注意 cap/capt/cip 同时挂着「头、帽子」义（那是 caput，另一个词），靠闸门挡掉。 */
+  cap:    ['have', 'k→h', ['抓', '拿', '取']],
+  capt:   ['have', 'k→h', ['抓', '拿', '取']],
+  cept:   ['have', 'k→h', ['拿', '取', '抓', '接受']],
+  ceiv:   ['have', 'k→h'],
+  cip:    ['have', 'k→h', ['拿', '抓', '取']],
+  cent:   ['hundred', 'k→h', ['百']],
+  /* kʷ → f（圆唇软腭音） */
+  quadr:  ['four', 'kʷ→f'],
+  quart:  ['four', 'kʷ→f'],
+  /* g → k（浊音清化） */
+  genu:   ['knee', 'g→k'],
+  cogn:   ['know', 'g→k'],
+  gnos:   ['know', 'g→k'],
+  gel:    ['cold', 'g→k'],
+  gran:   ['corn', 'g→k', ['谷物']],
+  /* d → t（浊音清化） */
+  dent:   ['tooth', 'd→t', ['牙']],
+  dual:   ['two', 'd→t'],
+  decem:  ['ten', 'd→t'],
+  /* 送气音那一组：方向正好和上面反过来——拉丁走 f，日耳曼走 b/d。
+     所以这几对是「英语里的 f 词根 ↔ 最基础的 b/d 单词」，反差最大也最好记。 */
+  fer:     ['bear', 'f↔b', ['携带', '带', '拿']],
+  frag:    ['break', 'f↔b', ['破', '碎', '断']],
+  fract:   ['break', 'f↔b', ['破', '碎', '断', '打']],
+  frater:  ['brother', 'f↔b'],
+  fratern: ['brother', 'f↔b'],
+  flat:    ['blow', 'f↔b', ['吹', '气']],
+  fac:     ['do', 'f↔d', ['做', '使', '制', '作', '造']],
+  fect:    ['do', 'f↔d', ['做', '制', '作', '使']],
+  fic:     ['do', 'f↔d', ['做', '制', '作', '使', '造', '塑']],
+};
+
+/* ============================================================
+   R 化音变（Rhotacism）在演变链上的注记
+   ------------------------------------------------------------
+   enhanced.json 里有些链没自带 source（如 general 的 gener），有些带了却没写
+   「为什么词形变了」。这里按词素补一句，让用户看得见 s→r 这条规律。
+   归族本身靠 MORPH_SRC_PATCH，这张表只管显示。
+   ============================================================ */
+const CHAIN_NOTE = {
+  corp:   '原形；属格词干 corporis 中的 r 由 R 化音变（s→r）而来',
+  corpor: 'R 化音变：corpus 的属格词干 corporis',
+  gen:    '原形；属格词干 generis 中的 r 由 R 化音变（s→r）而来',
+  gener:  'R 化音变：genus 的属格词干 generis',
+  temp:   '原形；属格词干 temporis 中的 r 由 R 化音变（s→r）而来',
+  tempor: 'R 化音变：tempus 的属格词干 temporis',
+};
+// 链条上某词素的来源：链自带优先；没有就用 MORPH_SRC（PATCH 已并入）补，
+// 但只补 CHAIN_NOTE 里点名的词素——不能无差别补，否则会给一堆后缀凭空安上来源。
+function chainSourceOf(m) {
+  const note = CHAIN_NOTE[m.m];
+  if (!note) return m.source || null;
+  // 数据里有些 source.note 存的是「含义本身」（如 corporation 的 note="身体"），
+  // 不是解释性备注——那种一律用我们的注记顶掉。真备注（较长/带说明）则不动。
+  const cur = m.source;
+  const keepNote = cur && cur.note && cur.note.length > 10 && cur.note.indexOf('后缀') < 0;
+  if (cur && cur.word) {
+    return { lang: cur.lang, word: cur.word, note: keepNote ? cur.note : note };
+  }
+  const s = MORPH_SRC[m.m];
+  return (s && s.word) ? { lang: s.lang, word: s.word, note: note } : null;
+}
+
+/* ============================================================
+   首次文献纪年
+   ------------------------------------------------------------
+   从 Etymonline 条目开头提取该词的纪年（"1667," / "mid-15c.," / "c.1200," / "1530s,"），
+   显示在词源区块的标题上。5 万条里能解析出约 76%。
+
+   措辞用「首次见于」而不用「首创」，这是对这个数据的准确表述：
+   Etymonline 给的是「英语文献中现存最早的书面用例」。很多词当时口语里
+   早就在用，只是更早的书面记录没能留存——所以「莎士比亚首创 1700 词」
+   那类说法是 OED 首次引用数的统计假象，不是事实。
+   ============================================================ */
+function firstAttest(w) {
+  const t = ETYM[w];
+  if (!t) return '';
+  const m = /^(?:[a-z()\s\-,]*?)((?:c\.\s*|before\s+|late\s+|early\s+|mid-)?\d{1,4}(?:s)?c?\.?)/i.exec(String(t));
+  if (!m) return '';
+  const c = /^(c\.|before |late |early |mid-)?\s*(\d{1,4})(s)?(c)?\.?$/i.exec(m[1].trim());
+  if (!c) return '';
+  const mod = (c[1] || '').trim(), num = c[2], dec = !!c[3], cent = !!c[4];
+  if (cent) {
+    if (+num < 1 || +num > 21) return '';
+    return '约 ' + num + ' 世纪' + ({ early: '初', mid: '中叶', late: '末' }[mod] || '');
+  }
+  if (dec) return (+num >= 1000 && +num <= 2100) ? num + ' 年代' : '';
+  if (+num < 500 || +num > 2100) return '';
+  if (mod === 'c.') return '约 ' + num + ' 年';
+  if (mod === 'before') return num + ' 年之前';
+  return num + ' 年';
+}
+// 词源区块标题上的后缀：" · 首次见于 1667 年"
+function attestLabel(w) {
+  const d = firstAttest(w);
+  return d ? ' · 首次见于 ' + d : '';
+}
+const ATTEST_TITLE = '英语文献中现存最早的书面用例（Etymonline），不等于首创';
+
+/* ============================================================
+   重音与后缀：哪些后缀把重音「钉」在固定位置
+   ------------------------------------------------------------
+   规律不是我照抄教科书的，是从 CMU 发音词典 7 万词里统计出来的：
+   对每条后缀，统计所有以它结尾的词，主重音落在倒数第几音节的分布。
+   只收一致率 ≥ 89% 的，其余一律不下结论——
+
+     -ical   → 倒数第 3   203 词 100%     -ic     → 倒数第 2   848 词 96%
+     -graphy → 倒数第 3    28 词 100%     -ion    → 倒数第 2  1373 词 92%
+     -ify    → 倒数第 3    70 词 100%     -tion   → 倒数第 2  1123 词 94%
+     -logy   → 倒数第 3   101 词  97%     -sion   → 倒数第 2   153 词 96%
+     -ity    → 倒数第 3   466 词  96%     -ation  → 倒数第 2   798 词 93%
+     -ible   → 倒数第 3    97 词  89%
+
+   教科书里常说的「-ous 在倒数第二」「-al 在倒数第三」，在这份数据上只有
+   五六成一致，站不住，所以不收。规律只在「与实际重音一致」时才显示，
+   绝不硬套——宁可不说，也不说错。
+   ============================================================ */
+// 长后缀必须排在短后缀前面（ation 先于 tion 先于 ion），否则匹配会截错
+const STRESS_RULE = [
+  ['ically', 3], ['ical', 3], ['graphy', 3], ['ify', 3],
+  ['logy', 3], ['ity', 3], ['ety', 3], ['ible', 3], ['ual', 3],
+  ['ation', 2], ['ition', 2], ['tion', 2], ['sion', 2], ['ion', 2], ['ic', 2],
+];
+// 中性后缀：不改变原词重音，只是往后添音节（happy→happiness 重音还在第一音节）
+const STRESS_NEUTRAL = ['ness', 'ly', 'er', 'or', 'ing', 'ed', 'ment',
+                        'able', 'ful', 'less', 'ship', 'hood', 'ward', 'ish'];
+function stressOf(w) {
+  const v = STRESS[String(w).toLowerCase()];
+  return typeof v === 'number' ? v : 0;
+}
+// 命中且与实际重音一致时才返回规律；不一致就什么都不说
+function stressRuleOf(w) {
+  const lw = String(w).toLowerCase();
+  for (const [suf, n] of STRESS_RULE) {
+    if (lw.length > suf.length + 2 && lw.endsWith(suf)) {
+      return stressOf(w) === n ? { suf: suf, n: n } : null;
+    }
+  }
+  return null;
+}
+const ORD_CN = ['', '一', '二', '三', '四', '五', '六'];
+
+/* ============================================================
+   诺曼双轨词（1066）与三语层
+   ------------------------------------------------------------
+   黑斯廷斯战役之后，诺曼法语成了统治阶层的语言，英语掉进厨房和马厩。
+   留下两笔遗产：
+     ① 牲口在泥地里用本族词，端上餐桌换成法语词 —— swine/pork、cow/beef
+     ② 同一个词，走诺曼底方言的保留 w，走巴黎法语的变成 g —— warden/guardian
+   每一对都拿项目的 Etymonline 数据核过词源。
+
+   没收 wise/guise：guise 对的是名词 wise（in this wise = 以这种方式），
+   跟常见的形容词 wise 根本不是一回事，收了只会让人认错。
+   ============================================================ */
+const NORMAN = [
+  ['meat', 'swine',   'pork'],
+  ['meat', 'pig',     'pork'],
+  ['meat', 'cow',     'beef'],
+  ['meat', 'ox',      'beef'],
+  ['meat', 'calf',    'veal'],
+  ['meat', 'sheep',   'mutton'],
+  ['meat', 'deer',    'venison'],
+  ['meat', 'chicken', 'poultry'],
+  ['wg',   'ward',     'guard'],
+  ['wg',   'warden',   'guardian'],
+  ['wg',   'warrant',  'guarantee'],
+  ['wg',   'warranty', 'guaranty'],
+  ['wg',   'war',      'guerrilla'],
+  ['wg',   'wage',     'gage'],
+  ['wg',   'wile',     'guile'],
+];
+// 三语层：同一个意思，本族词 → 法语借词 → 拉丁借词，越往后越"文"
+const TRICOLON = [
+  ['kingly', 'royal', 'regal'],
+  ['ask', 'question', 'interrogate'],
+  ['rise', 'mount', 'ascend'],
+  ['holy', 'sacred', 'consecrated'],
+];
+function normanOf(w) {
+  const lw = String(w).toLowerCase();
+  for (const g of NORMAN) if (g[1] === lw || g[2] === lw) return g;
+  return null;
+}
+function tricolonOf(w) {
+  const lw = String(w).toLowerCase();
+  for (const t of TRICOLON) if (t.indexOf(lw) >= 0) return t;
+  return null;
+}
+/* ============================================================
+   后缀的前世今生
+   ------------------------------------------------------------
+   今天的语法标签，全是昨天的实词。这些后缀在古英语里都是有血有肉的名词，
+   只是磨损成了词尾。每条的源词都拿项目的 Etymonline 数据核过。
+
+   判定方式：认「引擎拆出来的最后一个词素」，不是认词尾字符串——
+   按词尾匹配的话 family / random / napkin / coward 全会中招。
+   再加一道含义闸门挡住同形词：
+     spaceship 的 ship 是「船」、chromosome 的 some 是「物体」、
+     nevertheless 的 less 是「较少」、award 的 ward 是「观察」——
+     这些都不是后缀，闸门一挡就掉。
+   -craft 剔除了：命中只有 aircraft / spacecraft，全是「飞行器」义，没有真后缀。
+   ============================================================ */
+const SUFFIX_LORE = {
+  hood:  { src: 'hād',      mean: '身份、品阶',      gate: ['状态', '后缀'],
+           note: 'childhood = 处在「儿童」这个身份品阶里。跟「兜帽」那个 hood 无关，是两个不同的古英语词。' },
+  ly:    { src: '*līką',    mean: '肉身、相貌',      gate: null,
+           note: '和 like 同源。friendly 的古义是「有着朋友那般的身形相貌」。' },
+  dom:   { src: 'dōm',      mean: '判决、法权疆界',   gate: ['状态', '领域', '后缀'], not: ['random'],
+           note: '和 doom 同源。kingdom = 国王的法权所能行使审判的疆界。' },
+  ship:  { src: '*skapjan', mean: '塑造、创造',      gate: ['状态', '性质', '技能', '后缀'],
+           note: '和 shape 同源。friendship = 打磨出来的形态；township 就是「镇子被塑造出来的样子」。' },
+  some:  { src: '*-samaz',  mean: '相同',           gate: ['性质', '倾向', '特性', '后缀'],
+           note: '和 same 同源。handsome 的古义是「合手的、顺手的」，后来才引申成「好看的」。' },
+  less:  { src: 'lēas',     mean: '失去、无',        gate: ['无', '缺少', '缺乏', '否定'],
+           note: 'reckless 的古形是 receleas——「不计后果的」，字面就是「丢掉了顾虑的」。' },
+  ful:   { src: 'full',     mean: '满',             gate: ['充满', '满', '后缀'], not: ['full'],
+           note: '就是 full 这个词。hopeful = 装满希望的。' },
+  ward:  { src: 'weard',    mean: '守望、转向',       gate: ['方向', '朝向', '守护'],
+           note: '本来是「守望者」。「朝某个方向守望」→ 方向后缀。' },
+  wright:{ src: 'wryhta',   mean: '匠人',           gate: null,
+           note: '古英语「做工的人」。playwright = 编剧本的匠人，跟「写」无关。' },
+  monger:{ src: 'mangere',  mean: '商人',           gate: null,
+           note: '古英语「贩子」。warmonger = 贩卖战争的人。' },
+  stead: { src: 'stede',    mean: '地方、位置',      gate: null,
+           note: '古英语「地方」。instead 字面就是 in + stead（在那个位置上）。' },
+  kin:   { src: 'cynn',     mean: '家族、种类',      gate: ['家族'],
+           note: '古英语「家族、种类」。lambkin = 羊羔一族的幼小者；kind 也是它。' },
+  th:    { src: '*-iþō',    mean: '名词化',         gate: ['名词后缀', '抽象名词后缀'],
+           note: 'warmth、depth、theft 都是它的产物。这个后缀在现代英语里已经死了，不能再造新词。' },
+};
+function suffixLoreBlock(w, chain) {
+  if (!chain || !chain.length) return '';
+  const last = chain[chain.length - 1];
+  const key = String(last.m || '').replace(/^-+|-+$/g, '').toLowerCase();
+  const L = SUFFIX_LORE[key];
+  if (!L) return '';
+  const lw = String(w).toLowerCase();
+  if (L.not && L.not.indexOf(lw) >= 0) return '';          // 点名排除的同形词
+  if (L.gate) {
+    const mean = String(last.meaning || '');
+    if (!L.gate.some(g => mean.indexOf(g) >= 0)) return '';  // 含义闸门不放行
+  }
+  return `<div class="meaning"><div class="label">后缀溯源</div>` +
+    `-${key} ← 古英语 <b>${L.src}</b>（${L.mean}）<br>` +
+    `<span style="color:var(--sub);font-size:13px">${L.note}</span></div>`;
+}
+/* ============================================================
+   同根异读：为什么加了后缀，元音就变了
+   ------------------------------------------------------------
+   sign /saɪn/ → signal /ˈsɪɡnəl/ → signify /ˈsɪɡnɪfaɪ/
+   同一个词根，三个读音。这是学习者最想不通的一类。
+
+   两组机制不同，不能混为一谈：
+     ① 拉丁系：长元音在派生词里「松化」变短（三音节松化等）
+     ② 本族词：加 -th 等后缀后元音缩短，有的还伴随 i-突变
+        （strong /ɒ/ → strength /e/ 就是 i-突变，不是单纯缩短）
+
+   音标不是手写的，是渲染时从项目自己的 enhanced.pron 里现取，
+   所以永远和卡片上方显示的音标一致。
+   清单是拿真实音标核过的——元音没变的（medicine/logic/part/pure）
+   一律没收。
+   ============================================================ */
+const VOWEL_FAM = [
+  ['lat', 'sign', 'signal', 'signify'],
+  ['lat', 'type', 'typical'],
+  ['lat', 'divine', 'divinity'],
+  ['lat', 'nation', 'national', 'nationality'],
+  ['lat', 'line', 'linear', 'lineage'],
+  ['lat', 'serene', 'serenity'],
+  ['lat', 'sane', 'sanity'],
+  ['lat', 'sole', 'solitary', 'solitude'],
+  ['lat', 'grave', 'gravity'],
+  ['lat', 'vain', 'vanity'],
+  ['lat', 'crime', 'criminal'],
+  ['lat', 'please', 'pleasant', 'pleasure'],
+  ['lat', 'mime', 'mimic'],
+  ['lat', 'grade', 'gradual', 'graduate'],
+  ['lat', 'mine', 'mineral'],
+  ['lat', 'finite', 'finish', 'infinite'],
+  ['lat', 'holy', 'holiday'],
+  ['lat', 'title', 'titular'],
+  ['lat', 'fable', 'fabulous'],
+  ['lat', 'metal', 'metallic'],
+  ['lat', 'clear', 'clarity', 'clarify'],
+  ['gem', 'wide', 'width'],
+  ['gem', 'deep', 'depth'],
+  ['gem', 'strong', 'strength'],
+  ['gem', 'long', 'length'],
+  ['gem', 'heal', 'health'],
+  ['gem', 'five', 'fifth'],
+  ['gem', 'wise', 'wisdom'],
+];
+function ukIpa(w) {
+  const e = ENHANCED[w];
+  if (!e || !e.pron) return '';
+  const m = /UK \/([^/]+)\//.exec(e.pron);
+  return m ? m[1] : '';
+}
+function vowelBlock(w) {
+  const lw = String(w).toLowerCase();
+  const fam = VOWEL_FAM.find(f => f.indexOf(lw) > 0);
+  if (!fam) return '';
+  const parts = fam.slice(1).map(x => {
+    const ipa = ukIpa(x);
+    return '<b>' + x + '</b>' + (ipa ? ' /' + ipa + '/' : '');
+  });
+  const why = fam[0] === 'lat'
+    ? '同一个词根，加了后缀后重音后移、长元音松化成短元音'
+    : '本族词的另一套机制：加后缀后元音缩短（strong→strength 还伴随 i-突变）';
+  return `<div class="meaning"><div class="label">同根异读</div>` +
+    parts.join(' → ') + `<br>` +
+    `<span style="color:var(--sub);font-size:13px">${why}</span></div>`;
+}
+/* ============================================================
+   动词句型：从句库自己的例句里「读」出搭配骨架
+   ------------------------------------------------------------
+   不手写句型表——例句来自朗文(LDOCE)和柯林斯，本来就是真实用法。
+   做法：先在句中找到该动词的屈折形式，再看它后面一小段窗口里跟着什么结构。
+   「锚定到动词」是关键：不锚定的话，「we don't want to impose」里的
+   to impose 会被当成 impose 自己的 to do 句型（第一版就栽在这儿）。
+   每个句型旁边直接给出触发它的那句原例，随时可核对。
+   ============================================================ */
+const VPAT_TAIL = [
+  ['V + sb + from + doing', /^(?:\s+[\w'’-]+){0,2}\s+from\s+([a-z]+ing)\b/i],
+  ['V + sb + of + doing',   /^(?:\s+[\w'’-]+){0,2}\s+of\s+([a-z]+ing)\b/i],
+  ['V + sb + into + doing', /^(?:\s+[\w'’-]+){0,2}\s+into\s+([a-z]+ing)\b/i],
+  // 名词版要排在 -ing 版后面：先认动名词，认不出再退到名词
+  // （deprive sb of a majority 这种接名词的，只有名词版能接住）
+  ['V + sb + of + n',       /^(?:\s+[\w'’-]+){0,2}\s+of\s+([a-z]{2,})\b/i],
+  ['V + sb + from + n',     /^(?:\s+[\w'’-]+){0,2}\s+from\s+([a-z]{2,})\b/i],
+  ['V + (sb) + to do',      /^(?:\s+[\w'’-]+){0,2}\s+to\s+([a-z]{2,})\b/i],
+  ['V + on/upon + n',       /^(?:\s+[\w'’-]+){0,2}\s+(?:on|upon)\s+([a-z]{2,})\b/i],
+  ['V + with + n',          /^(?:\s+[\w'’-]+){0,2}\s+with\s+([a-z]{2,})\b/i],
+  ['V + for + n',           /^(?:\s+[\w'’-]+){0,2}\s+for\s+([a-z]{2,})\b/i],
+  ['V + that 从句',          /^\s+that\s+[a-z]+\s+[a-z]/i],
+];
+// 「to/on/with/for」后面跟这些词说明不是搭配（to the、on it…）
+const VPAT_STOP = new Set(['the', 'a', 'an', 'his', 'her', 'its', 'their', 'our', 'your', 'my',
+  'this', 'that', 'these', 'those', 'him', 'it', 'them', 'us', 'me', 'you', 'be', 'been',
+  'being', 'have', 'has', 'had', 'which', 'who', 'whom', 'what', 'when', 'where',
+  'some', 'any', 'no', 'all', 'both', 'each', 'every', 'one', 'two', 'other', 'another']);
+// 这个词有没有动词义——没有就根本不该谈「动词句型」。
+// beautiful / pedestrian 这类纯形容词、纯名词，后面跟着 to/with 也会被误判，
+// 靠 ECDICT 释义里的词性标记（vt./vi./v.）挡掉。
+function hasVerbSense(w) {
+  const lw = String(w).toLowerCase();
+  const d = ECDICT[lw];
+  if (d) {
+    // 数据里换行是「字面量 \n」两个字符而不是真换行，先归一化再判词性
+    const blob = (String(d.t || '') + ' ' + String(d.d || '')).split('\\n').join(' ');
+    if (/(?:^|[\s；;])(?:vt|vi|v)\./.test(blob)) return true;
+    if (/^v/.test(String(d.d || '').trim())) return true;
+  }
+  const e = ENHANCED[lw];
+  if (e && /(?:^|[\s；;])(?:vt|vi|v)\./.test(String(e.meaning || '').split('\\n').join(' '))) return true;
+  return false;
+}
+// 动词的各种屈折形式（comply→complies/complied/complied；deter→deterred/deterring）
+function verbForms(w) {
+  const f = [w];
+  if (/[^aeiou]y$/.test(w)) { const b = w.slice(0, -1); f.push(b + 'ies', b + 'ied', w + 'ing'); }
+  else if (/e$/.test(w)) { const b = w.slice(0, -1); f.push(w + 's', w + 'd', b + 'ing', b + 'ed'); }
+  else { f.push(w + 's', w + 'es', w + 'ed', w + 'ing'); }
+  if (/[^aeiou][aeiou][^aeiouwxy]$/.test(w)) { const c = w.slice(-1); f.push(w + c + 'ed', w + c + 'ing'); }
+  return f.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+}
+function verbPatterns(w) {
+  const lw = String(w).toLowerCase();
+  const arr = EX[lw];
+  if (!Array.isArray(arr) || !hasVerbSense(lw)) return [];
+  let vre;
+  try { vre = new RegExp('\\b(?:' + verbForms(lw).join('|') + ')\\b', 'i'); } catch (e) { return []; }
+  const out = new Map();
+  for (const item of arr) {
+    const en = String(item.en || '');
+    const m = vre.exec(en);
+    if (!m) continue;
+    const tail = en.slice(m.index + m[0].length, m.index + m[0].length + 34);
+    for (const [label, re] of VPAT_TAIL) {
+      const mm = re.exec(tail);
+      if (!mm) continue;
+      if (mm[1] && VPAT_STOP.has(mm[1].toLowerCase())) continue;
+      if (!out.has(label)) out.set(label, en.trim());
+      break;                       // 一句只认一个句型，取最先匹配的那个
+    }
+  }
+  return [...out.entries()];
+}
+function verbPatternBlock(w) {
+  const ps = verbPatterns(w);
+  if (!ps.length) return '';
+  const rows = ps.slice(0, 2).map(([lab, eg]) =>
+    `<div style="margin-top:3px"><b>${lab}</b><br>` +
+    `<span style="color:var(--sub);font-size:12.5px">${escapeHtml(eg)}</span></div>`).join('');
+  return `<div class="meaning"><div class="label">动词句型</div>${rows}</div>`;
+}
+/* ============================================================
+   拼写疫苗：双写字母落在词素边界上的词
+   ------------------------------------------------------------
+   accommodate 为什么两个 c、两个 m？因为它是 ac | com | mod | ate——
+   两个 c 是 ad- 在 c 前同化成 ac- 的尾字母撞上 com- 的首字母，
+   两个 m 是 com- 的尾字母撞上 mod- 的首字母。看清边界，就不会再漏写。
+
+   判定条件（全部要满足）：
+     ① 词素拼回去要正好等于整词——拼不回说明拆解是错的
+     ② 第一个词素必须是「同化前缀」——这是这个功能的教学点。
+        不加这条的话，引擎把原生词剁碎的碎片（button → but|ton、
+        bazaar → baza|ar）也会拼得回去，混进来全是假货。
+     ③ 双写必须恰好压在第 ① 与第 ② 个词素的边界上，
+        且两侧都是真词素（≥2 字母）——这一条天然排除了 embarrass
+        （它的 rr、ss 都在词素内部，不在边界上，是整词借来的）。
+
+   实测 353 词命中，分属 ad/con/in/sub/ob/ex 六族同化，无误报。
+   ============================================================ */
+const ASSIM = {
+  ab: 'ad', ac: 'ad', ad: 'ad', af: 'ad', ag: 'ad', al: 'ad', an: 'ad', ap: 'ad', ar: 'ad', as: 'ad', at: 'ad',
+  com: 'con', col: 'con', con: 'con', cor: 'con', co: 'con',
+  ef: 'ex', ec: 'ex', ex: 'ex',
+  il: 'in', im: 'in', in: 'in', ir: 'in',
+  oc: 'ob', of: 'ob', op: 'ob', os: 'ob', ob: 'ob',
+  suc: 'sub', suf: 'sub', sug: 'sub', sum: 'sub', sup: 'sub', sur: 'sub', sus: 'sub', sub: 'sub',
+  syl: 'syn', sym: 'syn', syn: 'syn',
+  em: 'en', en: 'en',
+  dif: 'dis', dis: 'dis', di: 'dis',
+};
+function spellVaccine(w, chain) {
+  if (!chain || chain.length < 2) return null;
+  const ms = chain.map(c => String(c.m || '').replace(/^-+|-+$/g, '').toLowerCase()).filter(Boolean);
+  if (ms.length < 2 || ms.join('') !== String(w).toLowerCase()) return null;   // ①
+  if (!ASSIM[ms[0]] || ms[1].length < 3) return null;                          // ②
+  let pos = 0;
+  for (let i = 0; i < ms.length - 1; i++) {
+    pos += ms[i].length;
+    const a = w[pos - 1], b = w[pos];
+    if (a && b && a.toLowerCase() === b.toLowerCase()) {
+      if (ms[i].length < 2 || ms[i + 1].length < 2) return null;               // ③
+      return { ms: ms, i: i, dbl: a + b, base: ASSIM[ms[0]] };
+    }
+  }
+  return null;
+}
+function spellVaccineBlock(w, chain) {
+  const r = spellVaccine(w, chain);
+  if (!r) return '';
+  const split = r.ms.map((m, i) => (i === r.i ? m + '·' + r.ms[i + 1] : (i === r.i + 1 ? null : m)))
+    .filter(Boolean).join(' | ');
+  const expl = r.ms[0] === r.base
+    ? `词素边界正好压在双写 ${r.dbl} 上`
+    : `${r.ms[0]}- 是 ${r.base}- 在后接 ${r.dbl[0]} 时同化来的（${r.base}- → ${r.ms[0]}-），` +
+      `它的尾字母正好撞上下一个词素的开头，于是写成两个 ${r.dbl[0]}`;
+  return `<div class="meaning"><div class="label">💊 拼写疫苗</div>` +
+    `<b>${split}</b><br>` +
+    `<span style="color:var(--sub);font-size:13px">${expl}</span></div>`;
+}
+function normanBlock(w) {
+  const g = normanOf(w);
+  const tri = tricolonOf(w);
+  if (!g && !tri) return '';
+  let inner = '';
+  if (g) {
+    inner += g[0] === 'meat'
+      ? `撒克逊农民养 <b>${g[1]}</b>，端上诺曼贵族的餐桌就叫 <b>${g[2]}</b>`
+      : `<b>${g[1]}</b> 走诺曼底方言（保留 w 音），<b>${g[2]}</b> 走巴黎法语（w → g）`;
+  }
+  if (tri) {
+    if (inner) inner += '<br>';
+    inner += `<b>${tri[0]}</b>（本族）→ <b>${tri[1]}</b>（法语借词）→ <b>${tri[2]}</b>（拉丁借词）`;
+  }
+  return `<div class="meaning"><div class="label">诺曼双轨 · 1066</div>⚔️ ${inner}</div>`;
+}
+function stressBlock(w) {
+  const n = stressOf(w);
+  if (!n) return '';
+  const lw = String(w).toLowerCase();
+  const r = stressRuleOf(w);
+  let hint = '';
+  if (r) hint = '　-' + r.suf + ' 类后缀固定把重音放在这里';
+  else if (STRESS_NEUTRAL.some(s => lw.length > s.length + 2 && lw.endsWith(s)))
+    hint = '　中性后缀，重音跟着原词走';
+  return `<div class="meaning"><div class="label">重音</div>倒数第 ` +
+    (ORD_CN[n] || n) + ` 个音节<span style="color:var(--sub);font-size:13px">${hint}</span></div>`;
+}
 const SUFFIX_KEYS = new Set(Object.keys(SUFFIXES));
 function buildIndex() {
   SRC_INDEX.clear();
@@ -4815,7 +5396,14 @@ function morphChunksHTML(chunks) {
   let h = `<div class="meaning"><div class="label">词根词缀分解</div><div class="breakdown">`;
   chunks.forEach((c, i) => {
     if (i > 0) h += `<span class="plus">+</span>`;
-    h += `<span class="morph ${c.cls}"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}</span></span>`;
+    // 格林法则认亲：词素在 GRIMM 表里、且含义闸门放行时，释义下面挂一个 ⚡ 角标。
+    // c.m 带词缀连字符（trans- / -ion），查表前先剥掉；闸门看的是这次实际显示的释义。
+    const g = GRIMM[(c.m || '').replace(/^-+|-+$/g, '')];
+    const pass = g && (!g[2] || g[2].some(k => (c.mtext || '').indexOf(k) >= 0));
+    const kin = pass
+      ? `<br><span class="grimm" data-w="${g[0]}" title="格林法则 ${g[1]}：这个词素与英语 ${g[0]} 同源，是同一个印欧词根的两支后代">⚡${g[0]}</span>`
+      : '';
+    h += `<span class="morph ${c.cls}"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}${kin}</span></span>`;
   });
   return h + `</div></div>`;
 }
@@ -5562,7 +6150,7 @@ async function loadData() {
     } catch (e) { console.warn('ex.json 加载失败', e); }
     // BNC-COCA 词频分级（Paul Nation 公开学术词表）：文件小，不占进度条，失败也不影响主体
     try {
-      const rr = await fetch('bnc.json', { cache: 'no-store' });
+      const rr = await fetch('bnc.json');   // 缓存交给服务端 Last-Modified 校验（改了自动更新，没改走 304）
       if (rr.ok) {
         const j = await rr.json();
         // j = {级别: {词族首词: [变形...]}}：词形和首词都进查找表，"词频"目录用原始结构
@@ -5575,6 +6163,11 @@ async function loadData() {
         BNC_FAMILIES = j;
       }
     } catch (e) { console.warn('bnc.json 加载失败', e); }
+    // 重音位置（CMU 发音词典派生）：同样不占进度条
+    try {
+      const sr = await fetch('stress.json');
+      if (sr.ok) Object.assign(STRESS, await sr.json());
+    } catch (e) { console.warn('stress.json 加载失败', e); }
     LOAD_STATE.done = 5; setPill('词库装载中 ' + loadFrac());
     textEl.textContent = '例句完成，正在加载全量词典…';
     // 全量词典优先走分片（dict/ 目录，由 split_ecdict.py 生成）：
@@ -5848,6 +6441,12 @@ function cardHTML(r) {
         <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
       </div>`;
     if (e.pron) html += `<div class="meaning"><div class="label">音标</div>${ipaNorm(e.pron)}</div>`;
+    html += stressBlock(r.word);   // 重音落在倒数第几音节 + 后缀规律（CMU 发音词典派生）
+    html += normanBlock(r.word);
+    html += suffixLoreBlock(r.word, e.chain);
+    html += vowelBlock(r.word);
+    html += verbPatternBlock(r.word);
+    html += spellVaccineBlock(r.word, e.chain);
     // 释义：英文模式优先取牛津 def_en / 全量词典 d（数据层本身就有英文）
     if (EN_MODE()) {
       const ox = oxfordLookup(r.word);
@@ -5870,11 +6469,12 @@ function cardHTML(r) {
       html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
       e.chain.forEach((m, idx) => {
         const mm = dp(gl(m.m, m.meaning));
-        if (m.source && m.source.lang) {
-          const note = (!EN_MODE() && m.source.note && m.source.note !== m.meaning) ? `<span class="note">（${m.source.note}）</span>` : '';
+        const csrc = chainSourceOf(m);   // 补 R 化音变这类「数据里没写」的来源注记
+        if (csrc && csrc.lang) {
+          const note = (!EN_MODE() && csrc.note && csrc.note !== m.meaning) ? `<span class="note">（${csrc.note}）</span>` : '';
           html += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${m.m}</span>` +
             `<span class="chain-arrow">←</span>` +
-            `<span class="chain-src"><span class="lang">${langEn(m.source.lang)}</span><span class="w">${m.source.word}</span>${note}</span>` +
+            `<span class="chain-src"><span class="lang">${langEn(csrc.lang)}</span><span class="w">${csrc.word}</span>${note}</span>` +
             `<span class="chain-meaning">${mm ? '（' + mm + '）' : ''}</span></div>`;
         } else {
           html += `<div class="chain-item" style="--i:${idx}"><span class="chain-morph">${m.m}</span>` +
@@ -5884,9 +6484,9 @@ function cardHTML(r) {
       html += `</div></div>`;
     }
     if (EN_MODE()) {
-      if (ETYM[r.word]) html += `<div class="meaning"><div class="label">词源</div>${escapeHtml(ETYM[r.word])}</div>`;
+      if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${escapeHtml(ETYM[r.word])}</div>`;
     } else if (e.etymology) {
-      html += `<div class="meaning"><div class="label">词源</div>${e.etymology}</div>`;
+      html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${e.etymology}</div>`;
     }
     html += examplesBlock(r.word, e.examples);
     html += (lastRel = relBlock(r.word, findCognates(r.word)));
@@ -5906,6 +6506,12 @@ function cardHTML(r) {
     if (o.bre) prons.push(`BrE /${fixIpaSeg(o.bre)}/`);
     if (o.name) prons.push(`NAmE /${fixIpaSeg(o.name)}/`);
     if (prons.length) html += `<div class="meaning"><div class="label">音标</div>${prons.join(' · ')}</div>`;
+    html += stressBlock(hw);
+    html += normanBlock(hw);
+    html += suffixLoreBlock(hw, (ENHANCED[hw] || {}).chain);
+    html += vowelBlock(hw);
+    html += verbPatternBlock(hw);
+    html += spellVaccineBlock(hw, (ENHANCED[hw] || {}).chain);
     if (o.pos) html += `<div class="meaning"><div class="label">词性</div>${escapeHtml(o.pos)}</div>`;
     // 中文释义：def_zh 为空（牛津交叉引用条目，如 polygraph = lie detector）
     // 或过短疑似主题标签（如 encrypt→"计算机"）时，用全量词典释义兜底
@@ -5921,7 +6527,7 @@ function cardHTML(r) {
         `<button class="tts-btn ex-tts" data-text="${escapeHtml(o.def_en).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div></div>`;
     }
     html += morphBlockHTML(hw, decompose(hw, 0) || partialDecompose(hw));
-    if (ETYM[r.word]) html += `<div class="meaning"><div class="label">词源(Etymonline)</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
     html += examplesBlock(hw, o.examples);
     html += (lastRel = relBlock(hw, findCognates(hw)));
     html += `</div>`;
@@ -5935,6 +6541,12 @@ function cardHTML(r) {
         <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
       </div>`;
     if (d.p) html += `<div class="meaning"><div class="label">音标</div>${ipa(d.p)}</div>`;
+    html += stressBlock(r.word);
+    html += normanBlock(r.word);
+    html += suffixLoreBlock(r.word, (ENHANCED[r.word] || {}).chain);
+    html += vowelBlock(r.word);
+    html += verbPatternBlock(r.word);
+    html += spellVaccineBlock(r.word, (ENHANCED[r.word] || {}).chain);
     if (d.g) html += `<div class="meaning"><div class="label">词性</div>${d.g}</div>`;
     // 英文模式优先用 ECDICT 的英文释义 d（覆盖 21%）；没有则回落到中文
     const _t = EN_MODE() ? (nl(d.d) || '') : nl(d.t);
@@ -5951,7 +6563,7 @@ function cardHTML(r) {
     // 全量词：先拆解（完整优先，失败退回部分拆解，如 binary→bi-+??nary），
     // 再据此生成分解区块与词源演变链（渲染逻辑与 enhanced 兜底共用 morphBlockHTML）
     html += morphBlockHTML(r.word, decompose(r.word, 0) || partialDecompose(r.word));
-    if (ETYM[r.word]) html += `<div class="meaning"><div class="label">词源(Etymonline)</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
     html += (lastRel = relBlock(r.word, findCognates(r.word)));
     html += examplesBlock(r.word, null);
     html += `</div>`;
@@ -6394,10 +7006,36 @@ function closePanel() {
 /* ---------- 查词记录（localStorage，本地保存） ---------- */
 const HIST_KEY = 'wr_history';
 const HIST_PRUNED_KEY = 'wr_hist_pruned_v2';   // 一次性清理标记（见 pruneJunkHistory）
-/* ---------- 收藏 ---------- */
+/* ---------- 收藏 ----------
+   和查词记录一样落盘到项目目录 favs.json，不再只活在浏览器里。
+   FAVS 是内存权威（渲染路径要同步读），localStorage 降级为缓存兼兜底。 */
 const FAV_KEY = 'wr_favs';
-function loadFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; } }
-function saveFavs(f) { try { localStorage.setItem(FAV_KEY, JSON.stringify(f)); } catch (e) {} }
+let FAVS = null;   // 内存权威：源自本地服务读出的 favs.json；null=尚未加载
+function loadFavs() {
+  if (FAVS) return FAVS;
+  try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; }
+}
+function saveFavs(f) {
+  FAVS = f;
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(f)); } catch (e) {}
+  fetch('/favs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: 1, items: f }) }).catch(() => {});
+}
+// 启动时拉收藏（项目目录 favs.json），随后渲染
+async function initFavs() {
+  try {
+    const d = await (await fetch('/favs')).json();
+    const server = (d && Array.isArray(d.items)) ? d.items : [];
+    let local = [];
+    try { local = JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { local = []; }
+    // 服务端文件是权威，只有它还空着（首次启用本功能）才拿 localStorage 迁过去。
+    // 否则会把「在别处已取消的收藏」又复活回来。
+    FAVS = server.length ? server : local;
+    if (server.length) { try { localStorage.setItem(FAV_KEY, JSON.stringify(FAVS)); } catch (e) {} }
+    else if (local.length) saveFavs(local);
+  } catch (e) { /* 服务未就绪：维持 localStorage 兜底 */ }
+  renderFavs();
+}
 function isFav(w) { return loadFavs().includes(w); }
 function toggleFav(w) {
   let f = loadFavs();
@@ -7455,6 +8093,18 @@ fetch(KOKORO_URL + '/health').then(r => r.json()).then(d => {
 }).catch(() => { kokoroOk = false; updateTtsHint(); });
 
 initHistory();   // 从本地服务加载历史（项目目录 history.json），随后渲染
+initFavs();      // 从本地服务加载收藏（项目目录 favs.json），随后渲染
+
+// 格林法则⚡角标：点它去查那个日耳曼「表亲」。
+// 挂在 document 上而不是 result 上——闪卡、词根目录在别的容器里，一处委托全都覆盖。
+document.addEventListener('click', (e) => {
+  const gk = e.target.closest('.grimm');
+  if (!gk || !gk.dataset.w) return;
+  e.preventDefault(); e.stopPropagation();
+  input.value = gk.dataset.w;
+  switchTab('query');
+  search();
+});
 
 result.addEventListener('click', (e) => {
     const t = e.target.closest('.cog');

@@ -31,8 +31,9 @@ ex.json
 us_ipa.json
 *.bak
 
-# 用户查词历史（本地服务自动写入项目目录，属个人数据，勿提交）
+# 用户查词历史与收藏（本地服务自动写入项目目录，属个人数据，勿提交）
 history.json
+favs.json
 
 # ecdict 分片（由 split_ecdict.py 生成，派生物不入库）
 dict/

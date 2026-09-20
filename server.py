@@ -28,14 +28,32 @@ MIME = {
     '.ico': 'image/x-icon',
 }
 
-# 历史记录文件：直接存在项目目录，浏览器前端通过 /history 端点读写（静默、免弹窗选位置）
+# 历史记录 / 收藏：直接存在项目目录，浏览器前端通过 /history、/favs 端点读写（静默、免弹窗选位置）
 HISTORY_FILE = os.path.join(DIR, 'history.json')
+FAVS_FILE = os.path.join(DIR, 'favs.json')
 
 # 本地翻译（Ollama）：默认模型可用环境变量 OLLAMA_MODEL 覆盖
 OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434')
 # 本机 GPU(1060 6GB) 在 Ollama 上默认推理会崩(0xc0000005)，改小模型强制 CPU，速度可用(约3-4秒/句)
 OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen3:1.7b')
 _IO_LOCK = threading.Lock()
+
+
+def _read_items(path):
+    """读 {version, items} 结构的数据文件；文件不存在或损坏时返回空列表。"""
+    try:
+        with _IO_LOCK:
+            with open(path, encoding='utf-8') as f:
+                return json.load(f).get('items', [])
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def _write_items(path, items):
+    with _IO_LOCK:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump({'version': 1, 'exportedAt': time.strftime('%Y-%m-%d %H:%M:%S'), 'items': items},
+                      f, ensure_ascii=False, indent=2)
 
 # 翻译任务的系统提示（整段翻译、逐句对照共用同一套口径）
 TRANSLATE_SYSTEM = ('你是一位专业中英翻译。把用户提供的英文翻译成简体中文。严格遵循：忠实原文、语言自然通顺；'
@@ -54,9 +72,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIR, **kwargs)
 
+    # 允许缓存、但每次使用前都要回服务器校验的文件类型（词典数据、图片）。
+    REVALIDATE_EXT = {'.json', '.png', '.jpg', '.jpeg', '.ico', '.webp', '.svg', '.woff2'}
+
     def end_headers(self):
-        # 禁用缓存，改完文件刷新即可生效
-        self.send_header('Cache-Control', 'no-store')
+        # 这里给的是 no-cache，不是 no-store，两者差别很大：
+        #   no-store = 碰都不许存，每次刷新都得把 140MB 重下一遍；
+        #   no-cache = 可以存，但用之前必须回服务器问一句「变了没」。
+        # 配 http.server 自带的 Last-Modified 机制：文件没改只回一个几十字节的 304，
+        # 浏览器直接用本地副本；改过了 mtime 就变，自动回新内容。
+        # 所以「改完刷新即生效」这个习惯保住了，重复刷新却不再重下词典。
+        # html/js/css（还有 /history 这类无扩展名的接口）仍是 no-store：它们小，重拉无感。
+        ext = os.path.splitext(self.path.split('?')[0])[1].lower()
+        self.send_header('Cache-Control', 'no-cache' if ext in self.REVALIDATE_EXT else 'no-store')
         super().end_headers()
 
     def guess_type(self, path):
@@ -72,15 +100,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
-        # /history：把历史记录直接读自项目目录下的 history.json（静默，前端无需选文件）
-        if self.path.split('?')[0] == '/history':
-            try:
-                with _IO_LOCK:
-                    with open(HISTORY_FILE, encoding='utf-8') as f:
-                        items = json.load(f).get('items', [])
-            except (FileNotFoundError, json.JSONDecodeError):
-                items = []
-            self._send_json({'version': 1, 'items': items})
+        # /history、/favs：数据直接读自项目目录下的同名 json（静默，前端无需选文件）
+        p = self.path.split('?')[0]
+        if p in ('/history', '/favs'):
+            self._send_json({'version': 1, 'items': _read_items(HISTORY_FILE if p == '/history' else FAVS_FILE)})
             return
         super().do_GET()
 
@@ -103,8 +126,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 it = iter_chat_stream(text, model, think)   # 连接/加载失败会抛异常（此时头还没发）
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/plain; charset=utf-8')
-                self.send_header('Cache-Control', 'no-store')
-                self.end_headers()
+                self.end_headers()   # 缓存头由 end_headers 统一给（/translate 无扩展名 → no-store）
                 for chunk in it:
                     self.wfile.write(chunk.encode('utf-8'))
                     self.wfile.flush()
@@ -145,8 +167,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 it = iter_chat_stream(prompt, model, False, system)
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/plain; charset=utf-8')
-                self.send_header('Cache-Control', 'no-store')
-                self.end_headers()
+                self.end_headers()   # 缓存头由 end_headers 统一给（/translate 无扩展名 → no-store）
                 for chunk in it:
                     self.wfile.write(chunk.encode('utf-8'))
                     self.wfile.flush()
@@ -161,8 +182,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 self._send_json({'ok': False, 'err': '无法连接本地 Ollama（' + str(e) + '）。请确认它已启动。'}, 502)
             return
-        # /history：把前端发来的历史全量写入项目目录下的 history.json
-        if self.path.split('?')[0] == '/history':
+        # /history、/favs：把前端发来的数据全量写入项目目录下的同名 json
+        if path in ('/history', '/favs'):
             try:
                 ln = int(self.headers.get('Content-Length', 0))
                 body = json.loads(self.rfile.read(ln) or b'{}')
@@ -171,10 +192,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             items = body.get('items', body) if isinstance(body, dict) else body
             if isinstance(items, list):
                 try:
-                    with _IO_LOCK:
-                        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
-                            json.dump({'version': 1, 'exportedAt': time.strftime('%Y-%m-%d %H:%M:%S'), 'items': items},
-                                      f, ensure_ascii=False, indent=2)
+                    _write_items(HISTORY_FILE if path == '/history' else FAVS_FILE, items)
                     self._send_json({'ok': True})
                 except Exception as e:
                     self._send_json({'ok': False, 'err': str(e)}, 500)
