@@ -151,6 +151,13 @@ if __name__ == '__main__':
         # 加载失败要吭声：否则 /health 永远停在 loading=true，前端一直重试，黑窗口却什么都不说
         try:
             _ensure_pipe()
+            # 报一下跑在哪：这是排查「怎么变慢了」第一眼要看的信息
+            #（KokoroGPU 环境是 CUDA 版 torch = GPU；moss-tts-nano 是 CPU 版 = 纯 CPU，整段朗读会慢好几倍）
+            import torch
+            if torch.cuda.is_available():
+                print('推理设备：GPU（' + torch.cuda.get_device_name(0) + '）')
+            else:
+                print('推理设备：CPU（当前环境是 CPU 版 torch，整段朗读会慢几倍）')
             print('Kokoro 模型已加载完成，可以发声了。')
         except Exception as e:
             print('!! Kokoro 模型加载失败：' + str(e))

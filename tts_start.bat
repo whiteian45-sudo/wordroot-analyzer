@@ -5,11 +5,15 @@ cd /d "%~dp0"
 :: 模型缓存目录：默认用户目录，无需修改
 set HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
-:: 优先用 moss-tts-nano 环境（唯一装了 kokoro+torch+soundfile 的），
-:: 找不到才回落到系统 python，并明确提示，不静默地换环境
-set "TTS_PY=D:\Program Files\MOSS\conda_envs\moss-tts-nano\python.exe"
+:: 优先用 KokoroGPU 环境（专用 GPU 环境：cu126 版 torch，1060 能吃到显卡，整段朗读快）
+:: 找不到才退 moss-tts-nano（CPU 版 torch，能跑但慢），再找不到才回系统 python
+set "TTS_PY=D:\Program Files\KokoroGPU\Scripts\python.exe"
 if not exist "%TTS_PY%" (
-    echo [提示] 未找到 moss-tts-nano 环境，回落到系统 python（可能缺少 kokoro 依赖）
+    echo [提示] 未找到 KokoroGPU 环境，退回 moss-tts-nano（CPU 模式，较慢）
+    set "TTS_PY=D:\Program Files\MOSS\conda_envs\moss-tts-nano\python.exe"
+)
+if not exist "%TTS_PY%" (
+    echo [提示] 两个环境都没找到，回落到系统 python（可能缺少 kokoro 依赖）
     set "TTS_PY=python"
 )
 :: 检查的是即将真正运行的那个解释器，而不是 PATH 里的 python——
@@ -17,7 +21,7 @@ if not exist "%TTS_PY%" (
 "%TTS_PY%" -c "import sys" >nul 2>nul
 if errorlevel 1 (
     echo 未检测到可用的 Python：%TTS_PY%
-    echo 请先安装 Python 3，或确认 moss-tts-nano 环境路径是否变了。
+    echo 请先安装 Python 3，或确认 KokoroGPU / moss-tts-nano 环境路径是否变了。
     pause
     exit /b 1
 )

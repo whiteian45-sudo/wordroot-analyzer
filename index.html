@@ -597,10 +597,11 @@
     cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); line-height: 1.4;
   }
   .theme-btn:hover { color: var(--accent); border-color: var(--accent); }
-  /* 段落朗读按钮 */
-  .para-head { margin-bottom: 10px; }
-  /* 段落翻译按钮 */
-  .trans-btn { display: inline-block; margin: 4px 8px 0 0; padding: 6px 14px; background: var(--glass-card); border: 1px solid var(--accent-soft); border-radius: 999px; font-size: 12.5px; color: var(--sub); cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); }
+  /* 段落头部按钮（朗读整段 / 译整段 / 短语切换）排成一行：flex + gap 保证等距且垂直居中
+     （原来走行内流，各按钮自带不同 margin/padding，导致「译整段」比「朗读整段」矮胖、还整体下移 4px） */
+  .para-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+  /* 段落翻译按钮：尺寸与 .tts-btn 对齐（同 padding/字号/行高），只保留自己的配色 */
+  .trans-btn { display: inline-block; padding: 5px 12px; background: var(--glass-card); border: 1px solid var(--accent-soft); border-radius: 999px; font-size: 13px; line-height: 1; color: var(--sub); cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); }
   .trans-btn:hover { background: var(--glass-card); filter: brightness(1.25); color: var(--text); }
   /* 翻译结果区 */
   .trans { margin-top: 14px; padding: 14px 16px; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 16px; font-size: 14.5px; line-height: 1.9; color: var(--text); }
@@ -618,9 +619,9 @@
   .trans.err { border-color: var(--danger-line); color: var(--danger); }
   /* 短语/段落智能切换按钮 */
   .switch-btn {
-    display: inline-block; margin: 4px 8px 0 0; padding: 6px 14px;
+    display: inline-block; padding: 5px 12px;
     background: var(--glass-card); border: 1px solid var(--accent-soft); border-radius: 999px;
-    font-size: 12.5px; color: var(--sub); cursor: pointer;
+    font-size: 13px; line-height: 1; color: var(--sub); cursor: pointer;
     transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast);
   }
   .switch-btn:hover { color: var(--accent); border-color: var(--accent); }
