@@ -20,7 +20,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
 import soundfile as sf
-from kokoro import KPipeline
+
+# 注意：kokoro（连带 torch）故意不在这里 import —— 见 _ensure_pipe()
 
 PORT = 8757
 
@@ -33,9 +34,26 @@ VOICES = {
     'bf_isabella': '英音女声 Isabella', 'bm_george': '英音男声 George',
 }
 
-# 加载一次，常驻内存（约 4 秒，一次性）
-pipe = KPipeline(lang_code='a')
-pipe_lock = threading.Lock()  # 合成非线程安全，串行化
+# 模型改成懒加载（启动时先占住端口，再在后台慢慢加载）。
+# 原来写在模块顶层：import 阶段就要跑 KPipeline(lang_code='a')，之后才轮到 __main__ 绑端口；
+# 而 start.bat 起完 0.8 秒就打开浏览器探测 /health，冷启动几乎必然探空 —— 前端会以为「Kokoro 不可用」。
+# 实测这行才是大头：from kokoro import KPipeline（连带 torch）本机热缓存 9.7 秒、冷启动 38 秒，
+# 所以连 import 一起挪进 _ensure_pipe()：只把 KPipeline 挪进去是不够的，端口照样要等十几秒。
+# numpy/soundfile 才 0.17 秒，留在顶层。实测挪完后端口 0.3 秒内就能应答 /health。
+pipe = None
+# 一把锁管两件事：保证模型只加载一次 + 合成串行化（KPipeline 非线程安全，这点保持原样）
+pipe_lock = threading.Lock()
+
+
+def _ensure_pipe():
+    """确保模型已加载并返回它。第一次调用会阻塞几秒~几十秒（import + 读权重），之后就只是取引用。"""
+    global pipe
+    with pipe_lock:
+        if pipe is None:
+            # 延迟到这一步才 import：import 本身就占了大头，别挡着端口绑定
+            from kokoro import KPipeline
+            pipe = KPipeline(lang_code='a')
+        return pipe
 
 
 def synth(text, voice='af_heart', speed=1.0):
@@ -44,8 +62,9 @@ def synth(text, voice='af_heart', speed=1.0):
         raise ValueError('empty text')
     if voice not in VOICES:
         voice = 'af_heart'
+    p = _ensure_pipe()
     with pipe_lock:
-        gen = pipe(text, voice=voice, speed=max(0.5, min(2.0, speed)))
+        gen = p(text, voice=voice, speed=max(0.5, min(2.0, speed)))
         all_audio = [a.numpy() for _gs, _ps, a in gen]
     if not all_audio:
         raise RuntimeError('no audio produced')
@@ -63,6 +82,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
 
+    def _safe_write(self, data):
+        """往 socket 写数据。用户切页/关页面时前端会 abort 请求，wav 还没写完对端就没了，
+        这时 write 抛 BrokenPipe/ConnectionReset 是常态不是故障；不拦住它就会一路冒到
+        ThreadingHTTPServer.handle_error，每断一次往黑窗口刷一屏堆栈。"""
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            self.close_connection = True
+
     def _json(self, obj, code=200):
         body = json.dumps(obj, ensure_ascii=False).encode('utf-8')
         self.send_response(code)
@@ -70,7 +98,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self._cors()
         self.end_headers()
-        self.wfile.write(body)
+        self._safe_write(body)
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -79,7 +107,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.startswith('/health'):
-            self._json({'ok': True, 'voice': 'af_heart'})
+            # 只读 pipe 判断状态，绝不在这里调 _ensure_pipe()：否则探测请求自己会把
+            # 几秒的加载扛在肩上，前端等到的就是超时而不是「正在加载」。
+            self._json({'ok': pipe is not None, 'loading': pipe is None})
         else:
             self._json({'error': 'not found'}, 404)
 
@@ -99,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(wav)))
         self._cors()
         self.end_headers()
-        self.wfile.write(wav)
+        self._safe_write(wav)
 
 
 if __name__ == '__main__':
@@ -115,6 +145,18 @@ if __name__ == '__main__':
     print('声线: ' + ', '.join(list(VOICES)[:5]) + ' 等共 %d 个' % len(VOICES))
     print('关闭窗口即退出')
     print('=' * 50)
+    # 端口已经绑好了：浏览器现在就能探到 /health（此时 loading=true），模型交给后台线程加载，
+    # 加载完 /health 自动变 ok=true。顺序反过来就又变成「端口没起来 → 前端判死」了。
+    def _warmup():
+        # 加载失败要吭声：否则 /health 永远停在 loading=true，前端一直重试，黑窗口却什么都不说
+        try:
+            _ensure_pipe()
+            print('Kokoro 模型已加载完成，可以发声了。')
+        except Exception as e:
+            print('!! Kokoro 模型加载失败：' + str(e))
+            print('!! 请检查 kokoro/torch 是否装好（本脚本要用装了 kokoro 的那个 python 跑）。')
+
+    threading.Thread(target=_warmup, daemon=True).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
