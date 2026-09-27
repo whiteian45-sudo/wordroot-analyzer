@@ -93,6 +93,171 @@
     },
     "examples": {
       "d": "example-s"
+    },
+    "commando": {
+      "d": "com|mand-o"
+    },
+    "commandoes": {
+      "d": "com|mand-o-es"
+    },
+    "volcano": {
+      "d": "volcan-o"
+    },
+    "thermo": {
+      "d": "therm-o"
+    },
+    "accelerando": {
+      "d": "ac|celer-and-o"
+    },
+    "lycanthropy": {
+      "d": "lyc-anthropy"
+    },
+    "lycanthropic": {
+      "d": "lyc+anthrop-ic"
+    },
+    "autolycus": {
+      "d": "auto+lyc-us"
+    },
+    "splinter": {
+      "d": "splint-er"
+    },
+    "splinters": {
+      "d": "splint-er-s"
+    },
+    "splintery": {
+      "d": "splint-ery"
+    },
+    "unsplinterable": {
+      "d": "un|splint-er-able"
+    },
+    "fertility": {
+      "d": "fertil-ity"
+    },
+    "fertile": {
+      "d": "fertil-e"
+    },
+    "fertilize": {
+      "d": "fertil-ize"
+    },
+    "fertilization": {
+      "d": "fertil-ization"
+    },
+    "fertilise": {
+      "d": "fertil-ise"
+    },
+    "infertility": {
+      "d": "in|fertil-ity"
+    },
+    "unfertile": {
+      "d": "un|fertil-e"
+    },
+    "realized": {
+      "d": "real-ized"
+    },
+    "civilizing": {
+      "d": "civil-izing"
+    },
+    "advertised": {
+      "d": "ad|vert-ised"
+    },
+    "surprised": {
+      "d": "sur|pris-ed"
+    },
+    "sized": {
+      "d": "size-ed"
+    },
+    "organized": {
+      "d": "organ-ized"
+    },
+    "organization": {
+      "d": "organ-ization"
+    },
+    "organic": {
+      "d": "organ-ic"
+    },
+    "organism": {
+      "d": "organ-ism"
+    },
+    "organelle": {
+      "d": "organ-elle"
+    },
+    "characterized": {
+      "d": "character-ized"
+    },
+    "characteristic": {
+      "d": "character-istic"
+    },
+    "uncharacteristically": {
+      "d": "un|character-ist-ical-ly"
+    },
+    "skitter": {
+      "d": "skit-er"
+    },
+    "skittered": {
+      "d": "skit-er-ed"
+    },
+    "skittish": {
+      "d": "skit-ish"
+    },
+    "skittishly": {
+      "d": "skit-ish-ly"
+    },
+    "skittishness": {
+      "d": "skit-ish-ness"
+    },
+    "demean": {
+      "d": "demean"
+    },
+    "demeaned": {
+      "d": "demean-ed"
+    },
+    "demeaning": {
+      "d": "demean-ing"
+    },
+    "demeanor": {
+      "d": "demean-or"
+    },
+    "demeanour": {
+      "d": "demean-our"
+    },
+    "misdemeanor": {
+      "d": "mis|demean-or"
+    },
+    "misdemeanors": {
+      "d": "mis|demean-or-s"
+    },
+    "misdemeanour": {
+      "d": "mis|demean-our"
+    },
+    "misdemeanant": {
+      "d": "mis|demean-ant"
+    },
+    "immune": {
+      "d": "immune"
+    },
+    "autoimmune": {
+      "d": "auto+immune"
+    },
+    "antiimmune": {
+      "d": "anti|immune"
+    },
+    "nonimmune": {
+      "d": "non|immune"
+    },
+    "hyperimmune": {
+      "d": "hyper|immune"
+    },
+    "heteroimmune": {
+      "d": "hetero|immune"
+    },
+    "disimmune": {
+      "d": "dis|immune"
+    },
+    "alloimmune": {
+      "d": "allo+immune"
+    },
+    "autoimmunity": {
+      "d": "auto+immun-ity"
     }
   },
   "partial词": {
@@ -126,6 +291,16 @@
     "willing": {
       "d": null,
       "p": "-ing|??will"
+    },
+    "lycanthrope": {
+      "d": null,
+      "p": "lyc|??anthrope"
+    },
+    "fertilizer": {
+      "d": "fertil-izer"
+    },
+    "fertilized": {
+      "d": "fertil-ized"
     }
   },
   "防误伤词": {
@@ -170,6 +345,84 @@
     },
     "incarcerated": {
       "d": null
+    },
+    "aerophoto": {
+      "d": "aero|photo"
+    },
+    "albino": {
+      "d": "alb+ino"
+    },
+    "audio": {
+      "d": "aud-io"
+    },
+    "adesso": {
+      "d": null
+    },
+    "nitroso": {
+      "d": null
+    },
+    "lychee": {
+      "d": null
+    },
+    "lychees": {
+      "d": null
+    },
+    "lyceum": {
+      "d": null
+    },
+    "lychgate": {
+      "d": null
+    },
+    "lychnis": {
+      "d": null
+    },
+    "lycra": {
+      "d": null
+    },
+    "acalycine": {
+      "d": null
+    },
+    "lycorine": {
+      "d": null
+    },
+    "lycurgus": {
+      "d": null
+    },
+    "aglycone": {
+      "d": "a|glyc-one"
+    },
+    "aglycaemia": {
+      "d": "a|glyc-aemia"
+    },
+    "organdy": {
+      "d": null
+    },
+    "organdie": {
+      "d": null
+    },
+    "organza": {
+      "d": null
+    },
+    "organzine": {
+      "d": null
+    },
+    "demorgan": {
+      "d": null
+    },
+    "milorganite": {
+      "d": null
+    },
+    "diskitis": {
+      "d": null
+    },
+    "norilskite": {
+      "d": null
+    },
+    "terskite": {
+      "d": null
+    },
+    "skittling": {
+      "d": null
     }
   },
   "基本词整词": {
@@ -199,6 +452,12 @@
     },
     "document": {
       "d": "document"
+    },
+    "splint": {
+      "d": "splint"
+    },
+    "skit": {
+      "d": "skit"
     }
   }
 }

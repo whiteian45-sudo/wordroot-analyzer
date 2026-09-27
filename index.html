@@ -1883,6 +1883,7 @@ const SUFFIXES = {
   "nap": "绑架以索取赎金",
   "nasty": "感性运动（植物）",
   "nik": "与某事物或品质相关的人",
+  "o": "组合形式的连接元音；意/西/葡语名词词尾",
   "ock": "构成名词",
   "ode": "电极、电导体",
   "odontics": "牙科专业",
@@ -2018,6 +2019,12 @@ const SUFFIXES = {
   "fy": "动词后缀，使…化",
   "ize": "动词后缀，使…化",
   "ise": "动词后缀，使…化(英式)",
+  "ized": "动词后缀，-ize 的过去式/过去分词(-ize+-ed，去e)",
+  "ised": "动词后缀，-ise 的过去式/过去分词(英式，-ise+-ed，去e)",
+  "izer": "名词后缀，…者、…物(-ize+-er，去e)",
+  "iser": "名词后缀，…者、…物(英式，-ise+-er，去e)",
+  "izing": "动词后缀，-ize 的现在分词(-ize+-ing，去e)",
+  "ising": "动词后缀，-ise 的现在分词(英式，-ise+-ing，去e)",
   "en": "动词后缀，使…",
   "able": "形容词后缀，可…的",
   "ible": "形容词后缀，可…的",
@@ -2261,6 +2268,7 @@ const ROOTS = {
   "cet": ["鲸", ["cetus","cetane"], {"lang": "拉丁语", "word": "cetus"}],
   "chaet": ["毛发", [], {"lang": "希腊语", "word": "chaite"}],
   "chalc": ["铜", ["chalceous","chalcitis"], {"lang": "希腊语", "word": "chalkos"}],
+  "character": ["刻痕、特征", ["character", "characteristic", "characterize"], {"lang": "希腊语", "word": "kharakter"}],
   "charit": ["爱、慈善", ["charity", "charitable"], {"lang": "拉丁语", "word": "caritas"}],
   "cheil": ["唇", ["cheilitis","cheilosis"], {"lang": "希腊语", "word": "cheilos"}],
   "chel": ["爪", [], {"lang": "希腊语", "word": "chele"}],
@@ -2460,6 +2468,7 @@ const ROOTS = {
   "cours": ["跑、进行(curr的变体)", ["course", "intercourse"], {"lang": "拉丁语", "word": "currere"}],
   "defens": ["防御、保卫", ["defensible", "defensive", "defend"], {"lang": "拉丁语", "word": "defendere"}],
   "dem": ["人民", ["democracy", "demographic", "epidemic"], {"lang": "希腊语", "word": "demos"}],
+  "demean": ["举止、行为；贬低", ["demean", "demeanor", "misdemeanor"], {"lang": "古法语", "word": "demener", "note": "由 de- 加 mener 引导构成"}],
   "cracy": ["统治、政体", ["democracy", "autocracy", "bureaucracy"]],
   "carcer": ["监狱、囚禁", ["incarcerate", "carceral"], {"lang": "拉丁语", "word": "carcer", "note": "监狱"}],
   "derm": ["皮肤", ["dermatology", "hypodermic"], {"lang": "希腊语", "word": "derma"}],
@@ -2522,6 +2531,7 @@ const ROOTS = {
   "femor": ["大腿、股骨", ["femoral"], {"lang": "拉丁语", "word": "femur"}],
   "fend": ["打击、防御", ["defend", "offend", "fend"], {"lang": "拉丁语", "word": "fendere"}],
   "ferr": ["铁", ["ferrous", "ferric"], {"lang": "拉丁语", "word": "ferrum"}],
+  "fertil": ["肥沃、多产", ["fertility", "fertile", "fertilizer"], {"lang": "拉丁语", "word": "fertilis"}],
   "fess": ["承认、声明", ["confess", "profess"], {"lang": "拉丁语", "word": "fateri"}],
   "festiv": ["节日、欢庆", ["festive", "festivity"], {"lang": "拉丁语", "word": "festum"}],
   "feto": ["胎儿", ["fetology","fetometry"], {"lang": "拉丁语", "word": "fetus"}],
@@ -2757,6 +2767,7 @@ const ROOTS = {
   "lupin": ["狼", ["lupine", "lupus"], {"lang": "拉丁语", "word": "lupus"}],
   "lut": ["泥", ["lute", "lutulent"], {"lang": "拉丁语", "word": "lutum"}],
   "lute": ["黄；黄体", ["luteal","luteus"], {"lang": "拉丁语", "word": "luteus"}],
+  "lyc": ["狼", ["lycanthropy", "lycanthrope", "lycopene"], {"lang": "希腊语", "word": "lykos"}],
   "lymph": ["淋巴", ["lymphatic","lymphocytic"], {"lang": "拉丁语", "word": "lympha"}],
   "lyo": ["分散、溶解", [], {"lang": "希腊语", "word": "lyein"}],
   "lys": ["溶解、分解", ["analysis", "catalyst", "paralysis"], {"lang": "希腊语", "word": "lysis"}],
@@ -2899,6 +2910,7 @@ const ROOTS = {
   "opportun": ["机会、合适", ["opportune", "opportunity"], {"lang": "拉丁语", "word": "opportunus"}],
   "opto": ["视觉、光", ["optometry","optometrist"], {"lang": "希腊语", "word": "optos"}],
   "orchid": ["睾丸；兰", ["orchidist","orchidic"], {"lang": "希腊语", "word": "orchis"}],
+  "organ": ["器官、工具", ["organ", "organic", "organize", "organism"], {"lang": "希腊语", "word": "organon"}],
   "organo": ["器官；有机化合物", ["organogram","organoid"], {"lang": "希腊语", "word": "organon"}],
   "ornith": ["鸟", ["ornithology"], {"lang": "希腊语", "word": "ornis"}],
   "oro": ["口", ["oroid","oroanal"], {"lang": "拉丁语", "word": "os"}],
@@ -3402,6 +3414,7 @@ const ROOTS = {
   "telescope": ["望远镜(tele远+scope看)", ["telescope", "telescopic"], {"lang": "希腊语", "word": "tele"}],
   "oc": ["朝向(ob的变体)", ["occur", "occlude"], {"lang": "拉丁语", "word": "ob"}],
   "immun": ["免疫", ["immune", "autoimmune", "immunity"]],
+  "immune": ["免疫的；免除的", ["immune", "autoimmune", "immunity"], {"lang": "拉丁语", "word": "immunis", "note": "本义为免除义务或负担"}],
   "kinesis": ["运动", ["kinesis", "kinesiology"], {"lang": "希腊语", "word": "kinesis"}],
   "kine": ["运动", ["kinetic", "kinesis", "kinematics"]],
   "kinet": ["运动(kine的变体)", ["kinetic", "hyperkinetic"], {"lang": "希腊语", "word": "kinesis"}],
@@ -5072,7 +5085,7 @@ const BASEWORDS = {
   "sister": "姐妹", "sit": "坐", "sky": "天空", "sleep": "睡觉",
   "size": "尺寸",
   "skin": "皮肤",
-  "skirt": "裙子",
+  "skirt": "裙子", "skit": "跳跃、轻快动作",
   "slight": "轻微的",
   "slow": "慢的", "small": "小的", "smart": "聪明的", "smile": "微笑",
   "smoke": "吸烟", "snow": "雪", "soft": "软的", "soil": "土壤",
@@ -5085,7 +5098,7 @@ const BASEWORDS = {
   "speak": "说话", "special": "特别的", "spend": "花费", "sport": "运动",
   "specify": "指定、详述",
   "speed": "速度",
-  "spill": "洒出",
+  "spill": "洒出", "splint": "夹板；碎片",
   "spit": "吐；唾液",
   "stair": "楼梯",
   "stake": "桩；赌注",
@@ -5167,7 +5180,7 @@ const BASEWORDS = {
   "world": "世界", "worry": "担心", "write": "写", "wrong": "错误的",
   "worth": "价值",
   "yard": "院子", "year": "年", "yellow": "黄色的", "young": "年轻的",
-  "beauty": "美丽", "govern": "管理、统治", "grand": "宏大的、祖辈的",
+  "beauty": "美丽", "govern": "管理、统治", "grand": "宏大的、祖辈的", "grant": "授予、准许",
   "stream": "河流、溪流", "king": "国王", "communicate": "通讯、交流",
   "discipline": "学科、纪律", "have": "有", "cause": "原因、导致",
   "heal": "治愈", "student": "学生",
@@ -5344,6 +5357,51 @@ const ROOT_BLOCK = {
   'amorite': ['amor'], 'amorites': ['amor'], 'amory': ['amor'], 'takamori': ['amor'], 'floramor': ['amor'],
   'concameration': ['camera'],   /* 拉丁 concameratio = con + camerare，走 camer-ation 更准 */
   'teuchit': ['teuch'],   /* 矿物名（纪念人名），与希腊 teuchos（书卷）无关；拦掉后回退 partial 显示，不给假结构 */
+  /* lyc(狼，希腊 lykos) 误伤：这是个 3 字符短词根，只在词首匹配，
+     但 lyc 开头的词里真正表"狼"义的只是一部分，其余是撞车：
+     · lychee 荔枝（汉语借词）、lychgate 墓园门廊（古英语 līc 尸体）、
+       lychnis 剪秋罗（希腊 lychnos 灯）、lyceum/lycee 学园中学（Apollo Lykeios）、
+       lycia/lycaonia 地名、lycurgus/alyce/lycett 人名、lycra 商标、
+       lycine 甘氨酸变体（glyc 甜）、lycium 枸杞属（希腊 lykion）、
+       acalycine/gymnocalycium 的花萼（希腊 kalyx）、aglycaemia/aglycone 的糖（glyc）
+     · lycoris 石蒜属及由其派生的生物碱（lycorine/lycorenine…）词源不明，一并拦掉
+     注：lycaena 灰蝶属（lykaina 母狼）、lycopod 石蒜/石松属、lycoperdon 马勃（狼屁）、
+     lycopersicon 番茄（狼桃）、autolycus（auto+lykos）等确为"狼"义，保留不拦 */
+  'lychee': ['lyc'], 'lychees': ['lyc'], 'lyche': ['lyc'], 'lyches': ['lyc'],
+  'lychgate': ['lyc'], 'lychgates': ['lyc'], 'lych-gate': ['lyc'], 'lych': ['lyc'],
+  'lyceum': ['lyc'], 'lyceums': ['lyc'], 'lycee': ['lyc'], 'lycees': ['lyc'], 'lyce': ['lyc'],
+  'alyce': ['lyc'], 'lycett': ['lyc'], 'lycurgus': ['lyc'], 'lycurgan': ['lyc'], 'lycurin': ['lyc'],
+  'lycia': ['lyc'], 'lycian': ['lyc'], 'lycians': ['lyc'], 'lycaonia': ['lyc'], 'lycaonian': ['lyc'],
+  'lycra': ['lyc'],
+  'lycine': ['lyc'], 'lycium': ['lyc'],
+  'lychnin': ['lyc'], 'lychnis': ['lyc'], 'lychnisc': ['lyc'], 'lychnise': ['lyc'], 'lychins': ['lyc'],
+  'lyclamycin': ['lyc'], 'lycetol': ['lyc'],
+  'acalycine': ['lyc'], 'acalycinous': ['lyc'], 'gymnocalycium': ['lyc'],
+  'aglycaemia': ['lyc'], 'aglycone': ['lyc'],
+  'homolycorine': ['lyc'], 'lycoramine': ['lyc'], 'lycoremine': ['lyc'], 'lycorenine': ['lyc'],
+  'lycorine': ['lyc'], 'lycoris': ['lyc'], 'lycorisin': ['lyc'], 'lycorin': ['lyc'], 'pseudolycorine': ['lyc'],
+  'lycobetaine': ['lyc'], 'lycomarasmin': ['lyc'], 'lycomarasmine': ['lyc'], 'lycodine': ['lyc'],
+  'lycodoline': ['lyc'], 'lycoclavanin': ['lyc'], 'lycoclavanol': ['lyc'], 'lycoclavine': ['lyc'],
+  'lycofawcine': ['lyc'], 'lyconnotine': ['lyc'], 'lycctonine': ['lyc'], 'lycoriidae': ['lyc'],
+  /* organ(器官，希腊 organon) 误伤：都不是"器官"义——
+     · demorgan 是 De Morgan（逻辑学家德摩根）人名
+     · milorganite 是商标（Milwaukee Organic Nitrogen 的缩合）
+     · organdy/organdie 奥甘迪布、organza 透明薄纱、organzine 经丝 均为法语/意语纺织品借词
+     · organburg 地名、organiger/organidin 专名
+     注：organo(有机) 是更长的独立词根，organosilane 等化学词不受影响；
+     organum/organon("器官"义)、organacidia、organanlage 等医学生物词保留 */
+  'demorgan': ['organ'], 'milorganite': ['organ'],
+  'organdy': ['organ'], 'organdie': ['organ'], 'organza': ['organ'],
+  'organzine': ['organ'], 'organburg': ['organ'],
+  'organiger': ['organ'], 'organidin': ['organ'],
+  /* skit(跳跃、轻快动作，基本词) 误伤：
+     · diskitis 椎间盘炎（disc + -itis 炎症，非 skit）
+     · norilskite/terskite 是矿物名（分别来自 Norilsk/Tersk 地名）
+     · skittling 属 skittle(九柱戏) 家族，与 skit 跳跃无关
+     注：skittish("易受惊的") 与 enhanced 词库一致，确为 skit+ish，保留 */
+  'diskitis': ['skit'], 'norilskite': ['skit'], 'terskite': ['skit'], 'skittling': ['skit'],
+  /* demean(举止、行为) 家族：mis- 前缀路径的评分天然低于后缀路径（mis|dem-ean-or 得 1.6 分 vs mis|demean-or 的 -1.4），与 astrophile/epicenter 同机制，拦掉 dem(人民) 才能让正确的 mis+demean+or 胜出 */
+  'misdemean': ['dem'], 'misdemeanant': ['dem'], 'misdemeaned': ['dem'], 'misdemeaning': ['dem'], 'misdemeanor': ['dem'], 'misdemeanors': ['dem'], 'misdemeanour': ['dem'], 'misdemeanours': ['dem'], 'misdemeans': ['dem'],
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -5471,6 +5529,9 @@ function decompose(w, depth) {
   // 2. 剥后缀（可连续多个），递归拆剩余部分
   for (const [suf, sufM] of LISTS.suffixes) {
     if (!w.endsWith(suf) || w.length - suf.length < 2) continue;
+    // -o 不走这条通用后缀路径：它是罗曼语借词的词尾，在这里参与评分会顶掉已有的正确拆解
+    // （aerophoto 的 aero|photo→aero|phot-o、albino 的 alb+ino→albin-o），只留给下面 3.5 兜底
+    if (suf === 'o') continue;
     const rest = w.slice(0, w.length - suf.length);
     // 弱后缀(s/es/e)只允许直接接在整词词根后，避免过度拆分(如 revers→rever+s 假拆分)
     // 复数s兜底：剥掉s/es后剩余部分能完整拆解才放行(acquaintances→quaint+ance+s)。防误伤三门槛：
@@ -5514,6 +5575,24 @@ function decompose(w, depth) {
       // 含基本词或变形还原词根的复合候选额外罚分，避免压过"真前缀+真词根"(如 complete 不拆成 come+plete)
       score: rootLen * 2 - (g.roots.length - 1) * SCORE.MORPH - (g.roots.some(r => r.isBase) ? SCORE.BASE : 0)
     });
+  }
+
+  /* 3.5 -o 兜底（罗曼语名词词尾，意/西/葡语借词）：commando→command+o、dynamo→dynam+o。
+     必须在"前三条路径一个候选都没有"时才补——commando 就是 decompose 全空才掉进 partial
+     显示 com||??mando 的。若作为普通后缀参与评分，它会顶掉已有的正确拆解（aerophoto 的
+     aero|photo 变 aero|phot-o、albino 的 alb+ino 变 albin-o），所以按兜底层处理、不参与竞争。
+     三道门槛（照 -on/-et 的惯例）：词干能完整拆解、无基本词根、含 ≥4 字符真词根。
+     最后一条是关键：3 字符词根在 -o 前多是巧合（barbaro→bar+bar+o、adesso→ad+ess+o 被拦）。 */
+  if (candidates.length === 0 && w.endsWith('o')) {
+    const stem = w.slice(0, -1);
+    const st = decompose(stem, depth + 1);
+    if (st && !st.roots.some(r => r.isBase) && st.roots.some(r => !r.isBase && r.m.length >= 4)
+        && !(st.suffixes || []).some(x => x.m === 'o')) {
+      candidates.push({
+        prefix: st.prefix, roots: st.roots,
+        suffixes: (st.suffixes || []).concat([{ m: 'o', meaning: SUFFIXES.o }]), score: 0
+      });
+    }
   }
 
   /* 误拆防线：按 ROOT_BLOCK 拦截表中该词禁用的词根过滤候选。
@@ -5817,17 +5896,148 @@ function morphChunksHTML(chunks) {
 /* enhanced 词自带 chain（[{m,meaning,source}]）本身就是结构化词素，直接铺成三色块——
    这批是 1.3 万个考试词，用户日常查得最多的一层。
    类别判定：后缀表/含义含"后缀"→后缀，前缀表/含义含"前缀"→前缀，其余算词根。 */
+/* 词素角色覆盖表（AI 复核，2026-09-27）：键 = 词素|义项|位置(词首/词中/词尾)，值 = pf 前缀 / rt 词根 / sf 后缀。
+   这些词素同时挂在两张表上（如 tach 既在词根表又在'速度'前缀表、en 前后缀表都有），
+   系统只能二选一、常选错。由本地 4b 模型逐条复核后人工抽检，只改三色块的类别标签与连字符，
+   不碰引擎拆解。见 test_ai_review.py */
+const CHUNK_CLS = {
+  'al|全部|词首': 'pf',
+  'al|全部 "all"（全部）|词首': 'pf',
+  'al|其他|词首': 'pf',
+  'al|冠词|词首': 'pf',
+  'al|加强|词首': 'pf',
+  'al|向|词首': 'pf',
+  'al|向、往|词首': 'pf',
+  'al|完全|词首': 'pf',
+  'al|定冠词|词首': 'pf',
+  'al|朝向|词首': 'pf',
+  'an|加强|词首': 'pf',
+  'an|向|词首': 'pf',
+  'an|向前|词首': 'pf',
+  'an|向，加强|词首': 'pf',
+  'an|否定|词首': 'pf',
+  'an|否定/无|词首': 'pf',
+  'an|否定/缺乏|词首': 'pf',
+  'an|否定，无|词首': 'pf',
+  'an|无|词首': 'pf',
+  'an|缺少|词首': 'pf',
+  'ar|加强|词首': 'pf',
+  'ar|向|词首': 'pf',
+  'ar|向/加强|词首': 'pf',
+  'e|出|词首': 'pf',
+  'e|出来|词首': 'pf',
+  'e|出，去掉|词首': 'pf',
+  'e|出；除去|词首': 'pf',
+  'e|加强|词首': 'pf',
+  'e|去除|词首': 'pf',
+  'e|向外|词首': 'pf',
+  'e|完全|词首': 'pf',
+  'e|超出|词首': 'pf',
+  'en|使|词首': 'pf',
+  'en|使动|词首': 'pf',
+  'en|使动化|词首': 'pf',
+  'en|使成为|词首': 'pf',
+  'en|使进入|词首': 'pf',
+  'en|内部|词首': 'pf',
+  'en|向内|词首': 'pf',
+  'en|向内/在上|词首': 'pf',
+  'en|否定|词首': 'pf',
+  'en|在...上|词首': 'pf',
+  'en|在...内|词首': 'pf',
+  'en|放入|词首': 'pf',
+  'eur|人|词尾': 'sf',
+  'eur|做…的人|词尾': 'sf',
+  'eur|行为者|词尾': 'sf',
+  'ino|西班牙/|词尾': 'sf',
+  'out|出|词尾': 'sf',
+  'out|向外|词尾': 'sf',
+  'out|外部的/彻底的|词尾': 'sf',
+  'out|外；离开|词尾': 'sf',
+  'out|熄灭/终止|词尾': 'sf',
+  'self|自己|词尾': 'sf',
+  'self|自身|词尾': 'sf',
+  'ster|人|词尾': 'sf',
+  'ster|从事…的人|词尾': 'sf',
+  'ster|表示行为者的人|词尾': 'sf',
+  'up|向上|词尾': 'sf',
+  'ag|驱动|词中': 'rt',
+  'amid|中间|词尾': 'rt',
+  'ar|属于…的|词中': 'sf',
+  'ar|向（ad 的变体）|词首': 'pf',
+  'al|生长|词中': 'rt',
+  'all|全部|词尾': 'rt',
+  'astr|星象|词中': 'rt',
+  'bor|庇护所|词尾': 'rt',
+  'bryo|生长|词尾': 'rt',
+  'but|末端|词尾': 'rt',
+  'but|目标|词尾': 'rt',
+  'chem|化学|词中': 'rt',
+  'chol|胆汁|词中': 'rt',
+  'cost|肋骨；侧边|词尾': 'rt',
+  'cross|十字形；交叉|词尾': 'rt',
+  'cross|十字架|词尾': 'rt',
+  'demon|恶魔|词中': 'rt',
+  'dextr|右手|词中': 'rt',
+  'dors|背|词中': 'rt',
+  'en|使动|词中': 'rt',
+  'en|年|词中': 'rt',
+  'end|周期|词中': 'rt',
+  'end|状态|词中': 'rt',
+  'end|结束|词尾': 'rt',
+  'falc|镰刀|词中': 'rt',
+  'for|打孔|词中': 'rt',
+  'grand|大|词中': 'rt',
+  'hind|后部|词尾': 'rt',
+  'ili|连接成分|词中': 'rt',
+  'inter|埋葬|词尾': 'rt',
+  'lip|嘴唇|词尾': 'rt',
+  'lute|冲洗|词尾': 'rt',
+  'lute|清洗|词尾': 'rt',
+  'mid|中间，源自|词尾': 'rt',
+  'nas|出生|词中': 'rt',
+  'nigr|黑|词中': 'rt',
+  'nor|知道|词中': 'rt',
+  'ole|反复动作|词尾': 'rt',
+  'ole|油|词中': 'rt',
+  'ortho|正统|词中': 'rt',
+  'oxy|尖锐|词中': 'rt',
+  'pent|思考|词尾': 'rt',
+  'phyll|叶子|词尾': 'rt',
+  'plan|平坦|词中': 'rt',
+  'pur|纯净|词中': 'rt',
+  'pyr|火|词中': 'rt',
+  'saur|蜥蜴|词尾': 'rt',
+  'sex|性别|词中': 'rt',
+  'sin|渗出物|词尾': 'rt',
+  'ster|固体|词中': 'rt',
+  'ster|工具/物品|词尾': 'rt',
+  'stern|僵硬|词中': 'rt',
+  'strat|层|词中': 'rt',
+  'tach|固定|词尾': 'rt',
+  'tach|固定|词中': 'rt',
+  'tach|连接|词中': 'rt',
+  'ter|反复动作|词尾': 'rt',
+  'ter|重复动作|词中': 'rt',
+  'uber|丰富|词中': 'rt',
+  'uber|肥沃|词中': 'rt',
+};
+
 function enhancedMorphBlock(chain) {
   const chunks = [];
-  for (const m of chain) {
+  chain.forEach((m, idx) => {
     const mm = (m.m || '').trim();
-    if (!mm) continue;
+    if (!mm) return;
     const mean = m.meaning || '';
+    const pos = idx === 0 ? '词首' : (idx === chain.length - 1 ? '词尾' : '词中');
     let cls = 'rt', label = '词根', disp = mm;
-    if (SUFFIXES[mm.toLowerCase()] || /后缀/.test(mean)) { cls = 'sf'; label = '后缀'; disp = '-' + mm; }
+    const ov = CHUNK_CLS[mm + '|' + mean + '|' + pos];
+    if (ov === 'sf') { cls = 'sf'; label = '后缀'; disp = '-' + mm; }
+    else if (ov === 'pf') { cls = 'pf'; label = '前缀'; disp = mm + '-'; }
+    else if (ov === 'rt') { cls = 'rt'; label = '词根'; disp = mm; }
+    else if (SUFFIXES[mm.toLowerCase()] || /后缀/.test(mean)) { cls = 'sf'; label = '后缀'; disp = '-' + mm; }
     else if (PREFIXES[mm.toLowerCase()] || /前缀/.test(mean)) { cls = 'pf'; label = '前缀'; disp = mm + '-'; }
     chunks.push({ cls: cls, label: label, m: disp, mtext: gl(mm, mean) });
-  }
+  });
   return chunks.length ? morphChunksHTML(chunks) : '';
 }
 
@@ -6013,7 +6223,7 @@ const MORPH_EN = {
   "dactyly":"having a type of finger or toe","dastard":"dastard, coward","de":"down, away, removal","debat":"debate","debentur":"debenture, debt",
   "dec":"ten","deceiv":"deceive (variant of decept)","decem":"ten","decess":"decease, death","decim":"ten, tenth",
   "decker":"having a stated number of decks","decre":"decree","defens":"defence","degr":"degree, grade","dehydro":"removal of hydrogen","deit":"deity",
-  "delic":"relating to a type of experience","delineat":"delineate","dem":"people","demi":"half","demon":"demon","dendro":"tree","dendron":"shrub, tree",
+  "delic":"relating to a type of experience","delineat":"delineate","dem":"people","demean":"conduct, bearing","demi":"half","demon":"demon","dendro":"tree","dendron":"shrub, tree",
   "dent":"tooth","deoxy":"removal of oxygen","deris":"derision","deriv":"derive","derm":"skin","derma":"skin disorder","dermat":"skin",
   "desm":"bond, ligament","despis":"despise","despit":"despite, scorn","destin":"destiny","desul":"leap, desultory","deterior":"deteriorate",
   "deuter":"second, secondary","dexter":"right; skilful","dextr":"right","dextro":"right, dextrorotatory","di":"two, apart","dia":"through, across",
@@ -6085,7 +6295,7 @@ const MORPH_EN = {
   "idine":"nitrogenous ring compound","idio":"own, peculiar","idium":"structure in a plant or animal","ient":"adjective suffix",
   "ier":"person engaged in an activity","ify":"verb suffix, to make","ign":"fire","il":"not (variant of in)",
   "ile":"adjective suffix, able to be (Latin)","ili":"ilium","illus":"illusion, deception","illustr":"illustrate","im":"not; into (variant of in)",
-  "imid":"imide","imitat":"imitate","immun":"immune","immuno":"immune","in":"not; into","ina":"forming nouns","inae":"animal subfamily",
+  "imid":"imide","imitat":"imitate","immun":"immune","immune":"exempt, immune","immuno":"immune","in":"not; into","ina":"forming nouns","inae":"animal subfamily",
   "ind":"indigo, indole","indiscr":"indiscreet","indo":"India","industri":"industry, diligence","ine":"adjective or noun suffix (Latin)",
   "infinit":"infinite","inflammat":"inflammation","info":"information","infra":"below, beneath","ing":"present participle or gerund",
   "iniquit":"iniquity","ino":"fibrous tissue, muscle","insula":"island","integrat":"integrate","integrit":"integrity","inter":"between, among",
