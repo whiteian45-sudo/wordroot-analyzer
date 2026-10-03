@@ -150,10 +150,10 @@ for (const item of words) {
   }
 }
 console.log('总词数:', stat.total, ' 引擎未拆出:', stat.null, ' 完整拆解:', stat.complete, ' 低匹配(<0.4):', stat.low);
-console.log('=== 低匹配词（疑似误拆）===');
-console.log(low.join('\\n'));
+if (!__BRIEF__) { console.log('=== 低匹配词（疑似误拆）==='); console.log(low.join('\\n')); }
 `;
-  console.log(eval(currentCore + probe.replace('__WORDS__', JSON.stringify(words))));
+  const auditOut = eval(currentCore + probe.replace('__WORDS__', JSON.stringify(words)).replace('__BRIEF__', args.includes('--brief') ? 'true' : 'false'));
+  if (!args.includes('--brief')) console.log(auditOut);   // --brief 时总量已由探针打印，别再印 eval 的返回值（undefined）
 } else if (args.includes('--enhanced')) {
   const oldCore = loadCore(execSync(`git -C "${DIR}" show HEAD:index.html`).toString('utf8'));
   const enh = JSON.parse(fs.readFileSync(DIR + '/enhanced.json', 'utf8'));
