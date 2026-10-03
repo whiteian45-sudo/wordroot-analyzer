@@ -4754,6 +4754,26 @@ function buildIndex() {
 
 
 /* 查询某词的 同源词/同根词 */
+/* 同形异源词素的「同根词」过滤（2026-10-03）
+   MORPH_INDEX 是按词素名聚合的，一个名字存不下两个义项：查 pedophilia（儿童义）会把土壤那支的
+   pedology 一起列出来，查 poseur（法语后缀 -eur）会列出 eurozone。这里按词形把"另一支"剔掉，
+   与 morphSource / 三色块 / PEDO_* 的分流保持同一口径。 */
+function homographMateOk(word, morph, mate) {
+  if (morph === 'pedo') {
+    const sense = x => (PEDO_CHILD.test(x) ? 'child' : (PEDO_FOOT.test(x) ? 'foot' : 'soil'));
+    return sense(word) === sense(mate);
+  }
+  if (morph === 'eur') {
+    return (String(word || '').slice(0, 3) === 'eur') === (String(mate || '').slice(0, 3) === 'eur');
+  }
+  return true;
+}
+function filterHomograph(word, morphs) {
+  if (!morphs || !morphs.length) return morphs;
+  return morphs
+    .map(g => ({ m: g.m, words: g.words.filter(x => homographMateOk(word, g.m, x)) }))
+    .filter(g => g.words.length);
+}
 function findCognates(word) {
   const e = ENHANCED[word];
   const srcs = [];
@@ -4802,7 +4822,7 @@ function findCognates(word) {
         if (list.length) srcs.push({ lang: src.lang, word: src.word, words: list });
       }
     }
-    return { srcs, morphs };
+    return { srcs, morphs: filterHomograph(word, morphs) };
   }
   if (e && e.chain) {
     for (const m of e.chain) {
@@ -4834,7 +4854,7 @@ function findCognates(word) {
       }
     }
   }
-  return { srcs, morphs };
+  return { srcs, morphs: filterHomograph(word, morphs) };
 }
 
 /* ============================================================
@@ -5290,7 +5310,18 @@ for (const bw of Object.keys(BASEWORDS)) {
    这里给它们开一张受控表：只在 rootOf 里「剥 ed/ing/est 且分段以重叠辅音结尾」时放行
    （nodded 的 nodd→nod）；er 不放行（butter/summer 的重叠是巧合）；非动词不收（cal/ces/mis 会把 called/missed 带坏）。
    实测：定向 798 词 由无到有 313 / 丢失 0 / 改写 31（全是改善）。 */
+/* 三字母**形容词**表（2026-10-03）：只给 er/est 用。
+   实测教训：把这些词放进主 BASEWORDS 会闯 91 处祸（cotenant→cot-en-ant、cubes→cub-es、
+   denationalize→den-ation-al-ize）——主表是"永远生效"的。放进受后缀闸门控制的表就干净：
+   定向扫 7684 词 → 由无到有 29、丢失 0、改写 0。 */
+const BASEWORDS_SHORT_ADJ = {
+  "fat": "肥的",
+};
 const BASEWORDS_SHORT = {
+  /* 第二批（2026-10-03）：同样是三字母、同样只在剥 ed/ing/est 时放行。
+     直接进主 BASEWORDS 实测会闯祸（见上面 ADJ 表的注释），闸门表则零回归。 */
+  "fat": "肥的", "gas": "气体", "cub": "幼兽", "den": "兽穴", "cam": "凸轮", "cot": "行军床",
+  "hob": "滚刀", "hub": "毂", "keg": "小桶", "bun": "小面包", "bur": "刺果", "gib": "凹字形楔",
   "bad": "a. 坏的nn. 坏",
   "bag": "n. 袋子",
   "bam": "n. 欺骗",
@@ -6599,6 +6630,13 @@ function rootOf(seg, depth) {
   }
   /* 三字母基本词的重叠辅音还原（同 BASEWORDS_SHORT）：只在剥 ed/ing/est 且分段以重叠辅音结尾时放行，
      且排在词根命中之前（budding 里的 budd 是「佛」词根，但这里要的是 bud）。 */
+  /* 三字母形容词的比较级/最高级（fatter/fattest）：只放形容词，
+     否则 butter/summer 那种巧合重叠会被当成派生（but-er / sum-er）。 */
+  if ((SUF_CTX === 'er' || SUF_CTX === 'est') && seg.length >= 4
+      && seg[seg.length - 1] === seg[seg.length - 2] && own(BASEWORDS_SHORT_ADJ, seg.slice(0, -1))) {
+    const da = seg.slice(0, -1);
+    return { m: da, meaning: BASEWORDS_SHORT_ADJ[da], cognates: [], isBase: true, flex: true };
+  }
   if ((SUF_CTX === 'ed' || SUF_CTX === 'ing' || SUF_CTX === 'est') && seg.length >= 4
       && seg[seg.length - 1] === seg[seg.length - 2] && own(BASEWORDS_SHORT, seg.slice(0, -1))) {
     const d0 = seg.slice(0, -1);
@@ -8949,16 +8987,71 @@ const HIST_PRUNED_KEY = 'wr_hist_pruned_v2';   // 一次性清理标记（见 pr
    和查词记录一样落盘到项目目录 favs.json，不再只活在浏览器里。
    FAVS 是内存权威（渲染路径要同步读），localStorage 降级为缓存兼兜底。 */
 const FAV_KEY = 'wr_favs';
-let FAVS = null;   // 内存权威：源自本地服务读出的 favs.json；null=尚未加载
-function loadFavs() {
-  if (FAVS) return FAVS;
-  try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; }
+/* FAV_MAP 是内存权威：词 -> {t, on}。t 是这次操作的时间，on=0 是「取消收藏」的墓碑。
+   为什么要时间戳（2026-10-03）：前端提交的永远是「自己那份快照 + 自己的改动」，
+   而早先收藏条目只是词名、没有任何时间信息，服务端只能整份覆盖 —— 两个标签页同时用，
+   后写的那份会把另一个页签新加的收藏抹掉（也会把它的取消复活）。
+   带上 t 之后，服务端按词取「更晚的那次操作」，加/删都正确，多标签页不再互相覆盖。 */
+let FAV_MAP = null;
+function favNorm(items) {
+  const m = {};
+  for (const it of (Array.isArray(items) ? items : [])) {
+    if (typeof it === 'string') { if (it) m[it] = { t: 0, on: 1 }; continue; }   // 旧格式：裸词名
+    const w = it && (it.w || it.k);
+    if (!w) continue;
+    const t = Number(it.t) || 0;
+    if (!m[w] || t >= m[w].t) m[w] = { t: t, on: it.on === 0 ? 0 : 1 };
+  }
+  return m;
 }
-function saveFavs(f) {
-  FAVS = f;
-  try { localStorage.setItem(FAV_KEY, JSON.stringify(f)); } catch (e) {}
+function favItems() {
+  return Object.keys(FAV_MAP || {}).map(w => ({ w: w, t: FAV_MAP[w].t || 0, on: FAV_MAP[w].on }));
+}
+function loadFavs() {
+  if (!FAV_MAP) {
+    try { FAV_MAP = favNorm(JSON.parse(localStorage.getItem(FAV_KEY)) || []); } catch (e) { FAV_MAP = {}; }
+  }
+  return Object.keys(FAV_MAP).filter(w => FAV_MAP[w].on)
+    .sort((a, b) => (FAV_MAP[b].t || 0) - (FAV_MAP[a].t || 0));   // 新收藏在前
+}
+function saveFavs() {
+  const items = favItems();
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(items)); } catch (e) {}
+  // 服务端回传合并结果（按词取更晚的操作）：立刻对齐本地，多标签页随即收敛
   fetch('/favs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ version: 1, items: f }) }).catch(() => {});
+    body: JSON.stringify({ version: 2, items: items }) })
+    .then(r => r.json())
+    .then(d => {
+      if (d && Array.isArray(d.items)) {
+        FAV_MAP = favNorm(d.items);
+        try { localStorage.setItem(FAV_KEY, JSON.stringify(favItems())); } catch (e) {}
+        renderFavs();
+      }
+    })
+    .catch(() => {});
+}
+function setFav(w, on) {
+  if (!FAV_MAP) loadFavs();
+  FAV_MAP[w] = { t: Date.now(), on: on ? 1 : 0 };
+  saveFavs();
+}
+function clearFavs() {
+  if (!FAV_MAP) loadFavs();
+  const t = Date.now();
+  for (const w of Object.keys(FAV_MAP)) if (FAV_MAP[w].on) FAV_MAP[w] = { t: t, on: 0 };
+  saveFavs();
+}
+/* 多标签页同步：切回本页签时拉一次，另一个页签的加/删就跟着出现 */
+function favPull() {
+  return fetch('/favs').then(r => r.json()).then(d => {
+    const server = (d && Array.isArray(d.items)) ? d.items : null;
+    if (!server) return false;
+    const before = JSON.stringify(loadFavs());
+    const local = favItems();
+    FAV_MAP = favNorm(server.concat(local));   // 同一套「取更晚操作」规则，本地未提交的改动不会丢
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(favItems())); } catch (e) {}
+    return before !== JSON.stringify(loadFavs());
+  }).catch(() => false);
 }
 // 启动时拉收藏（项目目录 favs.json），随后渲染
 async function initFavs() {
@@ -8967,21 +9060,20 @@ async function initFavs() {
     const server = (d && Array.isArray(d.items)) ? d.items : [];
     let local = [];
     try { local = JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { local = []; }
-    // 服务端文件是权威，只有它还空着（首次启用本功能）才拿 localStorage 迁过去。
-    // 否则会把「在别处已取消的收藏」又复活回来。
-    FAVS = server.length ? server : local;
-    if (server.length) { try { localStorage.setItem(FAV_KEY, JSON.stringify(FAVS)); } catch (e) {} }
-    else if (local.length) saveFavs(local);
+    // 两边的条目按词取更晚的操作：服务器上的删除墓碑能挡住 localStorage 里的旧收藏，
+    // 本地新点的取消也压得住服务器上的旧记录（旧实现只能整份二选一，两头都会出错）。
+    FAV_MAP = favNorm(server.concat(local));
+    if (server.length) { try { localStorage.setItem(FAV_KEY, JSON.stringify(favItems())); } catch (e) {} }
+    else if (local.length) saveFavs();
   } catch (e) { /* 服务未就绪：维持 localStorage 兜底 */ }
   renderFavs();
 }
+window.addEventListener('focus', () => { favPull().then(ch => { if (ch) renderFavs(); }); });
 function isFav(w) { return loadFavs().includes(w); }
 function toggleFav(w) {
-  let f = loadFavs();
-  if (f.includes(w)) f = f.filter(x => x !== w);
-  else f.unshift(w);
-  saveFavs(f);
-  return f.includes(w);
+  const on = !isFav(w);
+  setFav(w, on);
+  return on;
 }
 /* 收藏/历史摘要：enhanced → oxford(跟随重定向) → ecdict */
 function summaryFor(w) {
@@ -10209,7 +10301,7 @@ document.addEventListener('click', (e) => {
   }
   const dl = e.target.closest('.fav-rm');
   if (dl) {
-    saveFavs(loadFavs().filter(x => x !== dl.dataset.del));
+    setFav(dl.dataset.del, 0);   // 记一条删除墓碑（带时间戳），而不是整份重发
     renderFavs();
     return;
   }
@@ -10220,7 +10312,7 @@ document.addEventListener('click', (e) => {
     search();
   }
   const fc = e.target.closest('#fav-clear');
-  if (fc) { saveFavs([]); renderFavs(); }
+  if (fc) { clearFavs(); renderFavs(); }
 });
 btn.addEventListener('click', search);
 /* 搜索联想：输入防抖 + ↑↓导航 + Enter选中 + 点击 */

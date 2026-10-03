@@ -144,12 +144,14 @@ def _merge_items(path, new_items, cleared_at=0):
     history 的条目只增不删（删除的唯一形式就是「清空」，而那由水位表达），所以合并在语义上成立。
     单标签页的正常路径行为不变（合并结果与整表覆盖等价，只是顺序会重排成 t 倒序）。
 
-    收藏为什么必须覆盖：favs 有「单条取消收藏」——前端就是把那条从快照里删掉再整份发上来。
-    一旦合并（并集），删掉的那条会被旧文件重新补回来，**单标签页的正常路径都会坏**。
-    收藏既没有时间戳也没有水位，无从判断「谁更新」，覆盖就是它正确的语义。
+    收藏（2026-10-03 起）：条目改成 {w,t,on} —— on=0 是「取消收藏」的墓碑，同样按 t 取更晚的操作。
+    于是单条取消不会被并集复活（墓碑更晚就赢），多标签页也不会互相抹掉对方新加的收藏。
+    旧版裸字符串条目仍走下面的整份覆盖分支（兼容旧前端与旧文件；读到时即迁移成带 t 的条目）。
     """
     # 条目是字符串 = 收藏（history 的条目是带 t 的字典）。按元素类型分派而不是按路径，
     # 这样以后多一个同类文件也不会悄悄走错分支 —— 走错分支意味着把别人的数据抹掉。
+    # 首元素是字符串 = 旧版收藏的整份列表（条目无时间戳，无从判断谁更新，只能覆盖）。
+    # 新前端发的是对象条目，落到下面的合并分支。
     sample = new_items or _read_doc(path)['items']
     if sample and isinstance(sample[0], str):
         merged = list(new_items)
@@ -164,6 +166,8 @@ def _merge_items(path, new_items, cleared_at=0):
     best = {}
     nokey = []
     for it in list(old_items) + list(new_items):
+        if isinstance(it, str):
+            it = {'w': it, 't': 0, 'on': 1}   # 旧文件里的收藏裸词名：读到即迁移成带时间戳的条目
         if not isinstance(it, dict):
             continue
         k = it.get('k') or it.get('w')

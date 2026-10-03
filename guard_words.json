@@ -747,6 +747,84 @@
     },
     "startle": {
       "d": "startle"
+    },
+    "fatter": {
+      "d": "fat-er"
+    },
+    "fattest": {
+      "d": "fat-est"
+    },
+    "fatted": {
+      "d": "fat-ed"
+    },
+    "fatting": {
+      "d": "fat-ing"
+    },
+    "gassed": {
+      "d": "gas-ed"
+    },
+    "gassing": {
+      "d": "gas-ing"
+    },
+    "cubbed": {
+      "d": "cub-ed"
+    },
+    "cubbing": {
+      "d": "cub-ing"
+    },
+    "denned": {
+      "d": "den-ed"
+    },
+    "denning": {
+      "d": "den-ing"
+    },
+    "degassed": {
+      "d": "de|gas-ed"
+    },
+    "degassing": {
+      "d": "de|gas-ing"
+    },
+    "defatted": {
+      "d": "de|fat-ed"
+    },
+    "bunned": {
+      "d": "bun-ed"
+    },
+    "burred": {
+      "d": "bur-ed"
+    },
+    "cammed": {
+      "d": "cam-ed"
+    },
+    "cotenant": {
+      "d": "co|ten-ant"
+    },
+    "cotenancy": {
+      "d": "co|ten-ancy"
+    },
+    "coterminal": {
+      "d": "co|termin-al"
+    },
+    "cubes": {
+      "d": "cube-s"
+    },
+    "cubing": {
+      "d": "cube-ing"
+    },
+    "cubs": {
+      "d": "cube-s"
+    },
+    "denationalize": {
+      "d": "de|nat-ion-al-ize"
+    },
+    "butter": {
+      "d": "but+ter"
+    },
+    "summer": {
+      "d": "sum-mer"
+    },
+    "cuber": {
+      "d": "cube-er"
     }
   },
   "partial词": {
