@@ -258,6 +258,495 @@
     },
     "autoimmunity": {
       "d": "auto+immun-ity"
+    },
+    "seizure": {
+      "d": "seiz-ure"
+    },
+    "seizures": {
+      "d": "seiz-ure-s"
+    },
+    "seized": {
+      "d": "seize-ed"
+    },
+    "seizable": {
+      "d": "seiz-able"
+    },
+    "disseize": {
+      "d": "dis|seize"
+    },
+    "quadriplegic": {
+      "d": "quadri|pleg-ic"
+    },
+    "paraplegic": {
+      "d": "para|pleg-ic"
+    },
+    "hemiplegic": {
+      "d": "hemi|pleg-ic"
+    },
+    "slamming": {
+      "d": "slam-ing"
+    },
+    "slammed": {
+      "d": "slam-ed"
+    },
+    "skittling": {
+      "d": "skittle-ing"
+    },
+    "raising": {
+      "d": "raise-ing"
+    },
+    "planning": {
+      "d": "plan-ing"
+    },
+    "machines": {
+      "d": "machine-s"
+    },
+    "controlled": {
+      "d": "control-ed"
+    },
+    "wiped": {
+      "d": "wipe-ed"
+    },
+    "judges": {
+      "d": "judge-s"
+    },
+    "plan": {
+      "d": "plan"
+    },
+    "shapes": {
+      "d": "shape-s"
+    },
+    "contrarian": {
+      "d": "contrari-an"
+    },
+    "contrary": {
+      "d": "contrar-y"
+    },
+    "contrariwise": {
+      "d": "contrari-wise"
+    },
+    "contrarily": {
+      "d": "contrari-ly"
+    },
+    "contrariness": {
+      "d": "contrari-ness"
+    },
+    "contrarious": {
+      "d": "contrari-ous"
+    },
+    "contrariety": {
+      "d": "contrari-e-ty"
+    },
+    "cryptography": {
+      "d": "crypto-graphy"
+    },
+    "cryptology": {
+      "d": "crypto-logy"
+    },
+    "cryptobiotic": {
+      "d": "crypto+bio-tic"
+    },
+    "cryptoendomitosis": {
+      "d": "crypto-endo|mit-osis"
+    },
+    "cryptozoology": {
+      "d": "crypto+zoo-logy"
+    },
+    "junoesque": {
+      "d": "juno-esque"
+    },
+    "juno": {
+      "d": "juno"
+    },
+    "malaria": {
+      "d": "malaria"
+    },
+    "malarial": {
+      "d": "malari-al"
+    },
+    "antimalarial": {
+      "d": "anti|malari-al"
+    },
+    "sequitur": {
+      "d": "sequ-itur"
+    },
+    "loquitur": {
+      "d": "loqu-itur"
+    },
+    "cryptogam": {
+      "d": "crypto+gam"
+    },
+    "cryptorchid": {
+      "d": "crypto+orchid"
+    },
+    "anglophile": {
+      "d": "anglo|phil-e"
+    },
+    "anglophiles": {
+      "d": "anglo|phil-es"
+    },
+    "anglophobe": {
+      "d": "anglo|phob-e"
+    },
+    "anglophobes": {
+      "d": "anglo|phob-es"
+    },
+    "anglophilia": {
+      "d": "anglo+philia"
+    },
+    "anglophilias": {
+      "d": "anglo+philia-s"
+    },
+    "hemophilia": {
+      "d": "hemo+philia"
+    },
+    "haemophilia": {
+      "d": "haemo+philia"
+    },
+    "necrophilia": {
+      "d": "necro+philia"
+    },
+    "paraphilia": {
+      "d": "para|philia"
+    },
+    "biophilia": {
+      "d": "bio+philia"
+    },
+    "coprophilia": {
+      "d": "copro+philia"
+    },
+    "pedophilia": {
+      "d": "pedo+philia"
+    },
+    "zoophilia": {
+      "d": "zoo+philia"
+    },
+    "technophilia": {
+      "d": "techno+philia"
+    },
+    "thrombophilia": {
+      "d": "thrombo+philia"
+    },
+    "nyctophilia": {
+      "d": "nyct+philia"
+    },
+    "scopophilia": {
+      "d": "scop+philia"
+    },
+    "thanatophilia": {
+      "d": "thanato+philia"
+    },
+    "philia": {
+      "d": "philia"
+    },
+    "dermatophiliasis": {
+      "d": "dermat+phil-i-asis"
+    },
+    "pineapple": {
+      "d": "pineapple"
+    },
+    "pineapples": {
+      "d": "pineapple-s"
+    },
+    "pineapplelike": {
+      "d": "pineapple-like"
+    },
+    "alpine": {
+      "d": "al|pin-e"
+    },
+    "pilocarpine": {
+      "d": "pil-oc-ar|pin-e"
+    },
+    "repine": {
+      "d": "re|pin-e"
+    },
+    "pine": {
+      "d": "pin-e"
+    },
+    "pinewood": {
+      "d": "pin+wood"
+    },
+    "pedophile": {
+      "d": "pedo|phil-e"
+    },
+    "pedophilic": {
+      "d": "pedo+phil-ic"
+    },
+    "pedodontics": {
+      "d": "pedo+odont-ics"
+    },
+    "pedology": {
+      "d": "pedo-logy"
+    },
+    "pedogenesis": {
+      "d": "pedo+gen-esis"
+    },
+    "pedosphere": {
+      "d": "pedo+sphere"
+    },
+    "pedometer": {
+      "d": "pedo+meter"
+    },
+    "pedometry": {
+      "d": "pedo+metr-y"
+    },
+    "pedobarometer": {
+      "d": "pedo+baro+meter"
+    },
+    "paedophilia": {
+      "d": "paed+philia"
+    },
+    "abrasion": {
+      "d": "abras-ion"
+    },
+    "abrasive": {
+      "d": "abras-ive"
+    },
+    "traditional": {
+      "d": "tradit-ion-al"
+    },
+    "basically": {
+      "d": "basic-al-ly"
+    },
+    "improvident": {
+      "d": "im|provide-ent"
+    },
+    "unsettling": {
+      "d": "unsettle-ing"
+    },
+    "vivacity": {
+      "d": "viv-acity"
+    },
+    "capacity": {
+      "d": "cap-acity"
+    },
+    "audacity": {
+      "d": "aud-acity"
+    },
+    "agglomerate": {
+      "d": "ag+glomer-ate"
+    },
+    "embryonic": {
+      "d": "embry-onic"
+    },
+    "depredation": {
+      "d": "de|pred-ation"
+    },
+    "proliferation": {
+      "d": "proli-fera-tion"
+    },
+    "hippopotamus": {
+      "d": "hipp+potam-us"
+    },
+    "profligate": {
+      "d": "pro|flig-ate"
+    },
+    "restitution": {
+      "d": "restitut-ion"
+    },
+    "destitute": {
+      "d": "de|stitut-e"
+    },
+    "extreme": {
+      "d": "extrem-e"
+    },
+    "extremely": {
+      "d": "extrem-e-ly"
+    },
+    "extremist": {
+      "d": "extrem-ist"
+    },
+    "extremity": {
+      "d": "extrem-ity"
+    },
+    "tremendous": {
+      "d": "tremend-ous"
+    },
+    "nodded": {
+      "d": "nod-ed"
+    },
+    "digging": {
+      "d": "dig-ing"
+    },
+    "jamming": {
+      "d": "jam-ing"
+    },
+    "patted": {
+      "d": "pat-ed"
+    },
+    "canned": {
+      "d": "can-ed"
+    },
+    "hugged": {
+      "d": "hug-ed"
+    },
+    "rubbed": {
+      "d": "rub-ed"
+    },
+    "batted": {
+      "d": "bat-ed"
+    },
+    "popping": {
+      "d": "pop-ing"
+    },
+    "bidding": {
+      "d": "bid-ing"
+    },
+    "betting": {
+      "d": "bet-ing"
+    },
+    "moved": {
+      "d": "move-ed"
+    },
+    "lived": {
+      "d": "live-ed"
+    },
+    "used": {
+      "d": "use-ed"
+    },
+    "cared": {
+      "d": "care-ed"
+    },
+    "served": {
+      "d": "serve-ed"
+    },
+    "caused": {
+      "d": "cause-ed"
+    },
+    "faced": {
+      "d": "face-ed"
+    },
+    "finest": {
+      "d": "fine-est"
+    },
+    "latest": {
+      "d": "late-est"
+    },
+    "planed": {
+      "d": "plane-ed"
+    },
+    "barred": {
+      "d": "bar-ed"
+    },
+    "mobbed": {
+      "d": "mob-ed"
+    },
+    "subbed": {
+      "d": "sub-ed"
+    },
+    "tapped": {
+      "d": "tap-ed"
+    },
+    "pinned": {
+      "d": "pin-ed"
+    },
+    "budding": {
+      "d": "bud-ing"
+    },
+    "called": {
+      "d": "call-ed"
+    },
+    "missed": {
+      "d": "miss-ed"
+    },
+    "belled": {
+      "d": "bell-ed"
+    },
+    "cessing": {
+      "d": "cess-ing"
+    },
+    "curring": {
+      "d": "curr-ing"
+    },
+    "office": {
+      "d": "offic-e"
+    },
+    "official": {
+      "d": "offic-i-al"
+    },
+    "officer": {
+      "d": "offic-er"
+    },
+    "restriction": {
+      "d": "restrict-ion"
+    },
+    "restrict": {
+      "d": "restrict"
+    },
+    "restrictive": {
+      "d": "restrict-ive"
+    },
+    "percolate": {
+      "d": "percol-ate"
+    },
+    "percolation": {
+      "d": "percol-ation"
+    },
+    "innocent": {
+      "d": "innoc-ent"
+    },
+    "innocence": {
+      "d": "innoc-ence"
+    },
+    "categorical": {
+      "d": "categor-ical"
+    },
+    "category": {
+      "d": "categor-y"
+    },
+    "categorize": {
+      "d": "categor-ize"
+    },
+    "controversial": {
+      "d": "controvers-i-al"
+    },
+    "controversy": {
+      "d": "controvers-y"
+    },
+    "executive": {
+      "d": "execut-ive"
+    },
+    "execution": {
+      "d": "execut-ion"
+    },
+    "execute": {
+      "d": "execut-e"
+    },
+    "neoclassical": {
+      "d": "neo|classic-al"
+    },
+    "classical": {
+      "d": "classic-al"
+    },
+    "classic": {
+      "d": "classic"
+    },
+    "noncommittal": {
+      "d": "non|committ-al"
+    },
+    "committal": {
+      "d": "committ-al"
+    },
+    "multifarious": {
+      "d": "multifari-ous"
+    },
+    "abashed": {
+      "d": "abash-ed"
+    },
+    "abash": {
+      "d": "abash"
+    },
+    "assiduous": {
+      "d": "assid-uous"
+    },
+    "repertory": {
+      "d": "repert-ory"
+    },
+    "startling": {
+      "d": "startle-ing"
+    },
+    "startle": {
+      "d": "startle"
     }
   },
   "partial词": {
@@ -301,6 +790,34 @@
     },
     "fertilized": {
       "d": "fertil-ized"
+    },
+    "melituric": {
+      "d": null,
+      "p": "mel|??ituric"
+    },
+    "methitural": {
+      "d": null,
+      "p": "meth|??itural"
+    },
+    "primogeniturist": {
+      "d": null,
+      "p": "primogeni|??turist"
+    },
+    "carbamazepine": {
+      "d": null,
+      "p": "carb|??amazepine"
+    },
+    "pinecone": {
+      "d": null,
+      "p": "-one|??pinec"
+    },
+    "pedobaptism": {
+      "d": null,
+      "p": "pedo|??baptism"
+    },
+    "pedocal": {
+      "d": null,
+      "p": "pedo|??cal"
     }
   },
   "防误伤词": {
@@ -421,13 +938,46 @@
     "terskite": {
       "d": null
     },
-    "skittling": {
+    "seismonastic": {
+      "d": null
+    },
+    "plegmatium": {
+      "d": null
+    },
+    "basophilia": {
+      "d": null
+    },
+    "gatophilia": {
+      "d": null
+    },
+    "ailurophilia": {
+      "d": null
+    },
+    "argyrophilia": {
+      "d": null
+    },
+    "aneosinophilia": {
+      "d": null
+    },
+    "alcoholophilia": {
+      "d": null
+    },
+    "hemoglobinophilia": {
+      "d": null
+    },
+    "opsonophilia": {
+      "d": null
+    },
+    "pyroninophilia": {
       "d": null
     }
   },
   "基本词整词": {
     "family": {
       "d": "family"
+    },
+    "seize": {
+      "d": "seize"
     },
     "air": {
       "d": "air"
