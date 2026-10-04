@@ -10040,6 +10040,21 @@ const ttsVoiceSel = document.getElementById('tts-voice');
 const ttsSpeedSel = document.getElementById('tts-speed');
 const ttsHint = document.getElementById('tts-hint');
 
+/* 正在播放的语音（2026-10-04 修「连点重复发声」）
+   Kokoro 走的是 <audio>，早先每次点击都 new Audio 各放各的 → 连点就叠着念；
+   内置语音虽然先 cancel()，但连点时旧 utterance 仍可能挤进来。
+   现在统一留一个引用，开新的之前先停旧的；另用 speakSeq 作废在途请求——
+   连点会并发好几个 /tts，先发的后到，不作废的话停完又被它放起来。 */
+let curAudio = null, curUtter = null, speakSeq = 0;
+let kokoroCache = null;   // {key, url}：同一段文本重复点按直接复用，省一次 1~2 秒的合成
+function stopSpeaking() {
+  speakSeq++;
+  if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
+  curUtter = null;
+  if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} }
+  document.querySelectorAll('.tts-btn.playing').forEach(b => b.classList.remove('playing'));
+}
+
 // 内置浏览器语音
 function speakBuiltin(text, rate, onEnd) {
   if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
@@ -10048,21 +10063,33 @@ function speakBuiltin(text, rate, onEnd) {
   u.lang = ttsBuiltinLang;
   u.rate = rate;
   if (onEnd) u.onend = onEnd;
+  curUtter = u;
   speechSynthesis.speak(u);
 }
 
 // Kokoro 高音质：请求本地 TTS 服务合成并播放
-async function speakKokoro(text, speed, onEnd) {
-  const r = await fetch(KOKORO_URL + '/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice: ttsKokoroVoice, speed: speed || ttsSpeed })
-  });
-  if (!r.ok) throw new Error('TTS ' + r.status);
-  const blob = await r.blob();
-  const url = URL.createObjectURL(blob);
+async function speakKokoro(text, speed, onEnd, my) {
+  const key = text + '\u0001' + ttsKokoroVoice + '\u0001' + (speed || ttsSpeed);
+  let url;
+  if (kokoroCache && kokoroCache.key === key) {
+    url = kokoroCache.url;
+  } else {
+    const r = await fetch(KOKORO_URL + '/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice: ttsKokoroVoice, speed: speed || ttsSpeed })
+    });
+    if (!r.ok) throw new Error('TTS ' + r.status);
+    const blob = await r.blob();
+    if (my !== speakSeq) return;   // 连点：这次已经过期，合成结果直接丢掉
+    if (kokoroCache) { try { URL.revokeObjectURL(kokoroCache.url); } catch (e) {} }
+    url = URL.createObjectURL(blob);
+    kokoroCache = { key: key, url: url };
+  }
+  if (my !== speakSeq) return;
   const a = new Audio(url);
-  a.onended = () => { URL.revokeObjectURL(url); if (onEnd) onEnd(); };
+  curAudio = a;
+  a.onended = () => { if (curAudio === a) curAudio = null; if (onEnd) onEnd(); };
   await a.play();
 }
 
@@ -10073,8 +10100,10 @@ async function speakKokoro(text, speed, onEnd) {
 function speakText(text, speed, onEnd) {
   text = decodeEntities(text);   // 还原 &#x27;/&quot; 等实体，朗读才跟原文一致
   const sp = speed || ttsSpeed;
+  stopSpeaking();                // 先停掉上一次（并作废它在途的合成请求）
+  const my = ++speakSeq;         // 本次的令牌
   if (ttsEngine === 'kokoro' && kokoroOk) {
-    speakKokoro(text, sp, onEnd).catch(() => speakBuiltin(text, sp, onEnd));
+    speakKokoro(text, sp, onEnd, my).catch(() => { if (my === speakSeq) speakBuiltin(text, sp, onEnd); });
   } else {
     speakBuiltin(text, sp, onEnd);
   }
@@ -10283,11 +10312,13 @@ document.addEventListener('click', (e) => {
   if (tb) {
     const txt = tb.dataset.w || tb.dataset.text;
     if (txt) {
-      tb.classList.add('playing');
       // 呼吸动画跟着真实播放走：播完（onend/onended）即灭。
       // 另留 20 秒保险——语音引擎异常不回调时，图标不至于一直转下去。
       const stop = () => tb.classList.remove('playing');
       speakText(txt, undefined, stop);
+      // 点灯必须在 speakText 之后：speakText 内部会 stopSpeaking 清掉所有 playing（含上一次的），
+      // 先点后播的话这一下刚点的灯会被自己抹掉，按钮就不呼吸了。
+      tb.classList.add('playing');
       setTimeout(stop, 20000);
     }
     return;
