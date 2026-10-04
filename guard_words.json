@@ -825,6 +825,87 @@
     },
     "cuber": {
       "d": "cube-er"
+    },
+    "ambrosia": {
+      "d": "ambrosia"
+    },
+    "ambrosial": {
+      "d": "ambrosi-al"
+    },
+    "ambrosian": {
+      "d": "ambrosi-an"
+    },
+    "ambrosially": {
+      "d": "ambrosi-al-ly"
+    },
+    "hematocrit": {
+      "d": "hemato+crit"
+    },
+    "hematocrits": {
+      "d": "hemato+crit-s"
+    },
+    "hematology": {
+      "d": "hemato-logy"
+    },
+    "hematologist": {
+      "d": "hemato-logist"
+    },
+    "hematoma": {
+      "d": "hemat-oma"
+    },
+    "thematic": {
+      "d": "themat-ic"
+    },
+    "thematically": {
+      "d": "themat-ical-ly"
+    },
+    "thematics": {
+      "d": "themat-ics"
+    },
+    "thematize": {
+      "d": "themat-ize"
+    },
+    "anathematic": {
+      "d": "ana|themat-ic"
+    },
+    "anathematize": {
+      "d": "ana|themat-ize"
+    },
+    "monothematic": {
+      "d": "mono|themat-ic"
+    },
+    "athematic": {
+      "d": "a|themat-ic"
+    },
+    "unthematic": {
+      "d": "un|themat-ic"
+    },
+    "mathematics": {
+      "d": "mathemat-ics"
+    },
+    "mathematical": {
+      "d": "mathemat-ical"
+    },
+    "mathematician": {
+      "d": "mathemat-ician"
+    },
+    "biomathematics": {
+      "d": "bio+mathemat-ics"
+    },
+    "ethnomathematics": {
+      "d": "ethno|mathemat-ics"
+    },
+    "coffin": {
+      "d": "coffin"
+    },
+    "coffins": {
+      "d": "coffin-s"
+    },
+    "coffined": {
+      "d": "coffin-ed"
+    },
+    "coffining": {
+      "d": "coffin-ing"
     }
   },
   "partial词": {
@@ -845,7 +926,7 @@
     },
     "coops": {
       "d": null,
-      "p": "co||??ops"
+      "p": null
     },
     "eviscerated": {
       "d": null,

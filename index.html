@@ -2150,6 +2150,21 @@ const ROOTS = {
      （de|preci-ate 被切成 deprec-i-ate），integer 对 disintegrate 无效（那里是 integr），templ 会把
      temples 切成 templ-es。宁缺勿错，只留这一个。 */
   "flagr": ["燃烧、闪耀", ["conflagration", "flagrant", "deflagrate"], {"lang": "拉丁语", "word": "flagrare"}],
+  /* ambrosia / hematocrit 报词（2026-10-04）+ 顺手修 -thematic 家族：
+     ambrosial 原来直接拆不出（整词根只有 ambrosia，+al 就断了）；hematocrit 被切成 -it|??hematocr
+     （it←拉丁语 ire 是误拆），hematology/hematoma/hematin 全断在 hemat 上。
+     补 hemat 时又发现它会把 -thematic 家族抢走（anathematic→an-at|hemat-ic，因为 t-hemat-ic 里含 hemat），
+     所以连它们自己的词根 themat(希腊语 thema) 与 mathemat(希腊语 mathema) 一起补上，各归各位。
+     实测 459 词：由无到有 162、丢失 0、改写 26（全是改善，thematic→themat-ic 等）。 */
+  "ambrosi": ["神肴、仙馔；不朽", ["ambrosia", "ambrosial", "ambrosian"], {"lang": "希腊语", "word": "ambrosios"}],
+  "hemat": ["血", ["hematoma", "hematin", "hematite"], {"lang": "希腊语", "word": "haima"}],
+  "hemato": ["血", ["hematology", "hematocrit", "hematologist"], {"lang": "希腊语", "word": "haimatos"}],
+  "themat": ["主题、命题", ["thematic", "anathematic", "monothematic"], {"lang": "希腊语", "word": "thema"}],
+  "mathemat": ["学问、知识", ["mathematics", "mathematical", "mathematician"], {"lang": "希腊语", "word": "mathema"}],
+  /* coffin（2026-10-04 用户报词）：原来读成 `co||??ffin`——co-（共同）纯属撞车。
+     真词源是整体借词：古法语 cofin（箱、篮）← 拉丁语 cophinus ← 希腊语 kophinos（篮子），
+     与 co- 前缀无关。按 mallard/empress/bureau/ambrosia 同款补整词根。 */
+  "coffin": ["棺材、棺木（原义：箱子、篮子）", ["coffin", "coffins", "coffined"], {"lang": "希腊语", "word": "kophinos", "note": "经拉丁语 cophinus、古法语 cofin 借入"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -6853,7 +6868,12 @@ function partialDecomposeRaw(w) {
   // 2. 前缀兜底
   let bestPre = null, bestLen = 0;
   for (const [pre, preM] of LISTS.prefixes) {
-    if (pre.length < 2 || pre.length <= bestLen) continue;
+    // 收窄到 ≥3 字母（2026-10-04）：这一条本来是给「多字母前缀 + 未识别」用的
+    //（automato → auto+??mato），但两字母前缀（de/re/be/co/di/in/un/ar/al/bi…）会大面积巧合命中：
+    // coach→co|??ach、above→ab|??ove、trick→tri|??ck 都是假的。
+    // 全量实测：24731 个这类读法归零（12909 变「无拆解」、11822 落到更准的后缀兜底），
+    // 而完整拆解数 128167 → 128167 一个字没丢，三字母及以上前缀一字未动。
+    if (pre.length < 3 || pre.length <= bestLen) continue;
     if (!w.startsWith(pre)) continue;
     // 同 decompose：整词以该前缀的 blocked 基本词开头时跳过（isolate 非 iso- 前缀）
     let blocked = false;
@@ -7752,6 +7772,10 @@ const MORPH_EN_EXTRA = {
   "dispens": "distribute, manage (Latin dispensare)", "doctrin": "teaching, doctrine (Latin doctrina)",
   "ability": "noun suffix, ability or quality", "ibility": "noun suffix, ability or quality",
   "flagr": "burn, blaze (Latin flagrare)",
+  "ambrosi": "food of the gods, immortal (Greek ambrosios)", "hemat": "blood (Greek haima)",
+  "hemato": "blood (Greek haimatos)", "themat": "theme, proposition (Greek thema)",
+  "mathemat": "learning, knowledge (Greek mathema)",
+  "coffin": "coffin (Greek kophinos, basket)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
