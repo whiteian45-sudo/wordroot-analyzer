@@ -149,4 +149,6 @@ node test_health.js                    # 一体化体检：表完整性、原型
 
 ## License
 
-MIT
+本项目自己的代码以 MIT 许可发布，全文见 [LICENSE](LICENSE)。
+
+随仓库分发的数据文件（`ecdict.json` / `bnc.json` / `stress.json` 等）各有自己的来源与许可，见上面「数据来源」一节。
