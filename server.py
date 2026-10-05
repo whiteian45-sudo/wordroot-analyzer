@@ -212,23 +212,27 @@ MEMO_SYSTEM_ETYM_EN = ('You are a witty English vocabulary teacher. The user giv
 EXPLAIN_SYSTEM = (
     '你是一位面向中文母语学习者的英语词汇老师，正在写一份「深度讲解」。用户会给你一个单词和一份【素材】。\n'
     '事实与归纳分开对待（这是本任务的核心规则）：\n'
-    'A. 事实类——【释义】【真实例句】：只能来自素材。【真实例句】必须逐字原样照抄英文，一个字都不许改，'
-    '有几条用几条，**绝对不许自己造例句**；素材里没提到的词义不要写。\n'
-    'B. 归纳类——【搭配】【语域】【易混词】：素材通常只有同义词表、没有这些，'
+    'A. 释义：只能来自素材，素材没提到的词义不要写。\n'
+    'B. 例句：**优先用素材里给出的真实例句**（英文逐字照抄，带中文的照抄中文）。'
+    '但要注意素材里常有"片段"而不是完整句子（例如只给 "a gory accident" 这种短语）——'
+    '**片段不要放进【例句】段**（它们属于【常见搭配】），【例句】段只放完整的句子；'
+    '完整的素材例句不够 4 条时，**你可以自己补写**——只要求：完整、自然、常用、语法正确，'
+    '不许生造搭配，不许为了用上这个词而硬造场景。自补的排在素材例句之后。\n'
+    'C. 归纳类——【搭配】【语域】【易混词】：素材通常只有同义词表、没有这些，'
     '**允许你用自己可靠的英语词汇知识来写**（这才是这份讲解的价值所在）。要求：'
     '搭配要写真正常见、自然的（宁可 3 个准的，不要 6 个生僻的）；'
     '语域要区分场景（影视/新闻/文学/口语各自然度如何）；'
     '易混词要给出"核心差异"而不是同义反复，**并且必须至少包含两个学习者最容易混的常见近义词**'
     '（不要只照抄【同义词】表里的生僻词——那张表经常有 sanginary 这类书卷词；'
     '比如讲 gory 就该对比 bloody / gruesome / grisly / macabre），差异里点明气势或强度的不同。\n'
-    'C. 拿不准就不写。宁可少一段，不要编。\n'
+    'D. 拿不准就不写。宁可少一段，不要编。\n'
     '只输出讲解正文：不要开场白、不要"好的"、不要说明你在做什么。\n'
     '输出格式：用 **markdown** 排版（小标题用 ##，表格用 | a | b |，列表用 - ，重点用 **粗体**）；'
     '**不要输出代码块（```），不要写 HTML**。小标题请原样照用下面这几个：\n'
     '## 一句话结论\n（一句话说清核心意思与语气）\n'
     '## 核心义（母语者直觉）\n（一两句直觉，再用 - 列 2~4 行"脑中画面"）\n'
     '## 语域\n（先一句结论，再给一个三列表格：| 场景 | 自然度 | 说明 |，3~5 行）\n'
-    '## 真实例句\n（每条以 - 开头：英文 —— 中文；素材没给中文就只写英文；逐字照抄，一个字都不许改）\n'
+    '## 例句\n（4~6 条，每条以 - 开头：英文 —— 中文；素材里的逐字照抄，自补的写在后面）\n'
     '## 常见搭配\n（每条以 - 开头：英文搭配 中文；优先用素材里真实出现过的）\n'
     '## 易混词\n（一个两列表格：| 词 | 核心差异 |，3~5 行）\n'
     '## 总结\n（一两句可以直接记住的话）\n'
@@ -237,19 +241,24 @@ EXPLAIN_SYSTEM_EN = (
     'You are an English vocabulary teacher writing a "deep dive" for a Chinese-speaking learner. '
     'The user gives you a word and a set of SOURCE MATERIALS.\n'
     'Facts vs inference (the core rule of this task):\n'
-    'A. FACTS — definitions and real examples: materials only. Copy the REAL EXAMPLES verbatim, character for '
-    'character; never invent or rewrite an example; do not add senses the materials do not mention.\n'
-    'B. INFERENCE — collocations, register and near-synonyms: the materials usually only give a synonym list, so '
+    'A. DEFINITIONS: materials only; do not add senses the materials do not mention.\n'
+    'B. EXAMPLES: prefer the real examples given in the materials (copy them verbatim, including the Chinese '
+    'translation when present). BUT if the material examples are fragments rather than full sentences '
+    '(e.g. just "a gory accident"), or too few, or unnatural, you MAY write your own examples — they must be '
+    'complete, natural, idiomatic, grammatically correct sentences; never invent odd collocations. Mix them with '
+    'the material ones.\n'
+    'C. INFERENCE — collocations, register and near-synonyms: the materials usually only give a synonym list, so '
     'you MAY use your own reliable lexical knowledge here (that is the point of this explanation). Keep it '
     'accurate and common: three true collocations beat six obscure ones; register should say how natural the '
     'word is in film reviews / news / literature / speech; near-synonyms need a one-line "core difference" each, '
-    'covering the synonym list first and at most two extra common confusables.\n'
-    'C. If unsure, leave it out. Fewer sections is better than invented content.\n'
+    'and must include at least two common confusables (not just the obscure words in the synonym list).\n'
+    'D. If unsure, leave it out. Fewer sections is better than invented content.\n'
     'Output the explanation only: no preamble, no sign-off. Use **markdown** (## headings, | tables |, - lists, '
     '**bold**); do NOT emit code fences (```) or raw HTML. Use exactly these headings:\n'
     '## One-line takeaway / ## Core meaning (plus 2-4 "- " image lines) / ## Register (a 3-column table: '
-    '| scene | naturalness | note |) / ## Real examples (verbatim, one "- " line each) / ## Collocations / '
-    '## Near-synonyms (a 2-column table: | word | core difference |) / ## Summary. Aim for 350-500 words.')
+    '| scene | naturalness | note |) / ## Examples (4-6 "- " lines, verbatim material ones first) / '
+    '## Collocations / ## Near-synonyms (a 2-column table: | word | core difference |) / ## Summary. '
+    'Aim for 350-500 words.')
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -477,7 +486,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 zh = str(e[1] or '').strip() if len(e) > 1 else ''
                 if en:
                     exs.append(en + (' —— ' + zh if zh else ''))
-            add('真实例句', exs)
+            add('例句素材（来自词典，可能只是片段）', exs)
+            add('搭配素材（词典里的短语，可直接用作【常见搭配】）', body.get('colloc'))
             add('同义词', body.get('syn'))
             add('反义词', body.get('ant'))
             if not blocks:

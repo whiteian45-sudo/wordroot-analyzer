@@ -8476,12 +8476,16 @@ function explainMaterials(r) {
     if (e2) ety = decodeEntities(String(e2)).trim().slice(0, 500);
   }
   if (ety) mat.etym = ety;
-  // 真实例句：优先牛津（自带中文译文），不足再用 LDOCE/柯林斯补齐
-  const ex = [];
-  (o.examples || []).forEach(x => { if (x && x[0] && ex.length < 6) ex.push([String(x[0]), String(x[1] || '')]); });
+  // 真实例句：优先牛津（自带中文），不足再用 LDOCE/柯林斯补齐。
+  // 按"是不是完整句子"分成两组：整句进【例句素材】，片段（a gory accident 这种）进【搭配素材】——
+  // 词典里的短语本来就更像搭配，分开喂给模型比在提示词里求它自觉可靠（4B 对细分规则不敏感）。
+  const isSent = s => /^[A-Z"'(]/.test(String(s).trim()) && String(s).trim().split(/\s+/).length >= 4;
+  const ex = [], frag = [];
+  (o.examples || []).forEach(x => { if (x && x[0]) (isSent(x[0]) ? ex : frag).push([String(x[0]), String(x[1] || '')]); });
   const extra = EX[hw];
-  if (Array.isArray(extra)) extra.forEach(x => { if (x && x.en && ex.length < 6) ex.push([String(x.en), String(x.zh || '')]); });
-  if (ex.length) mat.examples = ex;
+  if (Array.isArray(extra)) extra.forEach(x => { if (x && x.en) (isSent(x.en) ? ex : frag).push([String(x.en), String(x.zh || '')]); });
+  if (ex.length) mat.examples = ex.slice(0, 6);
+  if (frag.length) mat.colloc = frag.slice(0, 8).map(x => x[0] + (x[1] ? ' —— ' + x[1] : ''));
   const th = THES[hw] || THES[w];
   const ss = th ? thesClean(hw, th.s) : [], aa = th ? thesClean(hw, th.a) : [];
   if (ss.length) mat.syn = ss.slice(0, 12);
