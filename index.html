@@ -401,9 +401,19 @@
   }
   .memo-box[hidden] { display: none; }
   .memo-err { color: var(--gold); font-size: 13.5px; }
-  /* 📖 深度讲解：纯文本分段渲染，靠 pre-wrap 保住换行；【小标题】单独上色 */
+  /* 📖 深度讲解：正文用极简 markdown 渲染（见 mdToHTML）；流式期间是纯文本，靠 pre-wrap 保换行 */
   .explain-box { white-space: pre-wrap; font-size: 14px; line-height: 1.85; }
   .explain-h { color: var(--accent); font-weight: 600; }
+  .explain-box .md-h { color: var(--accent); font-weight: 600; font-size: 15px; margin: 12px 0 4px; }
+  .explain-box .md-h:first-child { margin-top: 0; }
+  .explain-box .md-p { margin: 2px 0; }
+  .explain-box .md-li { padding-left: 14px; position: relative; }
+  .explain-box .md-li::before { content: '·'; position: absolute; left: 3px; color: var(--sub); }
+  .explain-box .md-table { border-collapse: collapse; margin: 6px 0; font-size: 13.5px; }
+  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 3px 9px; text-align: left; }
+  .explain-box .md-table th { color: var(--sub); font-weight: 600; background: var(--glass-card); }
+  .explain-box .md-hr { border: 0; border-top: 1px solid var(--glass-border); margin: 10px 0; }
+  .explain-box code { background: var(--glass-card); padding: 0 4px; border-radius: 4px; font-size: 13px; }
   .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
   .meaning .label { color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px; }
   .eq { color: var(--accent); font-weight: 600; }
@@ -8481,10 +8491,49 @@ function saveExplain(w, lang, text) {
   }
   try { localStorage.setItem(EXPLAIN_KEY, JSON.stringify(m)); } catch (e) {}
 }
-/* 【小标题】上色，其余转义；换行交给 CSS 的 pre-wrap */
-function explainTextHTML(text) {
-  return escapeHtml(text).replace(/【([^】]{1,14})】/g, '<span class="explain-h">【$1】</span>');
+/* 极简 markdown 渲染（2026-10-05，用户要求允许 markdown）。
+   只支持深度讲解真正会用到的几种：## 小标题、| 表格 |、- 列表、**粗体**、`行内代码`、--- 分隔线。
+   **先整体 escapeHtml 再解析**——模型输出里的任何 <script> 都变实体，进不了 DOM（XSS 安全）。
+   同时兼容旧的【小标题】写法（模型偶尔仍会这么写）。 */
+function mdInline(s) {
+  return String(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
 }
+function mdToHTML(text) {
+  const lines = escapeHtml(String(text == null ? '' : text)).split(/\r?\n/);
+  const out = [];
+  let tbl = [];
+  const flushTbl = () => {
+    if (!tbl.length) return;
+    const rows = tbl.map(r => r.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim()));
+    const sep = rows.length > 1 && rows[1].every(c => /^:?-{2,}:?$/.test(c));
+    const head = sep ? rows[0] : null;
+    const body = sep ? rows.slice(2) : rows;
+    let h = '<table class="md-table">';
+    if (head) h += '<tr>' + head.map(c => '<th>' + mdInline(c) + '</th>').join('') + '</tr>';
+    body.forEach(r => { h += '<tr>' + r.map(c => '<td>' + mdInline(c) + '</td>').join('') + '</tr>'; });
+    out.push(h + '</table>');
+    tbl = [];
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (/^\|.*\|$/.test(line)) { tbl.push(line); continue; }   // 表格行先攒着，遇到非表格行再落
+    flushTbl();
+    if (!line) continue;
+    let m;
+    if ((m = line.match(/^#{1,4}\s+(.*)$/))) { out.push('<div class="md-h">' + mdInline(m[1]) + '</div>'); continue; }
+    if ((m = line.match(/^【([^】]{1,20})】\s*(.*)$/))) {
+      out.push('<div class="md-h">' + mdInline(m[1]) + '</div>');
+      if (m[2]) out.push('<div class="md-p">' + mdInline(m[2].replace(/^[:：]\s*/, '')) + '</div>');
+      continue;
+    }
+    if ((m = line.match(/^[-*+•]\s+(.*)$/))) { out.push('<div class="md-li">' + mdInline(m[1]) + '</div>'); continue; }
+    if (/^-{3,}$/.test(line)) { out.push('<hr class="md-hr">'); continue; }
+    out.push('<div class="md-p">' + mdInline(line) + '</div>');
+  }
+  flushTbl();
+  return out.join('');
+}
+function explainTextHTML(text) { return mdToHTML(text); }
 function explainBlockHTML(r) {
   if (r.reason) return '';
   const mat = explainMaterials(r);

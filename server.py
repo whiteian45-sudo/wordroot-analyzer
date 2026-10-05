@@ -223,14 +223,15 @@ EXPLAIN_SYSTEM = (
     '比如讲 gory 就该对比 bloody / gruesome / grisly / macabre），差异里点明气势或强度的不同。\n'
     'C. 拿不准就不写。宁可少一段，不要编。\n'
     '只输出讲解正文：不要开场白、不要"好的"、不要说明你在做什么。\n'
-    '输出格式（纯文本；**小标题必须原样照用下面这几个，不要改写、不要自创**；不要 markdown 的 # 和 *）：\n'
-    '【一句话结论】一句话说清核心意思与语气。\n'
-    '【核心义】一两句母语者直觉，再给 2~4 行"脑中画面"（每行以 - 开头）。\n'
-    '【语域】先一句结论，再给三四行场景判断，每行格式：场景 ｜ 自然度 ｜ 说明。\n'
-    '【真实例句】素材里的例句，逐字照抄，每条一行：英文 —— 中文（素材没给中文就只写英文）。\n'
-    '【常见搭配】3~6 行，每行：英文搭配 中文（优先用素材里真实出现过的）。\n'
-    '【易混词】3~5 行，每行：词 ｜ 核心差异。\n'
-    '【总结】一两句可以直接记住的话。\n'
+    '输出格式：用 **markdown** 排版（小标题用 ##，表格用 | a | b |，列表用 - ，重点用 **粗体**）；'
+    '**不要输出代码块（```），不要写 HTML**。小标题请原样照用下面这几个：\n'
+    '## 一句话结论\n（一句话说清核心意思与语气）\n'
+    '## 核心义（母语者直觉）\n（一两句直觉，再用 - 列 2~4 行"脑中画面"）\n'
+    '## 语域\n（先一句结论，再给一个三列表格：| 场景 | 自然度 | 说明 |，3~5 行）\n'
+    '## 真实例句\n（每条以 - 开头：英文 —— 中文；素材没给中文就只写英文；逐字照抄，一个字都不许改）\n'
+    '## 常见搭配\n（每条以 - 开头：英文搭配 中文；优先用素材里真实出现过的）\n'
+    '## 易混词\n（一个两列表格：| 词 | 核心差异 |，3~5 行）\n'
+    '## 总结\n（一两句可以直接记住的话）\n'
     '整体 400~600 字。')
 EXPLAIN_SYSTEM_EN = (
     'You are an English vocabulary teacher writing a "deep dive" for a Chinese-speaking learner. '
@@ -244,10 +245,11 @@ EXPLAIN_SYSTEM_EN = (
     'word is in film reviews / news / literature / speech; near-synonyms need a one-line "core difference" each, '
     'covering the synonym list first and at most two extra common confusables.\n'
     'C. If unsure, leave it out. Fewer sections is better than invented content.\n'
-    'Output the explanation only: no preamble, no sign-off. Plain text, headings in 【】, no markdown # or *. '
-    'Sections: 【One-line takeaway】/【Core meaning】(plus 2-4 "- " image lines)/【Register】(scene ｜ naturalness ｜ note)'
-    '/【Real examples】(verbatim) /【Collocations】/【Near-synonyms】(word ｜ core difference)/【Summary】. '
-    'Aim for 350-500 words.')
+    'Output the explanation only: no preamble, no sign-off. Use **markdown** (## headings, | tables |, - lists, '
+    '**bold**); do NOT emit code fences (```) or raw HTML. Use exactly these headings:\n'
+    '## One-line takeaway / ## Core meaning (plus 2-4 "- " image lines) / ## Register (a 3-column table: '
+    '| scene | naturalness | note |) / ## Real examples (verbatim, one "- " line each) / ## Collocations / '
+    '## Near-synonyms (a 2-column table: | word | core difference |) / ## Summary. Aim for 350-500 words.')
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
