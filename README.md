@@ -7,6 +7,10 @@ transport → trans-(横穿) + port-(搬运)
           → transport ← 拉丁语 transportare（运送过去）
 ```
 
+![界面预览](screenshot.png)
+
+> 查词卡片（三色词素 + 词源演变链）、左侧同源词 / 近反义词、右侧「深度讲解」抽屉。
+
 ## 怎么跑
 
 需要 Python 3，不需要装任何第三方库。
