@@ -2175,6 +2175,16 @@ const ROOTS = {
      实测含 merid 的 50 词：由无到有 9、丢失 0、改写 3（antemeridian 由乱切转正）。 */
   "meridi": ["正午、子午", ["meridian", "meridians", "antemeridian"], {"lang": "拉丁语", "word": "meridies", "note": "medius（中间）+ dies（日）"}],
   "meridion": ["子午的、正午的", ["meridional", "meridionally"], {"lang": "拉丁语", "word": "meridionalis"}],
+  /* gory 词族（2026-10-05，用户报 gory）：原来 gory 读成 `go-ry`（go + -ry，纯误拆）、
+     gore 直接无拆解。真词源：古英语 gor（血、凝血）→ gore；gory = gore + -y（Etymonline 原话）。
+     试过两条通用规则都被否：①「+y 去 e 还原」会把 antibody→anti|bode-y、abbey→ab|bee-y、
+     gamy→game-y 全弄坏（71 处改写）；②把 gor/gori 当短词根会抢 gorgeous/categories/allegories。
+     最终只补四个专有整词根（含比较级/最高级形式），实测含 gor 与 ier/iest 的 2096 词：
+     由无到有 9、丢失 0、改写 1（就是 gory 本身），categories/allegories/phantasmagory 全不受影响。 */
+  "gore": ["血、凝血", ["gore", "gores", "gored", "goring"], {"lang": "古英语", "word": "gor"}],
+  "gory": ["血淋淋的、残暴的", ["gory", "gorily"], {"lang": "古英语", "word": "gor", "note": "gore + -y"}],
+  "gorier": ["更血腥的", ["gorier"], {"lang": "古英语", "word": "gor", "note": "gory 的比较级（y→i）"}],
+  "goriest": ["最血腥的", ["goriest"], {"lang": "古英语", "word": "gor", "note": "gory 的最高级（y→i）"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -7787,6 +7797,8 @@ const MORPH_EN_EXTRA = {
   "mathemat": "learning, knowledge (Greek mathema)",
   "coffin": "coffin (Greek kophinos, basket)",
   "meridi": "noon, midday (Latin meridies)", "meridion": "of midday, southern (Latin meridionalis)",
+  "gore": "blood, clotted blood (Old English gor)", "gory": "bloody, blood-soaked (gore + -y)",
+  "gorier": "bloodier", "goriest": "bloodiest",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
@@ -8214,17 +8226,31 @@ function examplesBlock(word, primary) {
   return h + `</div>`;
 }
 
+/* thes.json 里混着词形信息（gory 的"反义词"表里出现 gore 和 -y——抓取时把词形变化段落也当成了
+   反义词）。统一滤掉两类：以 - 开头的词缀；以及是原词子串的（gore ⊂ gory）。
+   卡片（synAntBlock）与深度讲解（explainMaterials）共用同一份干净列表。 */
+function thesClean(word, arr) {
+  const w = String(word || '').toLowerCase();
+  return (Array.isArray(arr) ? arr : []).filter(x => {
+    const s = String(x == null ? '' : x).trim();
+    if (!s || s.charAt(0) === '-') return false;
+    if (w && w.indexOf(s.toLowerCase()) >= 0) return false;
+    return true;
+  });
+}
 /* 近义词/反义词区块（来自 thes.json）：查词卡片通用，无数据返回空串 */
 function synAntBlock(word) {
   const th = THES[word];
-  if (!th || !((th.s && th.s.length) || (th.a && th.a.length))) return '';
+  if (!th) return '';
+  const ss = thesClean(word, th.s), aa = thesClean(word, th.a);
+  if (!ss.length && !aa.length) return '';
   let h = `<div class="cognates"><div class="label">近义词 / 反义词</div>`;
-  if (th.s && th.s.length) {
-    const tags = th.s.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${escapeHtml(w)}</span>`).join('');
+  if (ss.length) {
+    const tags = ss.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${escapeHtml(w)}</span>`).join('');
     h += `<div class="cog-row"><span class="cog-lbl">近义</span>：${tags}</div>`;
   }
-  if (th.a && th.a.length) {
-    const tags = th.a.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${escapeHtml(w)}</span>`).join('');
+  if (aa.length) {
+    const tags = aa.slice(0, 15).map(w => `<span class="cog" data-w="${w}">${escapeHtml(w)}</span>`).join('');
     h += `<div class="cog-row"><span class="cog-lbl">反义</span>：${tags}</div>`;
   }
   return h + `</div>`;
@@ -8435,8 +8461,9 @@ function explainMaterials(r) {
   if (Array.isArray(extra)) extra.forEach(x => { if (x && x.en && ex.length < 6) ex.push([String(x.en), String(x.zh || '')]); });
   if (ex.length) mat.examples = ex;
   const th = THES[hw] || THES[w];
-  if (th && Array.isArray(th.s) && th.s.length) mat.syn = th.s.slice(0, 12);
-  if (th && Array.isArray(th.a) && th.a.length) mat.ant = th.a.slice(0, 8);
+  const ss = th ? thesClean(hw, th.s) : [], aa = th ? thesClean(hw, th.a) : [];
+  if (ss.length) mat.syn = ss.slice(0, 12);
+  if (aa.length) mat.ant = aa.slice(0, 8);
   return mat;
 }
 /* 讲解缓存：按「词 + 语言」存（讲解语言跟界面走，与助记相反），上限比助记小——一段 400 字 */
