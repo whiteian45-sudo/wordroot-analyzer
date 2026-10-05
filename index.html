@@ -4494,35 +4494,61 @@ function tricolonOf(w) {
    ============================================================ */
 const SUFFIX_LORE = {
   hood:  { src: 'hād',      mean: '身份、品阶',      gate: ['状态', '后缀'],
-           note: 'childhood = 处在「儿童」这个身份品阶里。跟「兜帽」那个 hood 无关，是两个不同的古英语词。' },
+           mean_en: 'rank, standing',
+           note: 'childhood = 处在「儿童」这个身份品阶里。跟「兜帽」那个 hood 无关，是两个不同的古英语词。',
+           note_en: 'childhood = living inside the rank of "child". Nothing to do with the hood you wear — two different Old English words.' },
   /* 词尾碰巧是 ly 的借词：数据把它们标成了「名词/动词后缀」，纯闸门挡不住（jelly 的 -ly 也写着
      「名词后缀」），只能点名排除。剩下 211 条都是真的 -ly（comely=cyme+lic、grisly<古英语 grislic）。
      ally/rely 的链尾含义是「绑定」，是词根不是后缀，一并排除。 */
   ly:    { src: '*līką',    mean: '肉身、相貌',      gate: null,
+           mean_en: 'body, form, appearance',
            not: ['ally', 'rely', 'jelly', 'folly', 'holly', 'dally', 'tally', 'sully'],
-           note: '和 like 同源。friendly 的古义是「有着朋友那般的身形相貌」。' },
+           note: '和 like 同源。friendly 的古义是「有着朋友那般的身形相貌」。',
+           note_en: 'Cognate with like. friendly once meant "having the form and look of a friend".' },
   dom:   { src: 'dōm',      mean: '判决、法权疆界',   gate: ['状态', '领域', '后缀'], not: ['random'],
-           note: '和 doom 同源。kingdom = 国王的法权所能行使审判的疆界。' },
+           mean_en: 'judgement, domain',
+           note: '和 doom 同源。kingdom = 国王的法权所能行使审判的疆界。',
+           note_en: 'Cognate with doom. kingdom = the domain where the king\'s law can pass judgement.' },
   ship:  { src: '*skapjan', mean: '塑造、创造',      gate: ['状态', '性质', '技能', '后缀'],
-           note: '和 shape 同源。friendship = 打磨出来的形态；township 就是「镇子被塑造出来的样子」。' },
+           mean_en: 'shaping, creating',
+           note: '和 shape 同源。friendship = 打磨出来的形态；township 就是「镇子被塑造出来的样子」。',
+           note_en: 'Cognate with shape. friendship = a form worked into being; township = the shape a town was made into.' },
   some:  { src: '*-samaz',  mean: '相同',           gate: ['性质', '倾向', '特性', '后缀'],
-           note: '和 same 同源。handsome 的古义是「合手的、顺手的」，后来才引申成「好看的」。' },
+           mean_en: 'same',
+           note: '和 same 同源。handsome 的古义是「合手的、顺手的」，后来才引申成「好看的」。',
+           note_en: 'Cognate with same. handsome first meant "easy to handle" and only later "good-looking".' },
   less:  { src: 'lēas',     mean: '失去、无',        gate: ['无', '缺少', '缺乏', '否定'],
-           note: 'reckless 的古形是 receleas——「不计后果的」，字面就是「丢掉了顾虑的」。' },
+           mean_en: 'bereft of, without',
+           note: 'reckless 的古形是 receleas——「不计后果的」，字面就是「丢掉了顾虑的」。',
+           note_en: 'reckless was once receleas — literally "having lost one\'s reckoning".' },
   ful:   { src: 'full',     mean: '满',             gate: ['充满', '满', '后缀'], not: ['full'],
-           note: '就是 full 这个词。hopeful = 装满希望的。' },
+           mean_en: 'full',
+           note: '就是 full 这个词。hopeful = 装满希望的。',
+           note_en: 'It is simply the word full. hopeful = packed full of hope.' },
   ward:  { src: 'weard',    mean: '守望、转向',       gate: ['方向', '朝向', '守护'],
-           note: '本来是「守望者」。「朝某个方向守望」→ 方向后缀。' },
+           mean_en: 'watching, turning',
+           note: '本来是「守望者」。「朝某个方向守望」→ 方向后缀。',
+           note_en: 'Originally "a watcher". Watching in a given direction → the directional suffix.' },
   wright:{ src: 'wryhta',   mean: '匠人',           gate: null,
-           note: '古英语「做工的人」。playwright = 编剧本的匠人，跟「写」无关。' },
+           mean_en: 'craftsman',
+           note: '古英语「做工的人」。playwright = 编剧本的匠人，跟「写」无关。',
+           note_en: 'Old English "one who works". playwright = a craftsman of plays — nothing to do with "write".' },
   monger:{ src: 'mangere',  mean: '商人',           gate: null,
-           note: '古英语「贩子」。warmonger = 贩卖战争的人。' },
+           mean_en: 'dealer',
+           note: '古英语「贩子」。warmonger = 贩卖战争的人。',
+           note_en: 'Old English "peddler". warmonger = one who deals in war.' },
   stead: { src: 'stede',    mean: '地方、位置',      gate: null,
-           note: '古英语「地方」。instead 字面就是 in + stead（在那个位置上）。' },
+           mean_en: 'place, position',
+           note: '古英语「地方」。instead 字面就是 in + stead（在那个位置上）。',
+           note_en: 'Old English "place". instead is literally in + stead — in that place.' },
   kin:   { src: 'cynn',     mean: '家族、种类',      gate: ['家族'],
-           note: '古英语「家族、种类」。lambkin = 羊羔一族的幼小者；kind 也是它。' },
+           mean_en: 'family, kind',
+           note: '古英语「家族、种类」。lambkin = 羊羔一族的幼小者；kind 也是它。',
+           note_en: 'Old English "family, kind". lambkin = the little one of the lamb family; kind is the same word.' },
   th:    { src: '*-iþō',    mean: '名词化',         gate: ['名词后缀', '抽象名词后缀'],
-           note: 'warmth、depth、theft 都是它的产物。这个后缀在现代英语里已经死了，不能再造新词。' },
+           mean_en: 'noun-forming',
+           note: 'warmth、depth、theft 都是它的产物。这个后缀在现代英语里已经死了，不能再造新词。',
+           note_en: 'warmth, depth and theft are all its work. The suffix is dead in modern English — it can no longer coin new words.' },
 };
 function suffixLoreBlock(w, chain) {
   if (!chain || !chain.length) return '';
@@ -4536,9 +4562,11 @@ function suffixLoreBlock(w, chain) {
     const mean = String(last.meaning || '');
     if (!L.gate.some(g => mean.indexOf(g) >= 0)) return '';  // 含义闸门不放行
   }
+  const mean = EN_MODE() ? (L.mean_en || L.mean) : L.mean;
+  const note = EN_MODE() ? (L.note_en || L.note) : L.note;
   return `<div class="meaning"><div class="label">后缀溯源</div>` +
-    `-${key} ← 古英语 <b>${L.src}</b>（${L.mean}）<br>` +
-    `<span style="color:var(--sub);font-size:13px">${L.note}</span></div>`;
+    `-${key} ← ${EN_MODE() ? 'Old English' : '古英语'} <b>${L.src}</b>（${mean}）<br>` +
+    `<span style="color:var(--sub);font-size:13px">${note}</span></div>`;
 }
 /* ============================================================
    同根异读：为什么加了后缀，元音就变了
@@ -4600,9 +4628,13 @@ function vowelBlock(w) {
     const ipa = ukIpa(x);
     return '<b>' + x + '</b>' + (ipa ? ' /' + ipa + '/' : '');
   });
-  const why = fam[0] === 'lat'
-    ? '同一个词根，加了后缀后重音后移、长元音松化成短元音'
-    : '本族词的另一套机制：加后缀后元音缩短（strong→strength 还伴随 i-突变）';
+  const why = EN_MODE()
+    ? (fam[0] === 'lat'
+        ? 'Same root: the suffix shifts the stress back and the long vowel laxes to a short one'
+        : 'A native-word pattern: the vowel shortens with the suffix (strong→strength, with i-mutation)')
+    : (fam[0] === 'lat'
+        ? '同一个词根，加了后缀后重音后移、长元音松化成短元音'
+        : '本族词的另一套机制：加后缀后元音缩短（strong→strength 还伴随 i-突变）');
   return `<div class="meaning"><div class="label">同根异读</div>` +
     parts.join(' → ') + `<br>` +
     `<span style="color:var(--sub);font-size:13px">${why}</span></div>`;
@@ -4758,10 +4790,15 @@ function spellVaccineBlock(w, chain) {
   if (!r) return '';
   const split = r.ms.map((m, i) => (i === r.i ? m + '·' + r.ms[i + 1] : (i === r.i + 1 ? null : m)))
     .filter(Boolean).join(' | ');
-  const expl = r.ms[0] === r.base
-    ? `词素边界正好压在双写 ${r.dbl} 上`
-    : `${r.ms[0]}- 是 ${r.base}- 在后接 ${r.dbl[0]} 时同化来的（${r.base}- → ${r.ms[0]}-），` +
-      `它的尾字母正好撞上下一个词素的开头，于是写成两个 ${r.dbl[0]}`;
+  const expl = EN_MODE()
+    ? (r.ms[0] === r.base
+        ? `the morpheme boundary falls right on the doubled ${r.dbl}`
+        : `${r.ms[0]}- is ${r.base}- assimilated before ${r.dbl[0]} (${r.base}- → ${r.ms[0]}-); ` +
+          `its last letter collides with the next morpheme, so it is written as a double ${r.dbl[0]}`)
+    : (r.ms[0] === r.base
+        ? `词素边界正好压在双写 ${r.dbl} 上`
+        : `${r.ms[0]}- 是 ${r.base}- 在后接 ${r.dbl[0]} 时同化来的（${r.base}- → ${r.ms[0]}-），` +
+          `它的尾字母正好撞上下一个词素的开头，于是写成两个 ${r.dbl[0]}`);
   return `<div class="meaning"><div class="label">💊 拼写疫苗</div>` +
     `<b>${split}</b><br>` +
     `<span style="color:var(--sub);font-size:13px">${expl}</span></div>`;
@@ -4773,12 +4810,18 @@ function normanBlock(w) {
   let inner = '';
   if (g) {
     inner += g[0] === 'meat'
-      ? `撒克逊农民养 <b>${g[1]}</b>，端上诺曼贵族的餐桌就叫 <b>${g[2]}</b>`
-      : `<b>${g[1]}</b> 走诺曼底方言（保留 w 音），<b>${g[2]}</b> 走巴黎法语（w → g）`;
+      ? (EN_MODE()
+          ? `Saxon peasants raised <b>${g[1]}</b>; on the Norman lord's table it was called <b>${g[2]}</b>`
+          : `撒克逊农民养 <b>${g[1]}</b>，端上诺曼贵族的餐桌就叫 <b>${g[2]}</b>`)
+      : (EN_MODE()
+          ? `<b>${g[1]}</b> took the Norman path (keeping the w), <b>${g[2]}</b> took the Parisian one (w → g)`
+          : `<b>${g[1]}</b> 走诺曼底方言（保留 w 音），<b>${g[2]}</b> 走巴黎法语（w → g）`);
   }
   if (tri) {
     if (inner) inner += '<br>';
-    inner += `<b>${tri[0]}</b>（本族）→ <b>${tri[1]}</b>（法语借词）→ <b>${tri[2]}</b>（拉丁借词）`;
+    inner += EN_MODE()
+      ? `<b>${tri[0]}</b> (native) → <b>${tri[1]}</b> (French loan) → <b>${tri[2]}</b> (Latin loan)`
+      : `<b>${tri[0]}</b>（本族）→ <b>${tri[1]}</b>（法语借词）→ <b>${tri[2]}</b>（拉丁借词）`;
   }
   return `<div class="meaning"><div class="label">诺曼双轨 · 1066</div>⚔️ ${inner}</div>`;
 }
@@ -4789,10 +4832,18 @@ function stressLine(w) {
   if (!n) return '';
   const lw = String(w).toLowerCase();
   const r = stressRuleOf(w);
+  const neutral = STRESS_NEUTRAL.some(s => lw.length > s.length + 2 && lw.endsWith(s) && realStem(lw.slice(0, -s.length)));
+  if (EN_MODE()) {
+    const h = r ? ' — words ending in -' + r.suf + ' always carry the stress here'
+      : neutral ? ' — neutral suffix: the stress stays where the base word has it' : '';
+    const ord = ['', '', 'second', 'third', 'fourth', 'fifth', 'sixth'][n];
+    const pos = n === 1 ? 'the last syllable'
+      : (ord ? 'the ' + ord + ' syllable from the end' : 'the ' + n + 'th syllable from the end');
+    return 'stress on ' + pos + '<span style="color:var(--sub);font-size:13px">' + h + '</span>';
+  }
   let hint = '';
   if (r) hint = '　-' + r.suf + ' 类后缀固定把重音放在这里';
-  else if (STRESS_NEUTRAL.some(s => lw.length > s.length + 2 && lw.endsWith(s) && realStem(lw.slice(0, -s.length))))
-    hint = '　中性后缀，重音跟着原词走';
+  else if (neutral) hint = '　中性后缀，重音跟着原词走';
   return '倒数第 ' + (ORD_CN[n] || n) +
     ' 个音节<span style="color:var(--sub);font-size:13px">' + hint + '</span>';
 }
@@ -7955,6 +8006,8 @@ const UI_EN = {
 /* 2026-10-05 补：真机扫出来的漏译（按钮 / 小节标签 / title 提示 / 加载中 / 弹窗） */
 '深度讲解':'Deep dive','重新讲解':'Regenerate','复制':'Copy','已复制':'Copied',
 '测这一级':'Test this level','动词句型':'Verb patterns',
+'拼写疫苗':'Spelling vaccine','诺曼双轨 · 1066':'Norman doublets · 1066','同根异读':'Same root, different sound',
+'后缀溯源':'Suffix origin',
 '前缀 · 词根 · 后缀':'prefix · root · suffix','声音':'Voice','返回顶部':'Back to top',
 '朗读':'Read aloud','朗读英文例句':'Read the English example aloud','朗读这条释义':'Read this definition aloud',
 '浏览器自带，即点即播':'Built into the browser — instant playback',
