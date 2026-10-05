@@ -601,6 +601,10 @@
     cursor: pointer; align-self: center;
     transition: transform var(--dur-press), border-color var(--dur-fast), color var(--dur-fast);
   }
+  /* 词头下方的动作行（深度讲解 + 收藏）：右对齐，与上一行的按钮站一边；
+     行内的收藏要取消 margin-left:auto，否则它会把讲解按钮顶到最左 */
+  .word-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .word-actions .fav-btn { margin-left: 0; }
   .fav-btn:hover { border-color: var(--gold); color: var(--gold); }
   .fav-btn.on { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
   /* 发音按钮 */
@@ -8704,10 +8708,22 @@ const LABEL_ICON = [
 ];
 function decorateCard(html, r) {
   let out = String(html == null ? '' : html);
-  // 📖 深度讲解按钮：插在 ☆ 收藏 前面（词头那一行），由 cardHTML(r) 统一注入
-  if (r && !r.reason) {
-    const eb = explainButtonHTML(r);
-    if (eb) out = out.replace(/(<button class="fav-btn)/, eb + '$1');
+  /* 词头行的两个胶囊按钮（深度讲解 / 收藏）挪到第二行（2026-10-05，用户反馈）：
+     收藏带 margin-left:auto，第一行的徽章+按钮一多，它就被挤到单独一行，很难看。
+     词头行里只有 span/button、没有嵌套 div，所以「开标签之后的第一个 </div>」就是它的收尾。 */
+  const wlStart = out.indexOf('<div class="word-line">');
+  if (wlStart >= 0) {
+    const wlClose = out.indexOf('</div>', wlStart);
+    if (wlClose > wlStart) {
+      let wl = out.slice(wlStart, wlClose);
+      const acts = [];
+      if (r && !r.reason) { const eb = explainButtonHTML(r); if (eb) acts.push(eb); }
+      const fm = wl.match(/<button class="fav-btn[\s\S]*?<\/button>/);
+      if (fm) { acts.push(fm[0]); wl = wl.replace(fm[0], ''); }
+      if (acts.length) {
+        out = out.slice(0, wlStart) + wl + '</div><div class="word-actions">' + acts.join('') + '</div>' + out.slice(wlClose + 6);
+      }
+    }
   }
   return out.replace(/(<div class="label"[^>]*>)([^<]{1,30})/g, (m, open, txt) => {
     const t = txt.trim();
