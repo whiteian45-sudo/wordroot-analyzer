@@ -10506,7 +10506,9 @@ document.getElementById('exsearch').addEventListener('click', (e) => {
 /* 💡 AI 助记：点击后流式读 /memo（本地 Ollama，CPU 推理约 2-4 秒），边生成边显示 */
 document.addEventListener('click', async (e) => {
   const btn = e.target.closest('.memo-btn');
-  if (!btn || btn.disabled) return;
+  // 📖 深度讲解按钮复用 .memo-btn 的样式，但它没有 data-memo：
+  // 不排掉的话它会被这个处理器抓到，拿 undefined 去调 /memo，服务端回"没有要助记的单词"。
+  if (!btn || btn.disabled || !btn.dataset.memo) return;
   const box = btn.parentElement.querySelector('.memo-box');
   if (!box) return;
   const label = btn.textContent;
