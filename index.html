@@ -8771,7 +8771,13 @@ function cardHTMLRaw(r) {
       // 数据缺 breakdown（theocracy 等）：跑引擎兜底，质量达标才显示，否则保持空白
       html += enhancedMorphFallback(r.word);
     }
-    if (e.chain && e.chain.length) {
+    /* 演变链只在「真有额外词源可讲」时才渲染：条目里带了古语源词（拉丁语/希腊语原词）才有独立价值；
+       否则它就是上面「词根词缀分解」的同一组词素 + 同一组含义，等于把同一信息画两遍。
+       实测 13286 个带 chain 的 enhanced 词里 6547 个属于后者，且它们都另有分解块（不会丢信息）。
+       口径与 morphBlockHTML 里的 hasChainSrc 一致，全量词那条路本来就这么做的。 */
+    const chainHasSrc = e.chain && e.chain.length &&
+      e.chain.some(m => { const s = chainSourceOf(m); return s && s.lang; });
+    if (chainHasSrc) {
       html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
       e.chain.forEach((m, idx) => {
         const mm = dp(gl(m.m, m.meaning));
