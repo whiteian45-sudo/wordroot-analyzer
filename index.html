@@ -401,6 +401,9 @@
   }
   .memo-box[hidden] { display: none; }
   .memo-err { color: var(--gold); font-size: 13.5px; }
+  /* 📖 深度讲解：纯文本分段渲染，靠 pre-wrap 保住换行；【小标题】单独上色 */
+  .explain-box { white-space: pre-wrap; font-size: 14px; line-height: 1.85; }
+  .explain-h { color: var(--accent); font-weight: 600; }
   .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
   .meaning .label { color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px; }
   .eq { color: var(--accent); font-weight: 600; }
@@ -8401,6 +8404,76 @@ function memoBlockHTML(r) {
     `<div class="memo-box"${cached ? '' : ' hidden'}>${cached ? memoTextHTML(cached.t, cached.l) : ''}</div></div>`;
 }
 
+/* 📖 深度讲解（2026-10-05）：本地 Ollama 依「本地真实素材」写一份教学性讲解。
+   为什么这么设计（实测结论）：裸提示词下 4B 模型会自己造例句（编得很像真的）、编搭配与语域，
+   但格式与"归纳"部分写得不错。所以分工——事实类（释义/例句/同义词/词源/拆解）全部来自本地数据，
+   例句锁死逐字照抄，模型只写结论/直觉/语域/辨析。素材由前端组装（它手里有全部数据层），
+   后端 /explain 只负责拼提示词并流式转发。 */
+function explainMaterials(r) {
+  const w = r.word, hw = r.headword || w;
+  const oxw = oxfordLookup(hw);
+  const o = (oxw && oxw.o) || {};
+  const en = r.enhanced || ENHANCED[hw] || {};
+  const mat = {};
+  const mean = memoMeaning(r);
+  if (mean) mat.meaning = mean;
+  const men = o.def_en || (ECDICT[hw] && nl(ECDICT[hw].d)) || '';
+  if (men) mat.meaning_en = String(men).slice(0, 400);
+  if (o.pos) mat.pos = o.pos;
+  const src = memoSource(r);
+  if (src.kind === 'morph') mat.morph = src.text;
+  let ety = src.kind === 'etym' ? src.text : '';
+  if (!ety) {
+    const e2 = en.etymology || ETYM[hw];
+    if (e2) ety = decodeEntities(String(e2)).trim().slice(0, 500);
+  }
+  if (ety) mat.etym = ety;
+  // 真实例句：优先牛津（自带中文译文），不足再用 LDOCE/柯林斯补齐
+  const ex = [];
+  (o.examples || []).forEach(x => { if (x && x[0] && ex.length < 6) ex.push([String(x[0]), String(x[1] || '')]); });
+  const extra = EX[hw];
+  if (Array.isArray(extra)) extra.forEach(x => { if (x && x.en && ex.length < 6) ex.push([String(x.en), String(x.zh || '')]); });
+  if (ex.length) mat.examples = ex;
+  const th = THES[hw] || THES[w];
+  if (th && Array.isArray(th.s) && th.s.length) mat.syn = th.s.slice(0, 12);
+  if (th && Array.isArray(th.a) && th.a.length) mat.ant = th.a.slice(0, 8);
+  return mat;
+}
+/* 讲解缓存：按「词 + 语言」存（讲解语言跟界面走，与助记相反），上限比助记小——一段 400 字 */
+const EXPLAIN_KEY = 'wr_explain';
+function loadExplains() {
+  try { return JSON.parse(localStorage.getItem(EXPLAIN_KEY)) || {}; } catch (e) { return {}; }
+}
+function explainCacheKey(w, lang) { return String(w).toLowerCase() + '|' + lang; }
+function saveExplain(w, lang, text) {
+  const m = loadExplains();
+  m[explainCacheKey(w, lang)] = { t: text, l: lang, ts: Date.now() };
+  const ks = Object.keys(m);
+  if (ks.length > 300) {
+    ks.sort((a, b) => (m[a].ts || 0) - (m[b].ts || 0)).slice(0, ks.length - 300).forEach(k => delete m[k]);
+  }
+  try { localStorage.setItem(EXPLAIN_KEY, JSON.stringify(m)); } catch (e) {}
+}
+/* 【小标题】上色，其余转义；换行交给 CSS 的 pre-wrap */
+function explainTextHTML(text) {
+  return escapeHtml(text).replace(/【([^】]{1,14})】/g, '<span class="explain-h">【$1】</span>');
+}
+function explainBlockHTML(r) {
+  if (r.reason) return '';
+  const mat = explainMaterials(r);
+  const has = mat.meaning || mat.meaning_en || mat.etym || (mat.examples || []).length || mat.morph;
+  if (!has) return '';
+  const q = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const lang = EN_MODE() ? 'en' : 'zh';
+  const cached = loadExplains()[explainCacheKey(r.word, lang)];
+  return `<div class="meaning memo-wrap"><button class="memo-btn explain-btn" data-explain="${q(r.word)}"` +
+    ` data-mat="${q(JSON.stringify(mat))}"` +
+    ` title="用本地真实素材（释义/真实例句/同义词/词源/拆解）生成一份深度讲解，约 10~25 秒">` +
+    (cached ? '📖 重新讲解' : '📖 深度讲解') + `</button>` +
+    `<div class="memo-box explain-box"${cached ? '' : ' hidden'}>${cached ? explainTextHTML(cached.t) : ''}</div></div>`;
+}
+
 function cardHTML(r) {
   let html = '';
 
@@ -8597,6 +8670,7 @@ function cardHTML(r) {
   }
 
   html += memoBlockHTML(r);   // 💡 AI 助记（无拆解/查不到的词返回空串）
+  html += explainBlockHTML(r);   // 📖 深度讲解（素材打底；没有可用素材时返回空串）
 
   return html;
 }
@@ -10469,6 +10543,53 @@ document.addEventListener('click', async (e) => {
         box.innerHTML = memoTextHTML(acc, lang);   // 出完再切词，英文助记的词就能点开拆解了
         saveMemo(btn.dataset.memo, lang, acc);
         btn.textContent = '💡 重新生成';
+      } else {
+        box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
+        btn.textContent = label;
+      }
+    }
+  } catch (err) {
+    box.innerHTML = '<span class="memo-err">请求失败：' + escapeHtml(err.message || String(err)) + '</span>';
+    btn.textContent = label;
+  }
+  btn.disabled = false;
+});
+
+/* 📖 深度讲解：点击后流式读 /explain（本地 Ollama + 本地真实素材，约 10~25 秒），边写边显示 */
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.explain-btn');
+  if (!btn || btn.disabled) return;
+  const box = btn.parentElement.querySelector('.explain-box');
+  if (!box) return;
+  const label = btn.textContent;
+  let mat = {};
+  try { mat = JSON.parse(btn.dataset.mat || '{}'); } catch (err) { mat = {}; }
+  btn.disabled = true;
+  btn.textContent = '📖 生成中…';
+  box.hidden = false;
+  box.textContent = '本地模型依真实素材写讲解（约 10~25 秒）…';
+  try {
+    const payload = Object.assign({ word: btn.dataset.explain, lang: EN_MODE() ? 'en' : 'zh' }, mat);
+    const resp = await fetch('/explain', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if ((resp.headers.get('content-type') || '').includes('json')) {
+      const j = await resp.json().catch(() => ({}));
+      box.innerHTML = '<span class="memo-err">生成失败：' + escapeHtml(j.err || '未知错误') + '</span>';
+      btn.textContent = label;
+    } else {
+      const reader = resp.body.getReader(), dec = new TextDecoder();
+      let acc = '';
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        acc += dec.decode(value, { stream: true });
+        box.textContent = acc;   // 流式期间纯文本（逐字重排 DOM 会闪）
+      }
+      if (acc.trim()) {
+        box.innerHTML = explainTextHTML(acc);
+        saveExplain(btn.dataset.explain, EN_MODE() ? 'en' : 'zh', acc);
+        btn.textContent = '📖 重新讲解';
       } else {
         box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
         btn.textContent = label;

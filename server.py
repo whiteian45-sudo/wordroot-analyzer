@@ -205,6 +205,38 @@ MEMO_SYSTEM_ETYM_EN = ('You are a witty English vocabulary teacher. The user giv
                        'ONE very short, vivid, memorable English sentence (at most 15 words) built on the '
                        'etymology, a rhyme or an image. Never invent morphemes or split the word into fake roots. '
                        'Output only that sentence: no quotes, no numbering, no extra text.')
+# 深度讲解（2026-10-05）：素材打底 + 事实类信息锁死。
+# 为什么必须锁：实测裸提示词会让 4B 模型自己造例句（编得很像真的）、编搭配与语域判断；
+# 而项目本地已有真实素材（牛津释义+中英例句、LDOCE/柯林斯例句、thesaurus 同义词、Etymonline 词源）。
+# 分工：事实（释义/例句/同义词/词源/拆解）一律用素材，模型只写归纳（结论/直觉/语域/辨析）。
+EXPLAIN_SYSTEM = (
+    '你是一位面向中文母语学习者的英语词汇老师，正在写一份「深度讲解」。用户会给你一个单词和一份【素材】。\n'
+    '铁律（违反即错）：\n'
+    '1. 只能依据【素材】写。素材没提到的义项、搭配、语域判断一律不要写，不要用你自己的知识补充。\n'
+    '2. 【真实例句】必须逐字原样照抄英文，一个字都不许改；有几条用几条；**绝对不许自己造例句**。\n'
+    '3. 素材看不出来的，就写"素材未涉及"。宁可少写，不要编。\n'
+    '4. 只输出讲解正文：不要开场白、不要"好的"、不要解释你在做什么。\n'
+    '输出格式（纯文本；小标题就用【】，不要用 markdown 的 # 或 *；每条占一行）：\n'
+    '【一句话结论】一句话说清这个词的核心意思与语气。\n'
+    '【核心义】一到两句，写母语者的直觉（什么场景下会用、强调什么）。\n'
+    '【语域】正式 / 中性 / 口语，并说明依据（只能依据素材里的释义与例句判断）。\n'
+    '【真实例句】每条一行：英文 —— 中文（素材里带中文的就照抄；没有中文译文的只写英文）。\n'
+    '【搭配】只列【真实例句】里真实出现过的搭配；没有就写"素材未涉及"。\n'
+    '【易混词】只针对【同义词】/【反义词】里列出的词，各一句辨析；不确定就省略这一段。\n'
+    '【总结】一到两句，给出可操作的用法建议。\n'
+    '整体控制在 400 字以内。')
+EXPLAIN_SYSTEM_EN = (
+    'You are an English vocabulary teacher writing a "deep dive" for a Chinese-speaking learner. '
+    'The user gives you a word and a set of SOURCE MATERIALS.\n'
+    'Hard rules (breaking them is a failure):\n'
+    '1. Use ONLY the materials. Do not add senses, collocations or register judgements of your own.\n'
+    '2. Copy the REAL EXAMPLES verbatim, character for character. Never invent an example sentence.\n'
+    '3. If the materials do not cover something, write "not covered by the materials". Prefer less over wrong.\n'
+    '4. Output the explanation only: no preamble, no sign-off.\n'
+    'Format (plain text; section headings in 【】, no markdown # or *; one item per line):\n'
+    '【One-line takeaway】/【Core meaning】/【Register】/【Real examples】(English —— Chinese) /'
+    '【Collocations】(only those actually present in the real examples) /【Near-synonyms】(only the words listed '
+    'under synonyms/antonyms) /【Summary】. Keep it under 350 words.')
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -397,6 +429,52 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             else:
                 system = MEMO_SYSTEM_ETYM_EN if want_en else MEMO_SYSTEM_ETYM
             self._stream_ollama(iter_chat_stream(prompt, model, system), model)
+            return
+        # /explain：本地 Ollama 依「本地真实素材」写一份深度讲解（流式，做法同 /memo）
+        # 素材由前端组装（它手里有 oxford/ecdict/thes/etym/ex 全部数据），这里只负责拼提示词。
+        if path == '/explain':
+            ok, body = self._read_body()
+            if not ok:
+                return
+            if not isinstance(body, dict):
+                body = {}
+            word = (body.get('word') or '').strip()
+            if not word:
+                self._send_json({'ok': False, 'err': '没有要讲解的单词'}, 400)
+                return
+            blocks = []
+
+            def add(label, val):
+                if isinstance(val, (list, tuple)):
+                    val = '\n'.join('' if x is None else str(x) for x in val if x)
+                val = str(val or '').strip()
+                if val:
+                    blocks.append('【' + label + '】\n' + val)
+
+            add('释义', body.get('meaning'))
+            add('英文释义', body.get('meaning_en'))
+            add('词性', body.get('pos'))
+            add('词根词缀拆解', body.get('morph'))
+            add('词源', body.get('etym'))
+            exs = []
+            for e in (body.get('examples') or []):
+                if not isinstance(e, (list, tuple)) or not e:
+                    continue
+                en = str(e[0] or '').strip()
+                zh = str(e[1] or '').strip() if len(e) > 1 else ''
+                if en:
+                    exs.append(en + (' —— ' + zh if zh else ''))
+            add('真实例句', exs)
+            add('同义词', body.get('syn'))
+            add('反义词', body.get('ant'))
+            if not blocks:
+                self._send_json({'ok': False, 'err': '没有可用素材（这个词本地查不到释义/例句/词源）'}, 400)
+                return
+            want_en = str(body.get('lang') or '').lower() == 'en'
+            prompt = ('单词：' + word + '\n\n【素材】\n' + '\n'.join(blocks)
+                      + '\n\n请按系统提示的格式，只依据上面这份素材写讲解。')
+            model = body.get('model') or OLLAMA_MODEL
+            self._stream_ollama(iter_chat_stream(prompt, model, EXPLAIN_SYSTEM_EN if want_en else EXPLAIN_SYSTEM), model)
             return
         # /history、/favs：与磁盘旧数据合并后写入（不是整表覆盖，见 _merge_items 的说明）
         if path in ('/history', '/favs'):
