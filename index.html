@@ -404,16 +404,28 @@
   /* 📖 深度讲解：正文用极简 markdown 渲染（见 mdToHTML）；流式期间是纯文本，靠 pre-wrap 保换行 */
   .explain-box { white-space: pre-wrap; font-size: 14px; line-height: 1.85; }
   .explain-h { color: var(--accent); font-weight: 600; }
-  .explain-box .md-h { color: var(--accent); font-weight: 600; font-size: 15px; margin: 12px 0 4px; }
-  .explain-box .md-h:first-child { margin-top: 0; }
-  .explain-box .md-p { margin: 2px 0; }
-  .explain-box .md-li { padding-left: 14px; position: relative; }
-  .explain-box .md-li::before { content: '·'; position: absolute; left: 3px; color: var(--sub); }
-  .explain-box .md-table { border-collapse: collapse; margin: 6px 0; font-size: 13.5px; }
-  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 3px 9px; text-align: left; }
+  .explain-box .md-h {
+    color: var(--accent); font-weight: 600; font-size: 15px; letter-spacing: .2px;
+    margin: 16px 0 6px; padding-top: 12px; border-top: 1px solid var(--glass-border);
+  }
+  .explain-box .md-h:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+  .explain-box .md-p { margin: 3px 0; }
+  .explain-box .md-li { padding-left: 16px; position: relative; margin: 2px 0; }
+  .explain-box .md-li::before { content: '·'; position: absolute; left: 4px; color: var(--accent); opacity: .7; }
+  .explain-box .md-table { border-collapse: collapse; margin: 8px 0; font-size: 13.5px; width: 100%; table-layout: fixed; }
+  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 4px 10px; text-align: left; word-break: break-word; }
   .explain-box .md-table th { color: var(--sub); font-weight: 600; background: var(--glass-card); }
-  .explain-box .md-hr { border: 0; border-top: 1px solid var(--glass-border); margin: 10px 0; }
+  .explain-box .md-table tr:nth-child(even) td { background: rgba(255, 255, 255, .03); }
+  .explain-box .md-hr { border: 0; border-top: 1px solid var(--glass-border); margin: 12px 0; }
   .explain-box code { background: var(--glass-card); padding: 0 4px; border-radius: 4px; font-size: 13px; }
+  .explain-box b { color: var(--text); font-weight: 600; }
+  .explain-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .explain-copy {
+    font-size: 12px; padding: 3px 9px; border-radius: 9px; cursor: pointer;
+    color: var(--sub); background: var(--glass-card); border: 1px solid var(--glass-border);
+  }
+  .explain-copy:hover { color: var(--accent); border-color: var(--accent); }
+  .explain-copy[hidden] { display: none; }
   .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
   .meaning .label { color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px; }
   .eq { color: var(--accent); font-weight: 600; }
@@ -8498,6 +8510,18 @@ function saveExplain(w, lang, text) {
 function mdInline(s) {
   return String(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
 }
+/* 小节图标（按标题关键词匹配，模型偶尔会把「语域」写成「语」也能认出来一部分） */
+function mdIcon(title) {
+  const t = String(title || '');
+  if (/结论|takeaway/i.test(t)) return '📌';
+  if (/核心|core/i.test(t)) return '🎯';
+  if (/语域|register|场景/i.test(t)) return '🗣';
+  if (/例句|example/i.test(t)) return '📖';
+  if (/搭配|collocation/i.test(t)) return '🔗';
+  if (/易混|近义|synonym/i.test(t)) return '⚖️';
+  if (/总结|summary/i.test(t)) return '✅';
+  return '';
+}
 function mdToHTML(text) {
   const lines = escapeHtml(String(text == null ? '' : text)).split(/\r?\n/);
   const out = [];
@@ -8520,9 +8544,14 @@ function mdToHTML(text) {
     flushTbl();
     if (!line) continue;
     let m;
-    if ((m = line.match(/^#{1,4}\s+(.*)$/))) { out.push('<div class="md-h">' + mdInline(m[1]) + '</div>'); continue; }
+    if ((m = line.match(/^#{1,4}\s+(.*)$/))) {
+      const ic = mdIcon(m[1]);
+      out.push('<div class="md-h">' + (ic ? ic + ' ' : '') + mdInline(m[1]) + '</div>');
+      continue;
+    }
     if ((m = line.match(/^【([^】]{1,20})】\s*(.*)$/))) {
-      out.push('<div class="md-h">' + mdInline(m[1]) + '</div>');
+      const ic = mdIcon(m[1]);
+      out.push('<div class="md-h">' + (ic ? ic + ' ' : '') + mdInline(m[1]) + '</div>');
       if (m[2]) out.push('<div class="md-p">' + mdInline(m[2].replace(/^[:：]\s*/, '')) + '</div>');
       continue;
     }
@@ -8543,10 +8572,12 @@ function explainBlockHTML(r) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const lang = EN_MODE() ? 'en' : 'zh';
   const cached = loadExplains()[explainCacheKey(r.word, lang)];
-  return `<div class="meaning memo-wrap"><button class="memo-btn explain-btn" data-explain="${q(r.word)}"` +
+  return `<div class="meaning memo-wrap explain-wrap"><button class="memo-btn explain-btn" data-explain="${q(r.word)}"` +
     ` data-mat="${q(JSON.stringify(mat))}"` +
     ` title="用本地真实素材（释义/真实例句/同义词/词源/拆解）生成一份深度讲解，约 10~25 秒">` +
     (cached ? '📖 重新讲解' : '📖 深度讲解') + `</button>` +
+    `<button class="explain-copy" data-explain-copy="${q(r.word)}"${cached ? '' : ' hidden'}` +
+    ` title="复制讲解的 markdown 原文">📋 复制</button>` +
     `<div class="memo-box explain-box"${cached ? '' : ' hidden'}>${cached ? explainTextHTML(cached.t) : ''}</div></div>`;
 }
 
@@ -10668,6 +10699,8 @@ document.addEventListener('click', async (e) => {
         box.innerHTML = explainTextHTML(acc);
         saveExplain(btn.dataset.explain, EN_MODE() ? 'en' : 'zh', acc);
         btn.textContent = '📖 重新讲解';
+        const cp = btn.parentElement.querySelector('.explain-copy');
+        if (cp) cp.hidden = false;   // 有内容了才亮出「复制」
       } else {
         box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
         btn.textContent = label;
@@ -10678,6 +10711,27 @@ document.addEventListener('click', async (e) => {
     btn.textContent = label;
   }
   btn.disabled = false;
+});
+
+/* 📋 复制深度讲解的 markdown 原文（取缓存里的原始文本，不是渲染后的 DOM） */
+document.addEventListener('click', (e) => {
+  const cp = e.target.closest('.explain-copy');
+  if (!cp || cp.disabled) return;
+  const c = loadExplains()[explainCacheKey(cp.dataset.explainCopy, EN_MODE() ? 'en' : 'zh')];
+  if (!c || !c.t) return;
+  const flash = () => { const t = cp.textContent; cp.textContent = '✓ 已复制'; setTimeout(() => { cp.textContent = t; }, 1200); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(c.t).then(flash, () => {});
+    else {
+      const ta = document.createElement('textarea');
+      ta.value = c.t;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      flash();
+    }
+  } catch (err) { /* 剪贴板不可用就算了，不打扰用户 */ }
 });
 
 /* 返回顶部：词根/词频目录一页上千条，滚下去后右下角浮出按钮 */
