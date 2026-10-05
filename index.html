@@ -426,6 +426,11 @@
   }
   .explain-copy:hover { color: var(--accent); border-color: var(--accent); }
   .explain-copy[hidden] { display: none; }
+  /* 抽屉里的讲解卡片（2026-10-05）：一行工具条 + 正文；正文随流式增长时面板自己滚 */
+  .ex-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ex-word { font-weight: 600; font-size: 15px; margin-right: auto; }
+  .explain-regen { font-size: 12px; padding: 3px 10px; }
+  #panel-explain { max-height: none; }
   /* 字号 / 行距（2026-10-05）：字号用 zoom 加在结果与面板上——卡片里全是写死的 px，
      只有 zoom 能把它们整体缩放；行距单独用 !important 覆盖几个正文块。都存 localStorage。 */
   html[data-fs="s"] #result, html[data-fs="s"] #panel-body { zoom: .92; }
@@ -8614,22 +8619,79 @@ function mdToHTML(text) {
   return out.join('');
 }
 function explainTextHTML(text) { return mdToHTML(text); }
-function explainBlockHTML(r) {
-  if (r.reason) return '';
+/* 深度讲解按钮（2026-10-05 改版）：按钮挪到词头那一行、挨着收藏；讲解内容不再内嵌在卡片里，
+   而是送进右侧抽屉（那片区域平时空着，正好放 1000 字的长文）。这里只产出按钮本身，
+   由 decorateCard 统一插到收藏按钮前面，一处生效。 */
+function explainButtonHTML(r) {
   const mat = explainMaterials(r);
   const has = mat.meaning || mat.meaning_en || mat.etym || (mat.examples || []).length || mat.morph;
   if (!has) return '';
+  const cached = loadExplains()[explainCacheKey(r.word, EN_MODE() ? 'en' : 'zh')];
   const q = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const lang = EN_MODE() ? 'en' : 'zh';
-  const cached = loadExplains()[explainCacheKey(r.word, lang)];
-  return `<div class="meaning memo-wrap explain-wrap"><button class="memo-btn explain-btn" data-explain="${q(r.word)}"` +
+  return `<button class="memo-btn explain-btn" data-explain="${q(r.word)}"` +
     ` data-mat="${q(JSON.stringify(mat))}"` +
-    ` title="用本地真实素材（释义/真实例句/同义词/词源/拆解）生成一份深度讲解，约 10~25 秒">` +
-    (cached ? '📖 重新讲解' : '📖 深度讲解') + `</button>` +
-    `<button class="explain-copy" data-explain-copy="${q(r.word)}"${cached ? '' : ' hidden'}` +
-    ` title="复制讲解的 markdown 原文">📋 复制</button>` +
-    `<div class="memo-box explain-box"${cached ? '' : ' hidden'}>${cached ? explainTextHTML(cached.t) : ''}</div></div>`;
+    ` title="在右侧面板生成一份深度讲解：本地真实素材打底，约 10~25 秒">` +
+    (cached ? '📖 重新讲解' : '📖 深度讲解') + `</button>`;
+}
+
+/* 把讲解送进右侧抽屉：标题、复制、重新生成、流式输出都在这里。 */
+function openExplainPanel(word, mat) {
+  const body = document.getElementById('panel-body');
+  const lang = EN_MODE() ? 'en' : 'zh';
+  const cached = loadExplains()[explainCacheKey(word, lang)];
+  const q = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  document.getElementById('panel-title').textContent = '📖 ' + word + (EN_MODE() ? ' · deep dive' : ' · 深度讲解');
+  body.innerHTML = '<div class="card"><div class="ex-head">' +
+    '<span class="ex-word">' + escapeHtml(word) + '</span>' +
+    '<button class="explain-copy" data-explain-copy="' + q(word) + '"' + (cached ? '' : ' hidden') + '>📋 复制</button>' +
+    '<button class="memo-btn explain-regen" data-explain="' + q(word) + '" data-mat="' + q(JSON.stringify(mat)) +
+    '" title="重新生成（换一次措辞）">↻ 重新生成</button>' +
+    '</div><div class="memo-box explain-box" id="panel-explain"></div></div>';
+  translateDOM(body);
+  slidePanel(true);
+  const box = document.getElementById('panel-explain');
+  if (cached) box.innerHTML = explainTextHTML(cached.t);
+  else startExplain(word, mat, box);
+}
+
+/* 流式向 Ollama 要讲解并写进给定容器（面板与「重新生成」共用） */
+async function startExplain(word, mat, box) {
+  if (!box) return;
+  const cp = document.querySelector('.explain-copy');
+  if (cp) cp.hidden = true;
+  box.textContent = '本地模型依真实素材写讲解（约 10~25 秒）…';
+  try {
+    const payload = Object.assign({ word: word, lang: EN_MODE() ? 'en' : 'zh' }, mat || {});
+    const resp = await fetch('/explain', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if ((resp.headers.get('content-type') || '').includes('json')) {
+      const j = await resp.json().catch(() => ({}));
+      box.innerHTML = '<span class="memo-err">生成失败：' + escapeHtml(j.err || '未知错误') + '</span>';
+      return;
+    }
+    const reader = resp.body.getReader(), dec = new TextDecoder();
+    let acc = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      acc += dec.decode(value, { stream: true });
+      box.textContent = acc;
+      box.scrollTop = box.scrollHeight;
+    }
+    if (acc.trim()) {
+      box.innerHTML = explainTextHTML(acc);
+      saveExplain(word, EN_MODE() ? 'en' : 'zh', acc);
+      const cp2 = document.querySelector('.explain-copy');
+      if (cp2) cp2.hidden = false;
+    } else {
+      box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
+    }
+  } catch (err) {
+    box.innerHTML = '<span class="memo-err">请求失败：' + escapeHtml(err.message || String(err)) + '</span>';
+  }
 }
 
 /* 词源段落排版（2026-10-05）：Etymonline 原文是一整段，把带引号的源词挑出来上色，
@@ -8647,8 +8709,14 @@ const LABEL_ICON = [
   ['例句', '✍️'], ['同源 / 同根词', '🌿'], ['同根词', '🌿'], ['近义词 / 反义词', '🔁'],
   ['参见', '↪'], ['构成逻辑', '🧠'], ['后缀溯源', '🧾'], ['动词句型', '🧱'], ['诺曼双轨', '⚔'],
 ];
-function decorateCard(html) {
-  return String(html == null ? '' : html).replace(/(<div class="label"[^>]*>)([^<]{1,30})/g, (m, open, txt) => {
+function decorateCard(html, r) {
+  let out = String(html == null ? '' : html);
+  // 📖 深度讲解按钮：插在 ☆ 收藏 前面（词头那一行），由 cardHTML(r) 统一注入
+  if (r && !r.reason) {
+    const eb = explainButtonHTML(r);
+    if (eb) out = out.replace(/(<button class="fav-btn)/, eb + '$1');
+  }
+  return out.replace(/(<div class="label"[^>]*>)([^<]{1,30})/g, (m, open, txt) => {
     const t = txt.trim();
     if (!t || t.charCodeAt(0) > 0x2000) return m;           // 空标签或已带图标（emoji）的不动
     for (const [k, ic] of LABEL_ICON) if (t.indexOf(k) === 0) return open + ic + ' ' + txt;
@@ -8686,7 +8754,7 @@ function buildCardNav(root) {
     if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
-function cardHTML(r) { return decorateCard(cardHTMLRaw(r)); }
+function cardHTML(r) { return decorateCard(cardHTMLRaw(r), r); }
 
 function cardHTMLRaw(r) {
   let html = '';
@@ -8884,7 +8952,6 @@ function cardHTMLRaw(r) {
   }
 
   html += memoBlockHTML(r);   // 💡 AI 助记（无拆解/查不到的词返回空串）
-  html += explainBlockHTML(r);   // 📖 深度讲解（素材打底；没有可用素材时返回空串）
 
   return html;
 }
@@ -10792,53 +10859,21 @@ document.addEventListener('click', async (e) => {
   btn.disabled = false;
 });
 
-/* 📖 深度讲解：点击后流式读 /explain（本地 Ollama + 本地真实素材，约 10~25 秒），边写边显示 */
-document.addEventListener('click', async (e) => {
+/* 📖 深度讲解：点词头那一行的按钮 → 右侧抽屉滑出，讲解以卡片形式在里面流式生成 */
+document.addEventListener('click', (e) => {
   const btn = e.target.closest('.explain-btn');
   if (!btn || btn.disabled) return;
-  const box = btn.parentElement.querySelector('.explain-box');
-  if (!box) return;
-  const label = btn.textContent;
   let mat = {};
   try { mat = JSON.parse(btn.dataset.mat || '{}'); } catch (err) { mat = {}; }
-  btn.disabled = true;
-  btn.textContent = '📖 生成中…';
-  box.hidden = false;
-  box.textContent = '本地模型依真实素材写讲解（约 10~25 秒）…';
-  try {
-    const payload = Object.assign({ word: btn.dataset.explain, lang: EN_MODE() ? 'en' : 'zh' }, mat);
-    const resp = await fetch('/explain', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    });
-    if ((resp.headers.get('content-type') || '').includes('json')) {
-      const j = await resp.json().catch(() => ({}));
-      box.innerHTML = '<span class="memo-err">生成失败：' + escapeHtml(j.err || '未知错误') + '</span>';
-      btn.textContent = label;
-    } else {
-      const reader = resp.body.getReader(), dec = new TextDecoder();
-      let acc = '';
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        acc += dec.decode(value, { stream: true });
-        box.textContent = acc;   // 流式期间纯文本（逐字重排 DOM 会闪）
-      }
-      if (acc.trim()) {
-        box.innerHTML = explainTextHTML(acc);
-        saveExplain(btn.dataset.explain, EN_MODE() ? 'en' : 'zh', acc);
-        btn.textContent = '📖 重新讲解';
-        const cp = btn.parentElement.querySelector('.explain-copy');
-        if (cp) cp.hidden = false;   // 有内容了才亮出「复制」
-      } else {
-        box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
-        btn.textContent = label;
-      }
-    }
-  } catch (err) {
-    box.innerHTML = '<span class="memo-err">请求失败：' + escapeHtml(err.message || String(err)) + '</span>';
-    btn.textContent = label;
-  }
-  btn.disabled = false;
+  openExplainPanel(btn.dataset.explain, mat);
+});
+/* ↻ 重新生成（在抽屉里）：同一份素材再要一次，措辞会不一样 */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.explain-regen');
+  if (!btn || btn.disabled) return;
+  let mat = {};
+  try { mat = JSON.parse(btn.dataset.mat || '{}'); } catch (err) { mat = {}; }
+  startExplain(btn.dataset.explain, mat, document.getElementById('panel-explain'));
 });
 
 /* 📋 复制深度讲解的 markdown 原文（取缓存里的原始文本，不是渲染后的 DOM） */
