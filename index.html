@@ -441,13 +441,6 @@
   html[data-lh="loose"] #result .meaning, html[data-lh="loose"] #result .memo-box,
   html[data-lh="loose"] #result .ex-en, html[data-lh="loose"] #result .ex-zh,
   html[data-lh="loose"] #panel-body .meaning, html[data-lh="loose"] #panel-body .memo-box { line-height: 2.15 !important; }
-  /* 卡片小节导航（2026-10-05）：卡片长起来之后，顶部一排小节锚点，点一下跳过去 */
-  .card-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
-  .cn-chip {
-    font-size: 12px; padding: 3px 10px; border-radius: 999px; cursor: pointer;
-    color: var(--sub); background: var(--glass-card); border: 1px solid var(--glass-border);
-  }
-  .cn-chip:hover { color: var(--accent); border-color: var(--accent); }
   .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
   .meaning .label {
     color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px;
@@ -8723,37 +8716,6 @@ function decorateCard(html, r) {
     return m;
   });
 }
-/* 卡片小节导航（2026-10-05）：卡片里每个小节的 .label 都在它的块级父元素里，
-   就按「标签的父元素」现场收集小节 → 给它们编 id → 顶部生成一排锚点。
-   AI 区块（助记/深度讲解）不进导航；小节少于 3 个则不加（短卡片不需要）。 */
-function buildCardNav(root) {
-  const card = root && root.querySelector ? root.querySelector(".card") : null;
-  if (!card) return;
-  const old = card.querySelector(".card-nav");
-  if (old) old.remove();
-  const seen = new Set(), items = [];
-  card.querySelectorAll(".label").forEach((lb, i) => {
-    const el = lb.parentElement;
-    if (!el || seen.has(el) || el.closest(".memo-wrap")) return;
-    const txt = (lb.textContent || "").trim().replace(/\s+/g, " ");
-    if (!txt) return;
-    seen.add(el);
-    if (!el.id) el.id = "sec-" + (i + 1);
-    items.push({ id: el.id, txt: txt });
-  });
-  if (items.length < 3) return;
-  const nav = document.createElement("div");
-  nav.className = "card-nav";
-  nav.innerHTML = items.map(x => '<button class="cn-chip" data-sec="' + x.id + '">' + escapeHtml(x.txt) + "</button>").join("");
-  const wl = card.querySelector(".word-line");
-  if (wl) wl.insertAdjacentElement("afterend", nav); else card.insertBefore(nav, card.firstChild);
-  nav.addEventListener("click", (e) => {
-    const b = e.target.closest(".cn-chip");
-    if (!b) return;
-    const t = document.getElementById(b.dataset.sec);
-    if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
 function cardHTML(r) { return decorateCard(cardHTMLRaw(r), r); }
 
 function cardHTMLRaw(r) {
@@ -8985,7 +8947,6 @@ function clearSideRel() {
 
 function render(r) {
   result.innerHTML = cardHTML(r);
-  buildCardNav(result);
   decorateBnc(result, r);
   result.classList.add('show');
   if (worthRecording(r)) saveHistory(r);
