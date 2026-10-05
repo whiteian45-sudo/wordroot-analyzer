@@ -2165,6 +2165,13 @@ const ROOTS = {
      真词源是整体借词：古法语 cofin（箱、篮）← 拉丁语 cophinus ← 希腊语 kophinos（篮子），
      与 co- 前缀无关。按 mallard/empress/bureau/ambrosia 同款补整词根。 */
   "coffin": ["棺材、棺木（原义：箱子、篮子）", ["coffin", "coffins", "coffined"], {"lang": "希腊语", "word": "kophinos", "note": "经拉丁语 cophinus、古法语 cofin 借入"}],
+  /* meridian 词族（2026-10-05 用户报词）：原来 meridian 读成 `-ian|??merid`（后缀兜底 + 未识别词干）、
+     meridians 直接无拆解、antemeridian 被切成 ant-e-mer-id-ian。
+     真词源：拉丁语 meridies（正午）= medius（中间）+ dies（日）→ 经线即「正午线」。
+     照 apostle/apostol 惯例补基础形 + 组合形：meridi（正午、子午）与 meridion（子午的，-al 前用）。
+     实测含 merid 的 50 词：由无到有 9、丢失 0、改写 3（antemeridian 由乱切转正）。 */
+  "meridi": ["正午、子午", ["meridian", "meridians", "antemeridian"], {"lang": "拉丁语", "word": "meridies", "note": "medius（中间）+ dies（日）"}],
+  "meridion": ["子午的、正午的", ["meridional", "meridionally"], {"lang": "拉丁语", "word": "meridionalis"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -7776,6 +7783,7 @@ const MORPH_EN_EXTRA = {
   "hemato": "blood (Greek haimatos)", "themat": "theme, proposition (Greek thema)",
   "mathemat": "learning, knowledge (Greek mathema)",
   "coffin": "coffin (Greek kophinos, basket)",
+  "meridi": "noon, midday (Latin meridies)", "meridion": "of midday, southern (Latin meridionalis)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）

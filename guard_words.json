@@ -906,6 +906,36 @@
     },
     "coffining": {
       "d": "coffin-ing"
+    },
+    "meridian": {
+      "d": "meridi-an"
+    },
+    "meridians": {
+      "d": "meridi-an-s"
+    },
+    "meridional": {
+      "d": "meridion-al"
+    },
+    "meridionally": {
+      "d": "meridion-al-ly"
+    },
+    "antemeridian": {
+      "d": "ante|meridi-an"
+    },
+    "antimeridian": {
+      "d": "anti|meridi-an"
+    },
+    "postmeridian": {
+      "d": "post|meridi-an"
+    },
+    "circummeridian": {
+      "d": "circum|meridi-an"
+    },
+    "meridianal": {
+      "d": "meridi-an-al"
+    },
+    "palaeomeridian": {
+      "d": "palae+meridi-an"
     }
   },
   "partial词": {
