@@ -427,7 +427,14 @@
   .explain-copy:hover { color: var(--accent); border-color: var(--accent); }
   .explain-copy[hidden] { display: none; }
   .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
-  .meaning .label { color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px; }
+  .meaning .label {
+    color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  /* 小节标签左侧的主题色竖条（2026-10-05）：卡片里十几处 label 一处生效，扫读时有节奏 */
+  .meaning .label::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); opacity: .75; flex: none; }
+  /* 词源段落里的源词（"gore" 这类带引号的）高亮 */
+  .etym-q { color: var(--accent); }
   .eq { color: var(--accent); font-weight: 600; }
   .cognates { margin-top: 14px; }
   .rel-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 14px; }
@@ -8585,7 +8592,32 @@ function explainBlockHTML(r) {
     `<div class="memo-box explain-box"${cached ? '' : ' hidden'}>${cached ? explainTextHTML(cached.t) : ''}</div></div>`;
 }
 
-function cardHTML(r) {
+/* 词源段落排版（2026-10-05）：Etymonline 原文是一整段，把带引号的源词挑出来上色，
+   读的时候能一眼看到 "gore" / "gor" 这类构词来源。其余保持原样（不做断句，免得切坏缩写）。 */
+function etymTextHTML(s) {
+  return escapeHtml(String(s == null ? '' : s))
+    .replace(/"([^"]{1,40})"/g, '<span class="etym-q">"$1"</span>')          // 英文引号（Etymonline 原文）
+    .replace(/“([^”]{1,40})”/g, '<span class="etym-q">“$1”</span>');         // 中文引号（enhanced 自带那段用这个）
+}
+/* 卡片小节标签的图标（2026-10-05）：卡片里十几处 <div class="label"> 都长一个样，
+   在这里统一补图标，比散落二十处改代码可靠。已经自带图标的（💊 拼写疫苗）不动。 */
+const LABEL_ICON = [
+  ['音标', '🔊'], ['重音', '🔊'], ['词性', '🏷'], ['释义', '📘'], ['英文释义', '📖'], ['其它义项', '📚'],
+  ['词根词缀分解', '🧩'], ['词源演变链', '🧬'], ['词源(Etymonline)', '🏛'], ['词源', '🏛'],
+  ['例句', '✍️'], ['同源 / 同根词', '🌿'], ['同根词', '🌿'], ['近义词 / 反义词', '🔁'],
+  ['参见', '↪'], ['构成逻辑', '🧠'], ['后缀溯源', '🧾'], ['动词句型', '🧱'], ['诺曼双轨', '⚔'],
+];
+function decorateCard(html) {
+  return String(html == null ? '' : html).replace(/(<div class="label"[^>]*>)([^<]{1,30})/g, (m, open, txt) => {
+    const t = txt.trim();
+    if (!t || t.charCodeAt(0) > 0x2000) return m;           // 空标签或已带图标（emoji）的不动
+    for (const [k, ic] of LABEL_ICON) if (t.indexOf(k) === 0) return open + ic + ' ' + txt;
+    return m;
+  });
+}
+function cardHTML(r) { return decorateCard(cardHTMLRaw(r)); }
+
+function cardHTMLRaw(r) {
   let html = '';
 
   if (r.found && r.source === 'enhanced') {
@@ -8641,9 +8673,9 @@ function cardHTML(r) {
       html += `</div></div>`;
     }
     if (EN_MODE()) {
-      if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${escapeHtml(ETYM[r.word])}</div>`;
+      if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${etymTextHTML(ETYM[r.word])}</div>`;
     } else if (e.etymology) {
-      html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${e.etymology}</div>`;
+      html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${etymTextHTML(e.etymology)}</div>`;
     }
     html += examplesBlock(r.word, e.examples);
     html += (lastRel = relBlock(r.word, findCognates(r.word)));
@@ -8693,7 +8725,7 @@ function cardHTML(r) {
         `<button class="tts-btn ex-tts" data-text="${escapeHtml(o.def_en).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div></div>`;
     }
     html += morphBlockHTML(hw, decompose(hw, 0) || partialDecompose(hw));
-    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${etymTextHTML(ETYM[r.word])}</div></div>`;
     html += examplesBlock(hw, o.examples);
     html += (lastRel = relBlock(hw, findCognates(hw)));
     html += `</div>`;
@@ -8728,7 +8760,7 @@ function cardHTML(r) {
     // 全量词：先拆解（完整优先，失败退回部分拆解，如 binary→bi-+??nary），
     // 再据此生成分解区块与词源演变链（渲染逻辑与 enhanced 兜底共用 morphBlockHTML）
     html += morphBlockHTML(r.word, decompose(r.word, 0) || partialDecompose(r.word));
-    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${escapeHtml(ETYM[r.word])}</div></div>`;
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${etymTextHTML(ETYM[r.word])}</div></div>`;
     html += (lastRel = relBlock(r.word, findCognates(r.word)));
     html += examplesBlock(r.word, null);
     html += `</div>`;
