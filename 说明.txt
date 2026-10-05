@@ -13,8 +13,9 @@
 【怎么用】
 双击 start.bat，会自动：
   1. 启动本地服务（Python）
-  2. 打开浏览器进入工具页
-输入单词按回车即可。关闭黑窗口即退出。
+  2. 另开一个「Kokoro TTS」窗口（高音质发音服务，可选）
+  3. 打开浏览器进入工具页
+输入单词按回车即可。关掉主服务那个窗口即退出，TTS 窗口可单独关。
 
 注意：不要直接双击 index.html —— 浏览器会拦住页面读取数据，必须走
 start.bat（或手动 python server.py）。
@@ -68,7 +69,13 @@ start.bat（或手动 python server.py）。
   2. 命令行执行：ollama pull qwen3:4b-instruct-2507-q4_K_M（约 2.5GB）
 没装的话，这三个按钮点了会提示连接失败，其它功能完全不受影响。
 
+【开发文件】（普通查词用不到）
+  test_*.js、tune_scoring.js、test_health.js、guard_words.json、回归.bat、audit_report.md
+  改拆解引擎/词素表后跑一遍回归用的：双击 回归.bat 即可（需要装 Node.js）。
+
 【常见问题】
+  双击后出现两个黑窗口 → 正常。一个是词库主服务，另一个是发音服务（Kokoro），
+      后者可以单独关掉，关掉只是少了高音质发音。
   双击后页面打不开 → 多半是 Python 没装好。确认装了 Python 3，
       或手动运行 python server.py 看报什么错。
   提示"端口被占用" → 服务已经在跑了，直接用打开的那个浏览器页面即可。

@@ -1,8 +1,11 @@
 /* 词根词缀引擎测试工具（常驻，勿删）
    用法：
    node test_decompose.js 词1 词2 ...   → 打印每个词的拆解+演变链+同根词
-   node test_decompose.js --diff        → 对比 git HEAD 与当前，全量 diff 受影响词
+   node test_decompose.js --guard       → 守护清单回归（对照 guard_words.json 的期望值）
+   node test_decompose.js --diff [子串] → 对比 git HEAD 与当前，全量 diff 受影响词
+   node test_decompose.js --audit [--brief] → 用 enhanced 的真实词源当基准，统计完整拆解/低匹配
    node test_decompose.js --enhanced    → 检查 enhanced 空 breakdown 词是否被误触发
+   改引擎/词素表后按 --guard → --diff → --audit 的顺序跑；一键版见 回归.bat。
    注意：eval 是 const 作用域隔离，测试代码需拼进同一 eval。
 */
 const fs = require('fs');

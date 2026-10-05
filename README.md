@@ -22,7 +22,7 @@ start.bat
 python server.py
 ```
 
-启动后浏览器会打开 `http://localhost:8756`，关掉黑窗口即退出。
+启动后浏览器会打开 `http://localhost:8756`。`start.bat` 还会顺带另开一个「Kokoro TTS」窗口（高音质发音服务，可选，没装依赖也不影响主服务）；关掉主服务那个窗口即退出，TTS 窗口单独关。
 
 注意：不要直接双击 `index.html`，file:// 协议下浏览器会拦 fetch，跑不起来，必须走 server.py。
 
@@ -57,10 +57,10 @@ python server.py
 
 ```bash
 pip install kokoro soundfile torch --index-url https://download.pytorch.org/whl/cpu
-# Windows 双击 tts_start.bat（独立窗口常驻，端口 8757）
-# 其他系统 python tts_server.py
 # 首次运行自动下载模型到用户目录缓存（约 300MB，需联网）
 ```
+
+装好后 Windows 下不用管：`start.bat` 会自动另开一个「Kokoro TTS」窗口跑它（端口 8757），也可以单独双击 `tts_start.bat`；其他系统手动 `python tts_server.py`。
 
 Kokoro 没装或没启动时，页面会自动退回浏览器内置发音，不报错。有 N 卡的话换 CUDA 版 torch 能快好几倍（整段朗读实测约 6 倍）。
 
@@ -101,6 +101,8 @@ Ollama 默认监听 `127.0.0.1:11434`。server.py 默认用上面这个模型，
 
 `history.json` / `favs.json` 是查词记录与收藏，运行时由本地服务自动写在项目目录，属于个人数据，不进仓库。
 
+全量词典支持可选的**分片加载**：项目目录下有 `dict/` 分片时就逐个在空闲时解析，没有就整文件读 `ecdict.json`，功能完全一样（分片只是让加载不卡输入）。
+
 ## 数据来源
 
 - 词根词缀表和拆解引擎是项目自己写的
@@ -123,6 +125,27 @@ Ollama 默认监听 `127.0.0.1:11434`。server.py 默认用上面这个模型，
 | `stress.json` | 重音位置提示 |
 
 想用上全部功能，可以自备这些数据，或者换成开放许可的数据源（[Wiktionary](https://kaikki.org/dictionary/English/)、WordNet 等）自己重建。
+
+## 开发 / 回归
+
+改拆解引擎或词素表后跑一遍回归（Windows 直接双击 `回归.bat`，等价于依次执行下面三条）：
+
+```bash
+node test_decompose.js --guard         # 守护清单：401 个已验证词的拆解结果不许回退
+node test_decompose.js --audit --brief # 词源审计：以 enhanced 自带词源为基准，看总量
+node test_health.js                    # 一体化体检：表完整性、原型链、渲染冒烟、覆盖率、性能
+```
+
+配套工具：
+
+| 文件 | 用途 |
+|---|---|
+| `test_decompose.js` | 查单词拆解（`node test_decompose.js word`）；`--diff` 全量对比 git HEAD；`--enhanced` 查兜底误触发；`--audit` 列出低匹配词 |
+| `test_health.js` | 一体化体检，退出码非 0 表示有致命问题 |
+| `test_ui.js` | 真机 UI 验证（需主服务在跑 + Chrome） |
+| `tune_scoring.js` | 拆解评分调参实验（结论：调参解不了误拆，靠拦截表） |
+| `guard_words.json` | 守护清单数据 |
+| `audit_report.md` | `--audit` 的输出存档 |
 
 ## License
 
