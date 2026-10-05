@@ -7931,6 +7931,7 @@ const UI_EN = {
 '词根表里还没有收录例词。':'No examples listed for this root.',
 '查询过的词会累积到这里':'Words you look up accumulate here',
 '例句库还在建立索引，稍等几秒再搜。':'The example index is still building — try again shortly.',
+'例句库还在建立索引，稍等几秒再试。':'The example index is still building — try again shortly.',
 '牛津':'Oxford','考纲':'Exam list','朗文':'Longman','柯林斯':'Collins',
 '没有匹配的词素。换个关键词试试。':'No matching morphemes. Try another keyword.',
 '这些词在例句库里还没有例句。':'No examples for these words yet.',
@@ -7951,8 +7952,58 @@ const UI_EN = {
 '美音·男·Adam':'US · male · Adam','美音·男·Michael':'US · male · Michael','英音·女·Emma':'UK · female · Emma',
 '英音·女·Isabella':'UK · female · Isabella','英音·男·George':'UK · male · George',
 '翻译中…（本地模型，长文稍慢）':'Translating… (local model, slower for long text)',
+/* 2026-10-05 补：真机扫出来的漏译（按钮 / 小节标签 / title 提示 / 加载中 / 弹窗） */
+'深度讲解':'Deep dive','重新讲解':'Regenerate','复制':'Copy','已复制':'Copied',
+'测这一级':'Test this level','动词句型':'Verb patterns',
+'前缀 · 词根 · 后缀':'prefix · root · suffix','声音':'Voice','返回顶部':'Back to top',
+'朗读':'Read aloud','朗读英文例句':'Read the English example aloud','朗读这条释义':'Read this definition aloud',
+'浏览器自带，即点即播':'Built into the browser — instant playback',
+'Kokoro 高音质，需 TTS 服务在运行':'Kokoro — higher quality (requires the TTS service)',
+'在右侧面板生成一份深度讲解：本地真实素材打底，约 10~25 秒':'Generate a deep dive in the side panel — grounded in local materials, ~10–25s',
+'重新生成（换一次措辞）':'Regenerate (different wording)',
+'英语文献中现存最早的书面用例（Etymonline），不等于首创':'Earliest surviving written record in English (Etymonline) — not necessarily the first use',
+'本地 LLM 翻译整段':'Translate the passage with a local LLM',
+'间隔重复：只复习到期的词；没有到期的就洗牌全部':'Spaced repetition: review only words that are due; shuffle everything if none are',
+'历史自动存入项目目录 history.json':'History is saved automatically to history.json in the project folder',
+'从这一级随机抽 20 个词族，按闪卡的方式自测（空格揭晓、1 忘了 / 2 记住了）':
+  'Pick 20 word families from this level and self-test with flashcards (Space to reveal, 1 forgot / 2 remembered)',
+'不看排程，洗牌复习全部':'Ignore the schedule — shuffle and review everything',
+'快捷键：空格':'Shortcut: Space',
+'正在加载考试词库…':'Loading the exam word list…',
+'考试词库完成，正在加载牛津9词库…':'Exam list ready — loading Oxford 9…',
+'牛津词库完成，正在加载词源…':'Oxford ready — loading etymology…',
+'词源完成，正在加载近反义词…':'Etymology ready — loading synonyms/antonyms…',
+'近反义词完成，正在加载补充例句…':'Synonyms/antonyms ready — loading extra examples…',
+'例句完成，正在加载全量词典…':'Examples ready — loading the full dictionary…',
+'加载完成 ✓':'Loaded ✓','数据加载失败':'Failed to load data',
+'数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）':
+  'Failed to load data — start it with start.bat (the old wordroot.html will not work)',
+'本地模型依真实素材写讲解（约 10~25 秒）…':'The local model is writing a deep dive from real materials (~10–25s)…',
+'本地模型思考中（约 2-4 秒）…':'The local model is thinking (~2–4s)…',
+'Kokoro 服务未启动，已回退内置语音':'Kokoro service is not running — using the built-in voice',
+'这批例句里没有可用于挖空的句子（句中找不到目标词形）。':
+  'None of these examples can be made into a cloze (the target form is not in the sentence).',
+'确定清空全部查词记录吗？':'Clear all lookup history?',
 };
 function T(s) { return EN_MODE() ? (UI_EN[s] !== undefined ? UI_EN[s] : s) : s; }
+
+/* 「首次见于」的纪年（firstAttest 生成的中文）→ 英文写法。词源学惯用 c. / 1590s / before 1200 */
+function ordEn(n) {
+  const i = +n % 100;
+  if (i >= 11 && i <= 13) return n + 'th';
+  return n + (['th', 'st', 'nd', 'rd'][+n % 10] || 'th');
+}
+function dateEn(s) {
+  s = String(s).trim();
+  let m;
+  if ((m = /^约\s*(\d+)\s*世纪(初|中叶|末)?$/.exec(s)))
+    return 'c. ' + ({ '初': 'early ', '中叶': 'mid-', '末': 'late ' }[m[2]] || '') + ordEn(m[1]) + ' c.';
+  if ((m = /^(\d+)\s*年代$/.exec(s))) return m[1] + 's';
+  if ((m = /^约\s*(\d+)\s*年$/.exec(s))) return 'c. ' + m[1];
+  if ((m = /^(\d+)\s*年之前$/.exec(s))) return 'before ' + m[1];
+  if ((m = /^(\d+)\s*年$/.exec(s))) return m[1];
+  return s;
+}
 
 /* DOM 翻译层：把界面上的中文文案整片换掉。覆盖文本节点 + placeholder/title 属性。
    动态拼出来的文案（如「共 1892 条」）用前缀/正则规则处理。 */
@@ -7986,6 +8037,25 @@ const UI_RULES = [
   [/^已评 (\d+) ／ 共 (\d+)$/, (m) => 'Graded ' + m[1] + ' of ' + m[2]],
   [/^共 (\d+) 个$/, (m) => m[1] + ' total'],
   [/^(\d+) \/ (\d+)$/, (m) => m[1] + ' / ' + m[2]],
+  // 「词源 · 首次见于 1590 年代」——纪年是运行时根据 Etymonline 解析出来的
+  [/^词源(\(Etymonline\))? · 首次见于 (.+)$/,
+    (m) => 'Etymology' + (m[1] ? ' (Etymonline)' : '') + ' · first attested ' + dateEn(m[2])],
+  // 词素块里的格林法则⚡角标 title（词素名和表亲词都是动态的）
+  [/^格林法则 (.+?)：这个词素与英语 (.+) 同源，是同一个印欧词根的两支后代$/,
+    (m) => "Grimm's Law " + m[1] + ': this morpheme is cognate with English ' + m[2] +
+      ' — two branches of the same PIE root'],
+  // 词根目录的筛选块：「全部 2201 / 前缀 152 / 词根 1680 / 后缀 369」
+  [/^(全部|前缀|词根|后缀) (\d+)$/, (m) => (UI_EN[m[1]] || m[1]) + ' ' + m[2]],
+  // 目录里的计数列「13 个变形」
+  [/^(\d+) 个变形$/, (m) => m[1] + ' variants'],
+  // 复习小结（两个文本节点，中间隔一个 <br>）
+  [/^复习 (\d+) 张(（其中补看 (\d+) 张）)?$/, (m) => 'Reviewed ' + m[1] + (m[2] ? ' (' + m[3] + ' revisited)' : '')],
+  [/^记住 (\d+) · 忘了 (\d+)$/, (m) => 'Remembered ' + m[1] + ' · Forgot ' + m[2]],
+  [/^下次到期：(.+)$/, (m) => 'Next due: ' + m[1]],
+  // 装载中查不到：「「word」暂时查不到，不代表它不存在…」
+  [/^「(.+)」暂时查不到，不代表它不存在；装载完成后会自动重查。$/,
+    (m) => '“' + m[1] + '” is not available yet — it will be looked up again once loading finishes.'],
+  [/^「(.+)」暂时查不到，不代表它不存在。$/, (m) => '“' + m[1] + '” may still exist — unavailable for now.'],
 ];
 function trText(t) {
   if (!EN_MODE() || !t) return t;
@@ -8107,7 +8177,7 @@ function loadFrac() {
 function setPill(txt) {
   const p = document.getElementById('load-pill');
   if (!p) return;
-  if (txt) { p.textContent = txt; p.style.display = 'block'; } else p.style.display = 'none';
+  if (txt) { p.textContent = T(txt); p.style.display = 'block'; } else p.style.display = 'none';
 }
 
 /* 只把正文取回来、不解析。分片要等主线程空了再 JSON.parse，所以取和解析必须分成两步。 */
@@ -8133,12 +8203,12 @@ async function loadData() {
     if (document.getElementById('rootsview').style.display === 'block') paintRoots();
   };
   try {
-    textEl.textContent = '正在加载考试词库…';
+    textEl.textContent = T('正在加载考试词库…');
     const enh = await fetchJSON('enhanced.json', setProg, 0, 15);
     Object.assign(ENHANCED, enh);
     LOAD_STATE.done = 1;
     buildIndex();   // 只遍历 ENHANCED（1.4 万条，几毫秒），同根词查询依赖它——不能等 ecdict
-    textEl.textContent = '考试词库完成，正在加载牛津9词库…';
+    textEl.textContent = T('考试词库完成，正在加载牛津9词库…');
     try {
       const oxf = await fetchJSON('oxford.json', setProg, 15, 35);
       Object.assign(OXFORD, oxf);
@@ -8146,20 +8216,20 @@ async function loadData() {
     LOAD_STATE.done = 2;
     QUERY_READY = true;
     revealUI();
-    textEl.textContent = '牛津词库完成，正在加载词源…';
+    textEl.textContent = T('牛津词库完成，正在加载词源…');
     setPill('词库装载中 ' + LOAD_STATE.done + '/' + LOAD_STATE.total);
     try {
       const etm = await fetchJSON('etym.json', setProg, 35, 48);
       Object.assign(ETYM, etm);
     } catch (e) { console.warn('etym.json 加载失败', e); }
     LOAD_STATE.done = 3; setPill('词库装载中 3/6');
-    textEl.textContent = '词源完成，正在加载近反义词…';
+    textEl.textContent = T('词源完成，正在加载近反义词…');
     try {
       const th = await fetchJSON('thes.json', setProg, 48, 53);
       Object.assign(THES, th);
     } catch (e) { console.warn('thes.json 加载失败', e); }
     LOAD_STATE.done = 4; setPill('词库装载中 4/6');
-    textEl.textContent = '近反义词完成，正在加载补充例句…';
+    textEl.textContent = T('近反义词完成，正在加载补充例句…');
     try {
       const exx = await fetchJSON('ex.json', setProg, 53, 62);
       Object.assign(EX, exx);
@@ -8185,7 +8255,7 @@ async function loadData() {
       if (sr.ok) Object.assign(STRESS, await sr.json());
     } catch (e) { console.warn('stress.json 加载失败', e); }
     LOAD_STATE.done = 5; setPill('词库装载中 ' + loadFrac());
-    textEl.textContent = '例句完成，正在加载全量词典…';
+    textEl.textContent = T('例句完成，正在加载全量词典…');
     // 全量词典优先走分片（dict/ 目录，由 split_ecdict.py 生成）：
     // 66MB 一次性 JSON.parse 会同步卡主线程约 1.4 秒，而那时遮罩早已撤掉、用户可能正在打字，
     // 这一下会砸在输入上。切成 40 来片逐个在空闲时解析，每次只卡几十毫秒，基本察觉不到。
@@ -8218,7 +8288,7 @@ async function loadData() {
     idle(() => { buildExamples(); EXAMPLES_READY = true; buildSuggest(); SUGGEST_READY = true; pruneJunkHistory(); });
   } catch (e) {
     console.error('数据加载失败', e);
-    textEl.textContent = '数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）';
+    textEl.textContent = T('数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）');
   }
 }
 
@@ -8658,7 +8728,7 @@ async function startExplain(word, mat, box) {
   if (!box) return;
   const cp = document.querySelector('.explain-copy');
   if (cp) cp.hidden = true;
-  box.textContent = '本地模型依真实素材写讲解（约 10~25 秒）…';
+  box.textContent = T('本地模型依真实素材写讲解（约 10~25 秒）…');
   try {
     const payload = Object.assign({ word: word, lang: EN_MODE() ? 'en' : 'zh' }, mat || {});
     const resp = await fetch('/explain', {
@@ -9469,6 +9539,7 @@ function renderFavs() {
   const f = loadFavs();
   if (!f.length) {
     el.innerHTML = '<div class="card"><div class="miss">还没有收藏的单词。查询一个词，点右上角「☆ 收藏」即可加入。</div></div>';
+    translateDOM(el);   // 空态也要过翻译层：启动时就渲染，否则英文模式下一直挂中文
     return;
   }
   let h = '<div class="h-head">收藏（' + f.length + '）';
@@ -9883,7 +9954,7 @@ function searchExamples(q) {
 
 // 按词表搜例句：从词根目录 / 词卡跳过来，看这批词在真实语境里怎么用
 function searchExamplesByWords(words, title) {
-  if (!EXAMPLES_READY) { alert('例句库还在建立索引，稍等几秒再试。'); return; }
+  if (!EXAMPLES_READY) { alert(T('例句库还在建立索引，稍等几秒再试。')); return; }
   const set = new Set();
   (words || []).forEach(w => { const k = String(w).toLowerCase(); if (k) set.add(k); });
   const hits = [];
@@ -10085,7 +10156,7 @@ function saveHistory(r) {
 // 一键导出当前记录（另存一份，用于备份或换电脑迁移）
 async function exportHistory() {
   const h = loadHistory();
-  if (!h.length) { alert('暂无记录可导出'); return; }
+  if (!h.length) { alert(T('暂无记录可导出')); return; }
   const stamp = new Date().toISOString().slice(0, 10);
   const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), items: h }, null, 2)],
     { type: 'application/json' });
@@ -10186,6 +10257,7 @@ function finishReview() {
     '<div class="rev-date">下次到期：' + nextTxt + '</div>' +
     '<div style="margin-top:18px"><button class="rev-btn" data-rev="all">🔀 再复习一轮（全部）</button></div></div>';
   el.classList.add('show');
+  translateDOM(el);    // 小结也是 innerHTML 直接塞的，过一遍翻译层（否则英文模式下仍是中文）
   s.finished = true;   // 保留对象，让「再复习一轮/返回」按钮还能被复习分支接住
 }
 
@@ -10218,7 +10290,7 @@ function startExamplePractice(only) {
     seen.add(it.k);
     deck.push(it);
   }
-  if (!deck.length) { alert('这批例句里没有可用于挖空的句子（句中找不到目标词形）。'); return; }
+  if (!deck.length) { alert(T('这批例句里没有可用于挖空的句子（句中找不到目标词形）。')); return; }
   // 先把它们收进历史，等于"加入复习队列"
   const h = loadHistory();
   const incoming = new Map(deck.map(it => [it.k, it]));
@@ -10380,7 +10452,7 @@ document.getElementById('history').addEventListener('click', (e) => {
   }
   if (e.target.id === 'h-shuffle') { startReview(); return; }
   if (e.target.id === 'h-export') { exportHistory(); return; }
-  if (e.target.id === 'h-clear' && confirm('确定清空全部查词记录吗？')) {
+  if (e.target.id === 'h-clear' && confirm(T('确定清空全部查词记录吗？'))) {
     HISTORY = [];
     HIST_CLEARED = Date.now();   // 打一个水位：此后除了本页签新查的词，早于此刻的条目一律作废
     try { localStorage.removeItem(HIST_KEY); } catch (e2) {}
@@ -10507,7 +10579,7 @@ function fillVoiceOptions() {
 
 function updateTtsHint() {
   ttsHint.textContent = (ttsEngine === 'kokoro' && !kokoroOk)
-    ? 'Kokoro 服务未启动，已回退内置语音' : '';
+    ? T('Kokoro 服务未启动，已回退内置语音') : '';
 }
 
 // 工具条交互
@@ -10689,6 +10761,7 @@ function rerenderAll() {
   translateDOM(document.body);
   retranslateSelects();
   applyTheme();   // 主题按钮文案也随语言走
+  updateTtsHint();   // 这句是 T() 在生成时定死的，切语言得重生成一次
 }
 
 // Tab 切换
@@ -10797,7 +10870,7 @@ document.addEventListener('click', async (e) => {
   btn.disabled = true;
   btn.textContent = '💡 生成中…';
   box.hidden = false;
-  box.textContent = '本地模型思考中（约 2-4 秒）…';
+  box.textContent = T('本地模型思考中（约 2-4 秒）…');
   try {
     const resp = await fetch('/memo', {
       method: 'POST',
