@@ -8293,6 +8293,22 @@ async function loadData() {
     textEl.textContent = T('正在加载考试词库…');
     const enh = await fetchJSON('enhanced.json', setProg, 0, 15);
     Object.assign(ENHANCED, enh);
+    /* 上游数据里 enhanced 的几个字段带 HTML 实体（etymology 1500 条、meaning 63 条，例如
+       &quot;plow&quot; 开头这种），显示路径各自 escapeHtml 之后会把它原样印出来——用户报 plow
+       的词源里出现了 &quot;。这里载入时统一解一次，卡片 / 助记 / 深度讲解 / 摘要这些消费方全都受益。
+       （其它数据层扫过：ecdict / etym / oxford / ex 都没有实体，是干净的。） */
+    for (const k in ENHANCED) {
+      const e0 = ENHANCED[k];
+      if (!e0) continue;
+      for (const f of ['etymology', 'meaning', 'breakdown']) {
+        if (typeof e0[f] === 'string' && e0[f].indexOf('&') >= 0) e0[f] = decodeEntities(e0[f]);
+      }
+      if (Array.isArray(e0.examples)) {
+        e0.examples = e0.examples.map(x => (Array.isArray(x)
+          ? x.map(y => (typeof y === 'string' && y.indexOf('&') >= 0 ? decodeEntities(y) : y))
+          : (typeof x === 'string' && x.indexOf('&') >= 0 ? decodeEntities(x) : x)));
+      }
+    }
     LOAD_STATE.done = 1;
     buildIndex();   // 只遍历 ENHANCED（1.4 万条，几毫秒），同根词查询依赖它——不能等 ecdict
     textEl.textContent = T('考试词库完成，正在加载牛津9词库…');
