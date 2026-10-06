@@ -450,6 +450,18 @@
   .meaning .label::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); opacity: .75; flex: none; }
   /* 词源段落里的源词（"gore" 这类带引号的）高亮 */
   .etym-q { color: var(--accent); }
+  /* 长文本折叠：默认露出两行多一点，底部渐隐；展开后全显示 */
+  .fold-body {
+    max-height: 5.4em; overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent);
+    mask-image: linear-gradient(180deg, #000 62%, transparent);
+  }
+  .fold-wrap.open .fold-body { max-height: none; -webkit-mask-image: none; mask-image: none; }
+  .fold-btn {
+    margin-top: 7px; font-size: 12px; padding: 3px 11px; border-radius: 999px; cursor: pointer;
+    color: var(--sub); background: var(--glass-card); border: 1px solid var(--glass-border);
+  }
+  .fold-btn:hover { color: var(--accent); border-color: var(--accent); }
   .eq { color: var(--accent); font-weight: 600; }
   .cognates { margin-top: 14px; }
   .rel-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 14px; }
@@ -8878,6 +8890,14 @@ async function startExplain(word, mat, box) {
 
 /* 词源段落排版（2026-10-05）：Etymonline 原文是一整段，把带引号的源词挑出来上色，
    读的时候能一眼看到 "gore" / "gor" 这类构词来源。其余保持原样（不做断句，免得切坏缩写）。 */
+/* 参考型长文本折叠（2026-10-06，用户报 waves：中文模式下英文释义 853 字、词源 637 字，把卡片塞满）。
+   超过阈值只露两行，点「展开全文」看全。只用在【英文释义】与【词源】这两类参考内容上——
+   释义、例句、词根拆解保持完整显示，不折。 */
+function foldableHTML(inner, chars) {
+  if (!(chars > 220)) return inner;
+  return '<div class="fold-wrap"><div class="fold-body">' + inner + '</div>' +
+    '<button class="fold-btn" type="button">展开全文</button></div>';
+}
 function etymTextHTML(s) {
   return escapeHtml(String(s == null ? '' : s))
     .replace(/"([^"]{1,40})"/g, '<span class="etym-q">"$1"</span>')          // 英文引号（Etymonline 原文）
@@ -8981,9 +9001,9 @@ function cardHTMLRaw(r) {
       html += `</div></div>`;
     }
     if (EN_MODE()) {
-      if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${etymTextHTML(ETYM[r.word])}</div>`;
+      if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${foldableHTML(etymTextHTML(ETYM[r.word]), String(ETYM[r.word]).length)}</div>`;
     } else if (e.etymology) {
-      html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${etymTextHTML(e.etymology)}</div>`;
+      html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源${attestLabel(r.word)}</div>${foldableHTML(etymTextHTML(e.etymology), String(e.etymology).length)}</div>`;
     }
     html += examplesBlock(r.word, e.examples);
     html += (lastRel = relBlock(r.word, findCognates(r.word)));
@@ -9033,7 +9053,7 @@ function cardHTMLRaw(r) {
         `<button class="tts-btn ex-tts" data-text="${escapeHtml(o.def_en).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div></div>`;
     }
     html += morphBlockHTML(hw, decompose(hw, 0) || partialDecompose(hw));
-    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${etymTextHTML(ETYM[r.word])}</div></div>`;
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${foldableHTML(etymTextHTML(ETYM[r.word]), String(ETYM[r.word]).length)}</div></div>`;
     html += examplesBlock(hw, o.examples);
     html += (lastRel = relBlock(hw, findCognates(hw)));
     html += `</div>`;
@@ -9058,17 +9078,16 @@ function cardHTMLRaw(r) {
     if (_t) html += `<div class="meaning"><div class="label">释义</div>${escapeHtml(_t).replace(/\n/g, '<br>')}</div>`;
     else if (d.t && EN_MODE()) html += `<div class="meaning"><div class="label">释义</div>${nl(d.t).replace(/\n/g, '<br>')}</div>`;
     if (d.d) {
-      html += `<div class="meaning"><div class="label">英文释义</div>`;
-      nl(d.d).split('\n').map(s => s.trim()).filter(Boolean).forEach(ln => {
-        html += `<div class="ex-en def-line"><span class="ex-en-txt">${ln}</span>` +
-          `<button class="tts-btn ex-tts" data-text="${escapeHtml(ln).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div>`;
-      });
-      html += `</div>`;
+      const dls = nl(d.d).split('\n').map(s => s.trim()).filter(Boolean);
+      const dline = ln => `<div class="ex-en def-line"><span class="ex-en-txt">${ln}</span>` +
+        `<button class="tts-btn ex-tts" data-text="${escapeHtml(ln).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div>`;
+      html += `<div class="meaning"><div class="label">英文释义</div>`
+        + foldableHTML(dls.map(dline).join(''), dls.join(' ').length) + `</div>`;
     }
     // 全量词：先拆解（完整优先，失败退回部分拆解，如 binary→bi-+??nary），
     // 再据此生成分解区块与词源演变链（渲染逻辑与 enhanced 兜底共用 morphBlockHTML）
     html += morphBlockHTML(r.word, decompose(r.word, 0) || partialDecompose(r.word));
-    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${etymTextHTML(ETYM[r.word])}</div></div>`;
+    if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${foldableHTML(etymTextHTML(ETYM[r.word]), String(ETYM[r.word]).length)}</div></div>`;
     html += (lastRel = relBlock(r.word, findCognates(r.word)));
     html += examplesBlock(r.word, null);
     html += `</div>`;
@@ -11045,6 +11064,16 @@ document.addEventListener('click', (e) => {
   let mat = {};
   try { mat = JSON.parse(btn.dataset.mat || '{}'); } catch (err) { mat = {}; }
   startExplain(btn.dataset.explain, mat, document.getElementById('panel-explain'));
+});
+
+/* 长文本折叠的展开 / 收起 */
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.fold-btn');
+  if (!b) return;
+  const w = b.closest('.fold-wrap');
+  if (!w) return;
+  const open = w.classList.toggle('open');
+  b.textContent = open ? '收起' : '展开全文';
 });
 
 /* 📋 复制深度讲解的 markdown 原文（取缓存里的原始文本，不是渲染后的 DOM） */
