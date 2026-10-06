@@ -2253,6 +2253,15 @@ const ROOTS = {
   "gory": ["血淋淋的、残暴的", ["gory", "gorily"], {"lang": "古英语", "word": "gor", "note": "gore + -y"}],
   "gorier": ["更血腥的", ["gorier"], {"lang": "古英语", "word": "gor", "note": "gory 的比较级（y→i）"}],
   "goriest": ["最血腥的", ["goriest"], {"lang": "古英语", "word": "gor", "note": "gory 的最高级（y→i）"}],
+  /* undulate 词族（2026-10-06 用户报词）：原来 undulate→`und|??ulate`、undulant/undulatory 同样断在
+     长形上、undulation 被切成 `und-ula-tion`（把 ula 当后缀）。真词源：拉丁语 unda（波浪）的指小形
+     **undula** → 补 undul（波浪状、起伏）。redundant 原来读 `red+und-ant`（red=红 是误拆），
+     实际是 re+undare（溢出）→ 补 redund。
+     顺带试过把「去 e 还原」扩到 -ly（想让 unduly←undue+ly）：实测 9807 个 -ly 词里
+     probably→pro|babe-ly、chilly→chile-ly、sharply→sharpe-ly 全错，按测量否决，只留 unduly 拦截。
+     实测含 und/redund 的 9807 词：由无到有 11、丢失 0、改写 7（全是改善）。 */
+  "undul": ["波浪状、起伏", ["undulate", "undulation", "undulant", "undulatory"], {"lang": "拉丁语", "word": "undula", "note": "unda（波浪）的指小形"}],
+  "redund": ["溢出、多余", ["redundant", "redundancy", "redundantly"], {"lang": "拉丁语", "word": "redundare"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -6647,6 +6656,8 @@ const ROOT_BLOCK = {
   'argyrophilia': ['gyro'], 'basophilia': ['base'], 'careinophilia': ['ino'],
   'gatophilia': ['gate'], 'hemoglobinophilia': ['glob'], 'opsonophilia': ['son'],
   'pyroninophilia': ['nine'], 'dermatophiliasis': ['philia'],
+  'unduly': ['undul'],   // unduly = undue + ly，跟 unda（波浪）无关
+
   /* 低匹配误拆·第三批（2026-10-03，自动搜索）：对每个词试拦掉读法里的各个词素，取"新读法与真实词源链匹配率最高"的那组（54 个词，其中 30+ 个达到完全匹配）。
      典型: dedication 的 cat、consternation 的 consternat、profession 的 profes、secession 的 sec、
      interrogation 的 in、infinite 的 infinit 都是"把整段词干当词根"的假词根，拦掉才露出真实结构。 */
@@ -7918,6 +7929,7 @@ const MORPH_EN_EXTRA = {
   "meridi": "noon, midday (Latin meridies)", "meridion": "of midday, southern (Latin meridionalis)",
   "gore": "blood, clotted blood (Old English gor)", "gory": "bloody, blood-soaked (gore + -y)",
   "gorier": "bloodier", "goriest": "bloodiest",
+  "undul": "wavy, undulating (Latin undula, little wave)", "redund": "overflow, be in excess (Latin redundare)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
