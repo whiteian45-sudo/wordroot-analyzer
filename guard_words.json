@@ -1008,6 +1008,57 @@
     },
     "abundant": {
       "d": "ab|und-ant"
+    },
+    "wavy": {
+      "d": "wav-y"
+    },
+    "wavier": {
+      "d": "wavi-er"
+    },
+    "waviest": {
+      "d": "wavi-est"
+    },
+    "wavily": {
+      "d": "wavi-ly"
+    },
+    "waviness": {
+      "d": "wavi-ness"
+    },
+    "wave": {
+      "d": "wave"
+    },
+    "waves": {
+      "d": "wave-s"
+    },
+    "waved": {
+      "d": "wave-ed"
+    },
+    "waving": {
+      "d": "wave-ing"
+    },
+    "waver": {
+      "d": "wave-er"
+    },
+    "wavered": {
+      "d": "wave-er-ed"
+    },
+    "unwavering": {
+      "d": "un|wave-er-ing"
+    },
+    "microwave": {
+      "d": "micro|wave"
+    },
+    "wavelength": {
+      "d": "wave+length"
+    },
+    "waveform": {
+      "d": "wave+form"
+    },
+    "shortwave": {
+      "d": "short+wave"
+    },
+    "brainwave": {
+      "d": "brain+wave"
     }
   },
   "partial词": {

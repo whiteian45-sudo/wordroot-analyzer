@@ -2262,6 +2262,18 @@ const ROOTS = {
      实测含 und/redund 的 9807 词：由无到有 11、丢失 0、改写 7（全是改善）。 */
   "undul": ["波浪状、起伏", ["undulate", "undulation", "undulant", "undulatory"], {"lang": "拉丁语", "word": "undula", "note": "unda（波浪）的指小形"}],
   "redund": ["溢出、多余", ["redundant", "redundancy", "redundantly"], {"lang": "拉丁语", "word": "redundare"}],
+  /* wavy 词族（2026-10-06 用户报词）：wavy 无拆解、wavier/waviest/wavily/waviness 全是 `-er|??wavi`；
+     顺带发现 **wave 本身也没拆解**（它只在变形语境里被认：waved→wave-ed 靠 BASEWORDS_BATCH 的闸门），
+     microwave→`micro||??wave`、wavelength/waveform 也无拆解。
+     古英语 wafian（波浪、挥手）→ 按「基础形 + 词干形」补三个：
+       wave  波浪、挥手（wave/waves/waved/waver/microwave/wavelength 都用它）
+       wav   wave 的词干（wavy = wav + y；-y 那条去 e 还原实测不可用，见 undulate 那条注释）
+       wavi  wavy 的比较级词干（wavier/waviest/wavily/waviness，比照项目里已有的 happi/gori）
+     wav 只有 3 字符，按惯例该谨慎——实测含 wav 的 100 词**全是 wave 家族**（由无到有 54、丢失 0），
+     没有一处误伤，故放行。另给 wavered 加拦截（否则 wave+red，red=红 是误拆）。 */
+  "wave": ["波浪、挥手", ["wave", "waves", "waved", "waving", "waver"], {"lang": "古英语", "word": "wafian"}],
+  "wav": ["波浪", ["wavy", "wavily", "unwavering"], {"lang": "古英语", "word": "wafian", "note": "wave 的词干形式"}],
+  "wavi": ["波浪状的", ["wavier", "waviest", "waviness"], {"lang": "古英语", "word": "wafian", "note": "wavy 的比较级/最高级词干"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -6657,6 +6669,8 @@ const ROOT_BLOCK = {
   'gatophilia': ['gate'], 'hemoglobinophilia': ['glob'], 'opsonophilia': ['son'],
   'pyroninophilia': ['nine'], 'dermatophiliasis': ['philia'],
   'unduly': ['undul'],   // unduly = undue + ly，跟 unda（波浪）无关
+  'wavered': ['red'],    // waver+ed，别被 wave+red（red=红）抢走
+
 
   /* 低匹配误拆·第三批（2026-10-03，自动搜索）：对每个词试拦掉读法里的各个词素，取"新读法与真实词源链匹配率最高"的那组（54 个词，其中 30+ 个达到完全匹配）。
      典型: dedication 的 cat、consternation 的 consternat、profession 的 profes、secession 的 sec、
@@ -7930,6 +7944,8 @@ const MORPH_EN_EXTRA = {
   "gore": "blood, clotted blood (Old English gor)", "gory": "bloody, blood-soaked (gore + -y)",
   "gorier": "bloodier", "goriest": "bloodiest",
   "undul": "wavy, undulating (Latin undula, little wave)", "redund": "overflow, be in excess (Latin redundare)",
+  "wave": "wave, wave one's hand (Old English wafian)", "wav": "wave (stem form)",
+  "wavi": "wavy (comparative stem)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
