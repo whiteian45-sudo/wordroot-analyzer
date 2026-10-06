@@ -2274,6 +2274,11 @@ const ROOTS = {
   "wave": ["波浪、挥手", ["wave", "waves", "waved", "waving", "waver"], {"lang": "古英语", "word": "wafian"}],
   "wav": ["波浪", ["wavy", "wavily", "unwavering"], {"lang": "古英语", "word": "wafian", "note": "wave 的词干形式"}],
   "wavi": ["波浪状的", ["wavier", "waviest", "waviness"], {"lang": "古英语", "word": "wafian", "note": "wavy 的比较级/最高级词干"}],
+  /* sway（2026-10-06 用户报词）：sway 与 sways 都无拆解，swayed/swaying/swayer/swayable 是
+     `-ed|??sway` 这类部分拆解。词源古诺斯语 **sveigja**（使弯曲、摇摆）→ 补整词根。
+     实测含 sway 的 25 词：由无到有 14、丢失 0、改写 0（sway / sways / swayed / swaying /
+     swayback→sway+back / unswayed→un|sway-ed / oversway / sidesway…）。 */
+  "sway": ["摇摆、支配", ["sway", "sways", "swayed", "swaying"], {"lang": "古诺斯语", "word": "sveigja"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -7946,6 +7951,7 @@ const MORPH_EN_EXTRA = {
   "undul": "wavy, undulating (Latin undula, little wave)", "redund": "overflow, be in excess (Latin redundare)",
   "wave": "wave, wave one's hand (Old English wafian)", "wav": "wave (stem form)",
   "wavi": "wavy (comparative stem)",
+  "sway": "sway, swing, influence (Old Norse sveigja)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）

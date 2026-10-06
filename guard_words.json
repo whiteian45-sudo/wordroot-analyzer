@@ -1059,6 +1059,48 @@
     },
     "brainwave": {
       "d": "brain+wave"
+    },
+    "sway": {
+      "d": "sway"
+    },
+    "sways": {
+      "d": "sway-s"
+    },
+    "swayed": {
+      "d": "sway-ed"
+    },
+    "swaying": {
+      "d": "sway-ing"
+    },
+    "swayer": {
+      "d": "sway-er"
+    },
+    "swayback": {
+      "d": "sway+back"
+    },
+    "swaybacked": {
+      "d": "sway+back-ed"
+    },
+    "unswayed": {
+      "d": "un|sway-ed"
+    },
+    "oversway": {
+      "d": "over|sway"
+    },
+    "sidesway": {
+      "d": "sid+sway"
+    },
+    "swayful": {
+      "d": "sway-ful"
+    },
+    "swayless": {
+      "d": "sway-less"
+    },
+    "unswayable": {
+      "d": "un|sway-able"
+    },
+    "swayable": {
+      "d": "sway-able"
     }
   },
   "partial词": {
