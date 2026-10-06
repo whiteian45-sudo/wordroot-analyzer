@@ -2279,6 +2279,14 @@ const ROOTS = {
      实测含 sway 的 25 词：由无到有 14、丢失 0、改写 0（sway / sways / swayed / swaying /
      swayback→sway+back / unswayed→un|sway-ed / oversway / sidesway…）。 */
   "sway": ["摇摆、支配", ["sway", "sways", "swayed", "swaying"], {"lang": "古诺斯语", "word": "sveigja"}],
+  /* roll 词族（2026-10-06 用户报 rolling）：rolling→`-ing|??roll`、roll/rolls 无拆解、
+     rolled/roller 同样断在词干上；payroll/enroll 也无拆解，enrolment（英式单 l）走 `-ment|??enrol`。
+     词源：拉丁语 rota（轮子）的指小形 rotula → 古法语 rolle → 补 roll；英式拼写 enrol（en+roll）另补。
+     实测含 roll/enrol 的 281 词：由无到有 95、丢失 0、改写 6；**troll / scroll / stroll 未被抢**
+     （它们仍无拆解，说明"含 roll 子串"不等于会被误拆）。6 处改写里 3 处是改善（enrolled→en|roll-ed 等），
+     另 3 处（enrolling 被 ling 当后缀、disenrolled 被 sen 切）加了拦截。 */
+  "roll": ["滚动、卷、名单", ["roll", "rolls", "rolled", "rolling", "roller"], {"lang": "拉丁语", "word": "rotula", "note": "rota（轮子）的指小形"}],
+  "enrol": ["登记、注册（英式拼写）", ["enrol", "enrolment"], {"lang": "法语", "word": "enroller"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -6675,6 +6683,9 @@ const ROOT_BLOCK = {
   'pyroninophilia': ['nine'], 'dermatophiliasis': ['philia'],
   'unduly': ['undul'],   // unduly = undue + ly，跟 unda（波浪）无关
   'wavered': ['red'],    // waver+ed，别被 wave+red（red=红）抢走
+  'enrolling': ['ling'], 'disenrolling': ['ling'],   // enroll+ing，别把 -ling（小…）当后缀
+  'disenrolled': ['sen'],                            // dis+enroll+ed，别切成 di|sen+roll
+
 
 
   /* 低匹配误拆·第三批（2026-10-03，自动搜索）：对每个词试拦掉读法里的各个词素，取"新读法与真实词源链匹配率最高"的那组（54 个词，其中 30+ 个达到完全匹配）。
@@ -7952,6 +7963,7 @@ const MORPH_EN_EXTRA = {
   "wave": "wave, wave one's hand (Old English wafian)", "wav": "wave (stem form)",
   "wavi": "wavy (comparative stem)",
   "sway": "sway, swing, influence (Old Norse sveigja)",
+  "roll": "roll, scroll, list (Latin rotula, little wheel)", "enrol": "enrol, register (British spelling)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）

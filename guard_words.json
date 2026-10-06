@@ -1101,6 +1101,54 @@
     },
     "swayable": {
       "d": "sway-able"
+    },
+    "roll": {
+      "d": "roll"
+    },
+    "rolls": {
+      "d": "roll-s"
+    },
+    "rolled": {
+      "d": "roll-ed"
+    },
+    "rolling": {
+      "d": "roll-ing"
+    },
+    "roller": {
+      "d": "roll-er"
+    },
+    "enroll": {
+      "d": "en|roll"
+    },
+    "enrolled": {
+      "d": "en|roll-ed"
+    },
+    "enrolling": {
+      "d": "en|roll-ing"
+    },
+    "enrolment": {
+      "d": "enrol-ment"
+    },
+    "enrol": {
+      "d": "enrol"
+    },
+    "payroll": {
+      "d": "pay+roll"
+    },
+    "bankroll": {
+      "d": "bank+roll"
+    },
+    "bedroll": {
+      "d": "bed+roll"
+    },
+    "drumroll": {
+      "d": "drum+roll"
+    },
+    "logroll": {
+      "d": "log+roll"
+    },
+    "antiroll": {
+      "d": "anti|roll"
     }
   },
   "partial词": {
