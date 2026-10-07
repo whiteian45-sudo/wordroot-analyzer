@@ -971,7 +971,7 @@
 </div>
 
 <div class="search">
-  <input id="input" type="text" placeholder="输入单词，如 transport" autofocus spellcheck="false">
+  <input id="input" type="text" placeholder="输入单词，如 transport，或直接 Ctrl+V" autofocus spellcheck="false">
   <button id="btn">分析</button>
 </div>
 <div id="suggest"></div>
@@ -11176,14 +11176,44 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+/* 剪贴板 / 拖拽文本的清洗（2026-10-07）：Ctrl+V 与拖拽共用一套。
+   去掉首尾空白与换行、把连续空白压成一个空格（双击复制的词常带换行）；
+   整段只有一个词时再去掉两端标点（"wave." / "wave," → wave）。 */
+function cleanInputText(s) {
+  let t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  if (t.length > 1000) t = t.slice(0, 1000);
+  if (!/\s/.test(t)) {
+    t = t.replace(/^[^0-9A-Za-z\u00C0-\u024F]+/, '').replace(/[^0-9A-Za-z\u00C0-\u024F]+$/, '');
+  }
+  return t;
+}
+/* 填进搜索框并立即查询（拖拽与粘贴共用；返回是否真的查了） */
+function inputThenSearch(text) {
+  const w = cleanInputText(text);
+  if (!w) return false;
+  input.value = w;
+  hideSuggest();
+  switchTab('query');   // 在收藏/词根/词频页签时也把结果露出来
+  search();
+  return true;
+}
+/* Ctrl+V 直接查：页面任意位置粘贴都能查，不用先点搜索框。
+   但**别人家的输入框**（词根目录搜索、例句搜索）里的粘贴不抢——那是正常编辑。 */
+document.addEventListener('paste', (e) => {
+  const el = e.target;
+  if (el && el !== input && isTyping(el)) return;   // 别的输入框里的粘贴不抢
+  const cb = e.clipboardData || window.clipboardData;
+  const raw = cb && cb.getData ? cb.getData('text') : '';
+  if (!cleanInputText(raw)) return;                 // 空剪贴板：什么都不做
+  e.preventDefault();                               // 先拦默认粘贴，再做后面这些（免得中途出错留下半截状态）
+  inputThenSearch(raw);
+});
+
 input.addEventListener('drop', (e) => {
   e.preventDefault();
   input.classList.remove('drag-over');
-  const txt = (e.dataTransfer.getData('text') || '').trim();
-  if (txt) {
-    input.value = txt;
-    search();   // 拖入即分析，无需再点"分析"
-  }
+  inputThenSearch(e.dataTransfer.getData('text') || '');   // 拖入即分析，无需再点"分析"
 });
 
 </script>
