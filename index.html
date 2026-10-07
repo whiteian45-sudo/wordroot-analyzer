@@ -661,6 +661,7 @@
   .tts-eng:hover { color: var(--accent); border-color: var(--accent); }
   .tts-eng.active { color: #fff; border-color: rgba(110,168,255,0.5); background: linear-gradient(135deg, rgba(92,141,255,0.4), rgba(122,92,255,0.4)); }
   .tts-bar select option { background: var(--option-bg); }
+  .tts-bar select[hidden] { display: none; }
   /* 提示文字（"Kokoro 服务未就绪"这类）可能很长：单独占一行，别把控件挤走 */
   .tts-hint { flex-basis: 100%; font-size: 11px; opacity: .65; margin-top: -2px; }
   .tts-hint:empty { display: none; }
@@ -979,8 +980,9 @@
 <div class="tts-bar" id="tts-bar">
   <div class="bar-group">
   <span class="tts-label">发音</span>
-  <button class="tts-eng" data-eng="builtin" title="浏览器自带，即点即播">内置</button>
-  <button class="tts-eng active" data-eng="kokoro" title="Kokoro 高音质，需 TTS 服务在运行">Kokoro</button>
+  <select id="tts-eng-sel" title="发音引擎">
+    <option value="builtin">内置</option><option value="kokoro">Kokoro</option>
+  </select>
   <select id="tts-voice" title="声音">
     <option value="af_heart">美音·女·Heart</option><option value="af_bella">美音·女·Bella</option><option value="af_nicole">美音·女·Nicole</option><option value="af_aoede">美音·女·Aoede</option><option value="af_kore">美音·女·Kore</option><option value="am_adam">美音·男·Adam</option><option value="am_michael">美音·男·Michael</option><option value="bf_emma">英音·女·Emma</option><option value="bf_isabella">英音·女·Isabella</option><option value="bm_george">英音·男·George</option>
   </select>
@@ -8017,7 +8019,7 @@ const UI_EN = {
 '前缀':'prefix','词根':'root','后缀':'suffix','未识别':'unrecognised',
 '近义':'syn','反义':'ant','同源':'cognate','同根':'root','同缀':'suffix',
 '发音':'Audio','内置':'Built-in','语速':'Speed','朗读整段':'Read whole passage','译整段':'Translate passage',
-    '正文字号':'Body font size','正文行距':'Body line height',
+    '正文字号':'Body font size','正文行距':'Body line height','发音引擎':'Pronunciation engine',
     'A·小':'A small','A·中':'A medium','A·大':'A large',
     '≡·紧凑':'≡ tight','≡·标准':'≡ normal','≡·宽松':'≡ loose',
 '慢':'Slow','正常':'Normal','稍快':'Faster','快':'Fast','详细':'Details','✕ 关闭':'✕ Close',
@@ -10716,17 +10718,24 @@ function updateTtsHint() {
     ? T('Kokoro 服务未启动，已回退内置语音') : '';
 }
 
-// 工具条交互
-document.querySelectorAll('.tts-eng').forEach(b => {
-  b.classList.toggle('active', b.dataset.eng === ttsEngine);
-  b.addEventListener('click', () => {
-    ttsEngine = b.dataset.eng;
+// 工具条交互（2026-10-07 用户提议）：发音引擎改成一个下拉——原来是两个按钮 + 音色 + 语速
+// 一路铺开，顶栏太长。选 Kokoro 时才显示「语速」（内置还有空格/Shift 慢读快捷键，不占这块地方）；
+// 音色下拉两种模式都要留着：Kokoro 是音色，内置是美音/英音（内容按引擎切换）。
+const ttsEngSel = document.getElementById('tts-eng-sel');
+function applyTtsEngine() {
+  if (ttsEngSel) ttsEngSel.value = ttsEngine;
+  ttsSpeedSel.hidden = (ttsEngine !== 'kokoro');
+  fillVoiceOptions();
+  updateTtsHint();
+}
+if (ttsEngSel) {
+  ttsEngSel.addEventListener('change', () => {
+    ttsEngine = ttsEngSel.value;
     localStorage.setItem('wr_tts_eng', ttsEngine);
-    document.querySelectorAll('.tts-eng').forEach(x => x.classList.toggle('active', x === b));
-    fillVoiceOptions();
-    updateTtsHint();
+    applyTtsEngine();
   });
-});
+}
+applyTtsEngine();
 ttsVoiceSel.addEventListener('change', () => {
   if (ttsEngine === 'kokoro') {
     ttsKokoroVoice = ttsVoiceSel.value;
