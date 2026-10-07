@@ -597,7 +597,18 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 20px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0;
   }
-  .panel-title { font-weight: 700; font-size: 16px; }
+  /* 标题可长（📖 gory · 深度讲解）：占满中间、单行省略，别把两边的按钮挤走 */
+  .panel-title {
+    flex: 1; min-width: 0; text-align: center;
+    font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .panel-back {
+    border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
+    border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; flex-shrink: 0;
+    transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast);
+  }
+  .panel-back:hover { color: var(--accent); border-color: var(--accent); }
+  .panel-back[hidden] { display: none; }
   .panel-close {
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
     border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer;
@@ -1018,6 +1029,7 @@
 <div class="panel-mask" id="panel-mask"></div>
 <div class="panel" id="panel">
   <div class="panel-head">
+    <button class="panel-back" id="panel-back" hidden title="返回上一个视图（Esc）">← 返回</button>
     <span class="panel-title" id="panel-title">详细</span>
     <button class="panel-close" id="panel-close">✕ 关闭</button>
   </div>
@@ -8035,7 +8047,7 @@ const UI_EN = {
 '退出':'Exit','上一个':'Prev','下一个':'Next','重洗':'Shuffle','显示释义':'Show meaning',
 '显示答案':'Show answer','忘了':'Forgot','记住了':'Remembered','查看完整卡片':'Open full card',
 '查这个词的卡片':'Open this word','再复习一轮（全部）':'Another round (all)','完成 ✓':'Done ✓',
-'全部':'All','返回':'Back','本轮完成':'Round complete',
+'全部':'All','返回':'Back','← 返回':'← Back','本轮完成':'Round complete',
 '先回忆这个词的意思，再点下方显示释义':'Recall the meaning, then reveal it below',
 '句中缺的是哪个词？想好了再点下方揭晓':'Which word is missing? Reveal it below',
 '搜词素或含义，如 port / 携带':'Search a morpheme or meaning, e.g. port / carry',
@@ -8835,6 +8847,11 @@ function explainButtonHTML(r) {
 /* 把讲解送进右侧抽屉：标题、复制、重新生成、流式输出都在这里。 */
 function openExplainPanel(word, mat) {
   const body = document.getElementById('panel-body');
+  // 记住进讲解前那一屏：面板已开 → 存（「↻ 重新生成」不该把它覆盖掉）；面板没开 → 没有可返回的
+  const panelOpen = document.getElementById('panel').classList.contains('open');
+  if (!panelOpen) panelBack = null;
+  else if (!panelBack) panelBack = { title: document.getElementById('panel-title').textContent, html: body.innerHTML };
+  updatePanelBack();
   const lang = EN_MODE() ? 'en' : 'zh';
   const cached = loadExplains()[explainCacheKey(word, lang)];
   const q = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -9528,6 +9545,8 @@ let lastPanelWord = '';   // 面板当前显示的词，装载完成后要拿它
 function openPanel(word) {
   lastPanelWord = word;
   pushNav(word, 'panel');
+  panelBack = null;            // 新的一屏词条详情：返回栈清空
+  updatePanelBack();
   const r = analyze(word);
   const body = document.getElementById('panel-body');
   if (!r.found && !DATA_READY) {
@@ -9543,7 +9562,27 @@ function openPanel(word) {
   translateDOM(body);   // 面板是独立渲染路径，不走 render()——英文模式得自己补翻译层
   slidePanel(true);
 }
+/* 面板返回栈（2026-10-07 用户反馈）：点「深度讲解」会把侧栏里这个词的详细顶掉，而 Esc 直接关面板
+   → 详情就找不回来了。所以进讲解前把当前那一屏（标题 + 正文）存一份，头部出现「← 返回」；
+   Esc 也优先返回，没有可返回的才关面板。只存一层（够用，逻辑也简单）。
+   注意：只在面板**已经打开**时记；面板本来是关的（从主屏卡片点讲解）就没有可返回的一屏。 */
+let panelBack = null;
+function updatePanelBack() {
+  const b = document.getElementById('panel-back');
+  if (b) b.hidden = !panelBack;
+}
+function panelGoBack() {
+  if (!panelBack) return false;
+  const b = panelBack;
+  panelBack = null;
+  document.getElementById('panel-title').textContent = b.title;
+  document.getElementById('panel-body').innerHTML = b.html;
+  updatePanelBack();
+  return true;
+}
 function closePanel() {
+  panelBack = null;          // 面板关掉就清空返回栈，下次打开是干净的一屏
+  updatePanelBack();
   slidePanel(false);
 }
 /* 面板滑动期间临时提层，滑完立刻撤：常驻 will-change 会白占一张合成层，
@@ -11076,6 +11115,11 @@ document.addEventListener('click', (e) => {
   startExplain(btn.dataset.explain, mat, document.getElementById('panel-explain'));
 });
 
+/* 面板「← 返回」：退回进讲解前那一屏 */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.panel-back')) panelGoBack();
+});
+
 /* 长文本折叠的展开 / 收起 */
 document.addEventListener('click', (e) => {
   const b = e.target.closest('.fold-btn');
@@ -11131,6 +11175,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     // 面板优先于联想；复习模式不劫持（用户可能想用 Esc 取消选中）
     if (document.getElementById('panel').classList.contains('open')) {
+      if (panelGoBack()) { e.preventDefault(); return; }   // 从深度讲解退回词条详情
       closePanel();
       e.preventDefault();
       return;
