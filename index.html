@@ -637,17 +637,17 @@
   }
   .spell-suggest .cog { border-color: var(--warn-line-hi); color: var(--gold); }
   /* 发音工具条 */
-  /* 顶栏（2026-10-05 重排）：控件多了，按「发音 / 阅读 / 界面」分三组，组间一条细竖线，
-     最后一组右对齐；所有控件统一成同一高度同一圆角，排在一起才齐
-     （原来下拉是 10px 圆角、按钮是胶囊、高度靠 padding 凑，越加越乱）。 */
+  /* 顶栏（2026-10-05 重排，2026-10-07 收拢）：控件按「发音 / 阅读 / 界面」分三组，组间一条细竖线，
+     所有控件统一成同一高度同一圆角，排在一起才齐。
+     位置：body 是居中列、搜索框 560px，所以这里也取 560px 并把三组**居中聚拢**
+     （原来是末组 margin-left:auto 推到最右，中间空出一大片）。 */
   .tts-bar {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    width: 100%; max-width: 640px; margin-top: 12px; position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    width: 100%; max-width: 560px; margin-top: 12px; position: relative; z-index: 1;
     font-size: 13px; color: var(--sub);
   }
   .bar-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .bar-group + .bar-group { padding-left: 8px; border-left: 1px solid var(--glass-border); }
-  .bar-group.bar-end { margin-left: auto; }
   .tts-bar .tts-label { font-size: 12px; opacity: .8; }
   .tts-eng, .tts-bar select, .theme-btn {
     height: 25px; box-sizing: border-box; border-radius: 999px; padding: 0 9px;
@@ -999,7 +999,7 @@
     <option value="tight">≡·紧凑</option><option value="m" selected>≡·标准</option><option value="loose">≡·宽松</option>
   </select>
   </div>
-  <div class="bar-group bar-end">
+  <div class="bar-group">
   <button class="theme-btn" id="theme-btn" title="切换主题：自动 → 浅色 → 深色">🌗 自动</button>
   <button class="theme-btn" id="lang-btn" title="Switch display language / 切换界面语言">中</button>
   </div>
