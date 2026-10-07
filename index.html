@@ -641,20 +641,21 @@
      最后一组右对齐；所有控件统一成同一高度同一圆角，排在一起才齐
      （原来下拉是 10px 圆角、按钮是胶囊、高度靠 padding 凑，越加越乱）。 */
   .tts-bar {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     width: 100%; max-width: 640px; margin-top: 12px; position: relative; z-index: 1;
     font-size: 13px; color: var(--sub);
   }
-  .bar-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .bar-group + .bar-group { padding-left: 10px; border-left: 1px solid var(--glass-border); }
+  .bar-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .bar-group + .bar-group { padding-left: 8px; border-left: 1px solid var(--glass-border); }
   .bar-group.bar-end { margin-left: auto; }
-  .tts-bar .tts-label { font-size: 12px; opacity: .8; margin-right: 2px; }
+  .tts-bar .tts-label { font-size: 12px; opacity: .8; }
   .tts-eng, .tts-bar select, .theme-btn {
-    height: 26px; box-sizing: border-box; border-radius: 999px; padding: 0 11px;
+    height: 25px; box-sizing: border-box; border-radius: 999px; padding: 0 9px;
     font-size: 12px; line-height: 1; cursor: pointer;
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
   }
-  .tts-bar select { color: var(--text); padding: 0 6px 0 10px; }
+  /* 下拉自带箭头已经占一截，左右内边距收到最小，别再多留空 */
+  .tts-bar select { color: var(--text); padding: 0 2px 0 8px; }
   .tts-eng {
     transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast);
   }
