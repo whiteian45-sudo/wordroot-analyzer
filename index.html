@@ -2255,8 +2255,8 @@ const ROOTS = {
      所以连它们自己的词根 themat(希腊语 thema) 与 mathemat(希腊语 mathema) 一起补上，各归各位。
      实测 459 词：由无到有 162、丢失 0、改写 26（全是改善，thematic→themat-ic 等）。 */
   "ambrosi": ["神肴、仙馔；不朽", ["ambrosia", "ambrosial", "ambrosian"], {"lang": "希腊语", "word": "ambrosios"}],
-  "hemat": ["血", ["hematoma", "hematin", "hematite"], {"lang": "希腊语", "word": "haima"}],
-  "hemato": ["血", ["hematology", "hematocrit", "hematologist"], {"lang": "希腊语", "word": "haimatos"}],
+  "hemat": ["血", ["hematoma", "hematin", "hematite"], {"lang": "希腊语", "word": "haima", "rel": ["hemato"]}],
+  "hemato": ["血", ["hematology", "hematocrit", "hematologist"], {"lang": "希腊语", "word": "haimatos", "rel": ["hemat"]}],
   "themat": ["主题、命题", ["thematic", "anathematic", "monothematic"], {"lang": "希腊语", "word": "thema"}],
   "mathemat": ["学问、知识", ["mathematics", "mathematical", "mathematician"], {"lang": "希腊语", "word": "mathema"}],
   /* coffin（2026-10-04 用户报词）：原来读成 `co||??ffin`——co-（共同）纯属撞车。
@@ -2268,18 +2268,18 @@ const ROOTS = {
      真词源：拉丁语 meridies（正午）= medius（中间）+ dies（日）→ 经线即「正午线」。
      照 apostle/apostol 惯例补基础形 + 组合形：meridi（正午、子午）与 meridion（子午的，-al 前用）。
      实测含 merid 的 50 词：由无到有 9、丢失 0、改写 3（antemeridian 由乱切转正）。 */
-  "meridi": ["正午、子午", ["meridian", "meridians", "antemeridian"], {"lang": "拉丁语", "word": "meridies", "note": "medius（中间）+ dies（日）"}],
-  "meridion": ["子午的、正午的", ["meridional", "meridionally"], {"lang": "拉丁语", "word": "meridionalis"}],
+  "meridi": ["正午、子午", ["meridian", "meridians", "antemeridian"], {"lang": "拉丁语", "word": "meridies", "note": "medius（中间）+ dies（日）", "rel": ["meridion"]}],
+  "meridion": ["子午的、正午的", ["meridional", "meridionally"], {"lang": "拉丁语", "word": "meridionalis", "rel": ["meridi"]}],
   /* gory 词族（2026-10-05，用户报 gory）：原来 gory 读成 `go-ry`（go + -ry，纯误拆）、
      gore 直接无拆解。真词源：古英语 gor（血、凝血）→ gore；gory = gore + -y（Etymonline 原话）。
      试过两条通用规则都被否：①「+y 去 e 还原」会把 antibody→anti|bode-y、abbey→ab|bee-y、
      gamy→game-y 全弄坏（71 处改写）；②把 gor/gori 当短词根会抢 gorgeous/categories/allegories。
      最终只补四个专有整词根（含比较级/最高级形式），实测含 gor 与 ier/iest 的 2096 词：
      由无到有 9、丢失 0、改写 1（就是 gory 本身），categories/allegories/phantasmagory 全不受影响。 */
-  "gore": ["血、凝血", ["gore", "gores", "gored", "goring"], {"lang": "古英语", "word": "gor"}],
-  "gory": ["血淋淋的、残暴的", ["gory", "gorily"], {"lang": "古英语", "word": "gor", "note": "gore + -y"}],
-  "gorier": ["更血腥的", ["gorier"], {"lang": "古英语", "word": "gor", "note": "gory 的比较级（y→i）"}],
-  "goriest": ["最血腥的", ["goriest"], {"lang": "古英语", "word": "gor", "note": "gory 的最高级（y→i）"}],
+  "gore": ["血、凝血", ["gore", "gores", "gored", "goring"], {"lang": "古英语", "word": "gor", "rel": ["gory", "gorier", "goriest"]}],
+  "gory": ["血淋淋的、残暴的", ["gory", "gorily"], {"lang": "古英语", "word": "gor", "note": "gore + -y", "rel": ["gore", "gorier", "goriest"]}],
+  "gorier": ["更血腥的", ["gorier"], {"lang": "古英语", "word": "gor", "note": "gory 的比较级（y→i）", "rel": ["gore", "gory", "goriest"]}],
+  "goriest": ["最血腥的", ["goriest"], {"lang": "古英语", "word": "gor", "note": "gory 的最高级（y→i）", "rel": ["gore", "gory", "gorier"]}],
   /* undulate 词族（2026-10-06 用户报词）：原来 undulate→`und|??ulate`、undulant/undulatory 同样断在
      长形上、undulation 被切成 `und-ula-tion`（把 ula 当后缀）。真词源：拉丁语 unda（波浪）的指小形
      **undula** → 补 undul（波浪状、起伏）。redundant 原来读 `red+und-ant`（red=红 是误拆），
@@ -2298,9 +2298,9 @@ const ROOTS = {
        wavi  wavy 的比较级词干（wavier/waviest/wavily/waviness，比照项目里已有的 happi/gori）
      wav 只有 3 字符，按惯例该谨慎——实测含 wav 的 100 词**全是 wave 家族**（由无到有 54、丢失 0），
      没有一处误伤，故放行。另给 wavered 加拦截（否则 wave+red，red=红 是误拆）。 */
-  "wave": ["波浪、挥手", ["wave", "waves", "waved", "waving", "waver"], {"lang": "古英语", "word": "wafian"}],
-  "wav": ["波浪", ["wavy", "wavily", "unwavering"], {"lang": "古英语", "word": "wafian", "note": "wave 的词干形式"}],
-  "wavi": ["波浪状的", ["wavier", "waviest", "waviness"], {"lang": "古英语", "word": "wafian", "note": "wavy 的比较级/最高级词干"}],
+  "wave": ["波浪、挥手", ["wave", "waves", "waved", "waving", "waver"], {"lang": "古英语", "word": "wafian", "rel": ["wav", "wavi"]}],
+  "wav": ["波浪", ["wavy", "wavily", "unwavering"], {"lang": "古英语", "word": "wafian", "note": "wave 的词干形式", "rel": ["wave", "wavi"]}],
+  "wavi": ["波浪状的", ["wavier", "waviest", "waviness"], {"lang": "古英语", "word": "wafian", "note": "wavy 的比较级/最高级词干", "rel": ["wave", "wav"]}],
   /* sway（2026-10-06 用户报词）：sway 与 sways 都无拆解，swayed/swaying/swayer/swayable 是
      `-ed|??sway` 这类部分拆解。词源古诺斯语 **sveigja**（使弯曲、摇摆）→ 补整词根。
      实测含 sway 的 25 词：由无到有 14、丢失 0、改写 0（sway / sways / swayed / swaying /
@@ -2312,8 +2312,8 @@ const ROOTS = {
      实测含 roll/enrol 的 281 词：由无到有 95、丢失 0、改写 6；**troll / scroll / stroll 未被抢**
      （它们仍无拆解，说明"含 roll 子串"不等于会被误拆）。6 处改写里 3 处是改善（enrolled→en|roll-ed 等），
      另 3 处（enrolling 被 ling 当后缀、disenrolled 被 sen 切）加了拦截。 */
-  "roll": ["滚动、卷、名单", ["roll", "rolls", "rolled", "rolling", "roller"], {"lang": "拉丁语", "word": "rotula", "note": "rota（轮子）的指小形"}],
-  "enrol": ["登记、注册（英式拼写）", ["enrol", "enrolment"], {"lang": "法语", "word": "enroller"}],
+  "roll": ["滚动、卷、名单", ["roll", "rolls", "rolled", "rolling", "roller"], {"lang": "拉丁语", "word": "rotula", "note": "rota（轮子）的指小形", "rel": ["enrol"]}],
+  "enrol": ["登记、注册（英式拼写）", ["enrol", "enrolment"], {"lang": "法语", "word": "enroller", "rel": ["roll"]}],
   /* ambient 族（2026-10-08 用户报 ambient）：ambient/ambience/ambiance 都是 `ambi||??ent` 这类——
      ambi 是**前缀**、ent/ence/ance 是**后缀**，中间没有词根，两条路都要求"中间得有东西"所以都走不通。
      先试过给引擎补一条通用的"前缀+后缀"路径：实测灾难（147776 词里**丢失 40**、改写 1384，
@@ -2323,11 +2323,11 @@ const ROOTS = {
      ambiguous ← ambiguus（ambi- + agere 驱动，两边都推得动）→ 补 ambigu。
      实测含 ambien/ambian/ambit/ambigu 的 70 词：由无到有 58、丢失 0、改写 1（disambiguate 由
      `di|same+big-uate` 改善为 `dis|ambigu-ate`）。 */
-  "ambient": ["周围的、环境氛围的", ["ambient", "ambiently", "ambience", "ambiance"], {"lang": "拉丁语", "word": "ambire", "note": "ambi-（周围）+ ire（走）"}],
-  "ambience": ["氛围、环境", ["ambience", "ambiances"], {"lang": "法语", "word": "ambiance"}],
-  "ambiance": ["氛围（ambience 的另一种拼写）", ["ambiance"], {"lang": "法语", "word": "ambiance"}],
-  "ambit": ["一圈、范围", ["ambition", "ambitious", "ambitiously"], {"lang": "拉丁语", "word": "ambitus", "note": "ambire 的过去分词"}],
-  "ambigu": ["模糊不清", ["ambiguous", "ambiguity", "unambiguously"], {"lang": "拉丁语", "word": "ambiguus", "note": "ambi- + agere（驱动）→ 两边都推得动"}],
+  "ambient": ["周围的、环境氛围的", ["ambient", "ambiently", "ambience", "ambiance"], {"lang": "拉丁语", "word": "ambire", "note": "ambi-（周围）+ ire（走）", "rel": ["ambience", "ambiance", "ambit", "ambigu"]}],
+  "ambience": ["氛围、环境", ["ambience", "ambiances"], {"lang": "法语", "word": "ambiance", "rel": ["ambient", "ambiance"]}],
+  "ambiance": ["氛围（ambience 的另一种拼写）", ["ambiance"], {"lang": "法语", "word": "ambiance", "rel": ["ambient", "ambience"]}],
+  "ambit": ["一圈、范围", ["ambition", "ambitious", "ambitiously"], {"lang": "拉丁语", "word": "ambitus", "note": "ambire 的过去分词", "rel": ["ambient", "ambigu"]}],
+  "ambigu": ["模糊不清", ["ambiguous", "ambiguity", "unambiguously"], {"lang": "拉丁语", "word": "ambiguus", "note": "ambi- + agere（驱动）→ 两边都推得动", "rel": ["ambient", "ambit"]}],
   /* redound（2026-10-08 用户报词）：redound/redounds 无拆解，redounded/redounding 是 `-ed|??redound`。
      词素结构是 re-（回）+ undare（涌起，← unda 波浪，同 inundate 的 und），但英语拼写经古法语 redonder，**中间多出一个 d**（re-d-ound），
      所以既不含 "redund"（redundant 的词根）也拆不出 re+und，只能单独补一条整词根、
