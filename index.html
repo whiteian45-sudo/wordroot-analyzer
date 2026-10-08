@@ -4262,6 +4262,52 @@ const PEDO_FOOT = /^pedo(metr|meter|baro|dynamo)/;
    例如 redound 声明 rel:["und","redund"] —— 它的词素是 re- + undare（unda 波浪），
    但英语拼写走岔了（re-d-ound），只能挂整词根，于是卡片上的同根词就只剩自己的变形，
    看不到 inundate / abundant / redundant 这些真正的亲戚。有了 rel，查询时把那一支的词也列进来。 */
+/* 同源词根（自动关联，2026-10-08）：两条词根的元数据里 lang + word 完全相同，就是同一个来源词
+   —— embry / embryo（希腊语 embryon）、basic / basi（basis）、
+   hemat / haem / haemo / hemo（haima）、cosm / cosmo（kosmos）……
+   实测这条信息**原本没有进同根词**（embryo 的卡片看不到 embry，hemoglobin 看不到 hemat/haem），
+   于是"血"这一家被拆在四个词根上各看各的。全表扫下来这样的组有 112 个，
+   与其手写 112 组 rel（还容易漏），不如按来源运行时建索引。
+   注意：来源串**不同**却同属一家的（hemat ↔ hemato 是 haima/haimatos、und ↔ undul ↔ redound
+   是 unda/undula/redundare、ambient ↔ ambience…），仍然靠元数据里显式写的 rel。 */
+let SRC_ROOTS = null;
+function srcKeyOf(m) {
+  const r = ROOTS[m], meta = r && r[2];
+  return (meta && meta.lang && meta.word) ? meta.lang + '\u0001' + meta.word : '';
+}
+function siblingRoots(m) {
+  if (!SRC_ROOTS) {
+    SRC_ROOTS = new Map();
+    for (const k in ROOTS) {
+      const key = srcKeyOf(k);
+      if (!key) continue;
+      if (!SRC_ROOTS.has(key)) SRC_ROOTS.set(key, []);
+      SRC_ROOTS.get(key).push(k);
+    }
+  }
+  const key = srcKeyOf(m);
+  const list = key ? SRC_ROOTS.get(key) : null;
+  return list ? list.filter(x => x !== m) : [];
+}
+/* 一个词根的"家族"= 显式 rel + 同源词根，并**反复展开直到不再增长**（上限 8 个词根）。
+   为什么需要闭包：hemato 的来源是 haimatos、hemat 的是 haima，两者不同源（靠手写 rel 相连），
+   而 hemat 又和 haem/haemo/hemo 同源——只走一跳的话，查 hematology 就看不到 haem/haemo。
+   上限 8 是防"logos/gyros 这种大族"把同根词撑爆。 */
+function familyOf(m) {
+  const out = new Set();
+  let frontier = [m];
+  for (let hop = 0; hop < 4 && frontier.length; hop++) {
+    const next = [];
+    for (const x of frontier) {
+      for (const y of rootRel(x).concat(siblingRoots(x))) {
+        if (y && y !== m && !out.has(y)) { out.add(y); next.push(y); }
+      }
+    }
+    frontier = next;
+    if (out.size >= 8) break;
+  }
+  return [...out].slice(0, 8);
+}
 function rootRel(m) {
   const r = ROOTS[m];
   const meta = r && r[2];
@@ -5049,10 +5095,12 @@ function findCognates(word) {
           if (list.length) morphs.push({ m: rm, words: list });
         }
       }
-      /* 关联词根那一支：redound 的 rel 是 und/redund，就把 inundate、redundant 这些一并列出来
-         （按词根本身的名字分组显示，学习者能直接看出"这一家其实是波浪那个 und"） */
+      /* 关联词根那一支：redound 的 rel 是 und/redund，就把 inundate、redundant 这些一并列出来；
+         再加上**同源词根**（来源词相同，如 hemat/haem/haemo/hemo）——两者合起来才是完整的"这一家"。
+         按词根本身的名字分组显示，学习者能直接看出"这一家其实是波浪那个 und"。 */
       for (const rm of (bd.roots || []).map(x => x.m)) {
-        for (const r2 of rootRel(rm)) {
+        const related = familyOf(rm);
+        for (const r2 of related) {
           if (r2.length < 2 || seenMorph.has(r2)) continue;
           seenMorph.add(r2);
           const mates = MORPH_INDEX.get(r2);
