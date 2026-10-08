@@ -8771,10 +8771,18 @@ function explainMaterials(r) {
   if (Array.isArray(extra)) extra.forEach(x => { if (x && x.en) (isSent(x.en) ? ex : frag).push([String(x.en), String(x.zh || '')]); });
   if (ex.length) mat.examples = ex.slice(0, 6);
   if (frag.length) mat.colloc = frag.slice(0, 8).map(x => x[0] + (x[1] ? ' —— ' + x[1] : ''));
-  const th = THES[hw] || THES[w];
-  const ss = th ? thesClean(hw, th.s) : [], aa = th ? thesClean(hw, th.a) : [];
-  if (ss.length) mat.syn = ss.slice(0, 12);
-  if (aa.length) mat.ant = aa.slice(0, 8);
+  /* 【词频】进素材（2026-10-08）：实测 4B 把 redound 这种罕见书面词的语域判成"新闻 ⭐⭐⭐⭐"，
+     而 BNC-COCA 千词族分级本地就有（BNC_LEVEL）。语域判断有了硬依据，不用求它自觉。 */
+  const lv = BNC_LEVEL.get(hw) || BNC_LEVEL.get(w);
+  mat.freq = lv
+    ? ('BNC-COCA 千词族第 ' + lv + ' 级（1 级最常用，9 级最罕见）')
+    : '不在 BNC-COCA 最常用的 9000 词族内 —— 罕见词，只在正式/书面语里出现';
+  /* 【同义词】【反义词】**不进讲解素材**（2026-10-08，实测两轮后定）：
+     thes.json 是 WordNet 口径的表，经常给 react/recoil/resound/reverberate 这种语义很远的词；
+     4B 拿到就会照抄成【易混词】——先给它挂中文释义没用，在提示词里点名"react 不该进这张表"也没用
+     （3B/4B 对细分规则不敏感，见项目既有结论）。对照实验：另一份讲解手上根本没有这张表，
+     反而挑对了 result in / contribute to / benefit。所以按"能靠数据约束就别靠提示词"，直接不喂。
+     卡片上的「近义 / 反义」标签不受影响，仍走 thesClean。 */
   return mat;
 }
 /* 讲解缓存：按「词 + 语言」存（讲解语言跟界面走，与助记相反），上限比助记小——一段 400 字 */
