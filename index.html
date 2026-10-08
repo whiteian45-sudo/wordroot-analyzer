@@ -2328,6 +2328,12 @@ const ROOTS = {
   "ambiance": ["氛围（ambience 的另一种拼写）", ["ambiance"], {"lang": "法语", "word": "ambiance"}],
   "ambit": ["一圈、范围", ["ambition", "ambitious", "ambitiously"], {"lang": "拉丁语", "word": "ambitus", "note": "ambire 的过去分词"}],
   "ambigu": ["模糊不清", ["ambiguous", "ambiguity", "unambiguously"], {"lang": "拉丁语", "word": "ambiguus", "note": "ambi- + agere（驱动）→ 两边都推得动"}],
+  /* redound（2026-10-08 用户报词）：redound/redounds 无拆解，redounded/redounding 是 `-ed|??redound`。
+     词素结构是 re-（回）+ undare（涌起，← unda 波浪，同 inundate 的 und），但英语拼写经古法语 redonder，**中间多出一个 d**（re-d-ound），
+     所以既不含 "redund"（redundant 的词根）也拆不出 re+und，只能单独补一条整词根、
+     并在 note 里把词素结构写给学习者看。
+     实测含 redound 的 4 词：由无到有 4、丢失 0、改写 0（redundant/redundancy 不受影响）。 */
+  "redound": ["回涌、溢出、归于", ["redound", "redounds", "redounded", "redounding"], {"lang": "拉丁语", "word": "redundare", "note": "re-（回）+ undare（涌起）← unda 波浪，同 inundate 的 und"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -8008,6 +8014,7 @@ const MORPH_EN_EXTRA = {
   "ambient": "surrounding, ambient (Latin ambire: ambi- around + ire go)",
   "ambience": "atmosphere, surroundings", "ambiance": "atmosphere (variant of ambience)",
   "ambit": "circuit, scope (Latin ambitus, going around)", "ambigu": "ambiguous, unclear (Latin ambiguus)",
+  "redound": "overflow, contribute to (Old French redonder, from Latin redundare)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
