@@ -1149,6 +1149,54 @@
     },
     "antiroll": {
       "d": "anti|roll"
+    },
+    "ambient": {
+      "d": "ambient"
+    },
+    "ambience": {
+      "d": "ambience"
+    },
+    "ambiance": {
+      "d": "ambiance"
+    },
+    "ambiently": {
+      "d": "ambient-ly"
+    },
+    "circumambient": {
+      "d": "circum|ambient"
+    },
+    "ambition": {
+      "d": "ambit-ion"
+    },
+    "ambitious": {
+      "d": "ambit-ious"
+    },
+    "ambitiously": {
+      "d": "ambit-ious-ly"
+    },
+    "ambiguous": {
+      "d": "ambigu-ous"
+    },
+    "ambiguity": {
+      "d": "ambigu-ity"
+    },
+    "unambiguous": {
+      "d": "un|ambigu-ous"
+    },
+    "unambiguously": {
+      "d": "un|ambigu-ous-ly"
+    },
+    "disambiguate": {
+      "d": "dis|ambigu-ate"
+    },
+    "overambitious": {
+      "d": "over|ambit-ious"
+    },
+    "unambitious": {
+      "d": "un|ambit-ious"
+    },
+    "ambit": {
+      "d": "ambit"
     }
   },
   "partial词": {

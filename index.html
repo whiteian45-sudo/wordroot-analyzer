@@ -2314,6 +2314,20 @@ const ROOTS = {
      另 3 处（enrolling 被 ling 当后缀、disenrolled 被 sen 切）加了拦截。 */
   "roll": ["滚动、卷、名单", ["roll", "rolls", "rolled", "rolling", "roller"], {"lang": "拉丁语", "word": "rotula", "note": "rota（轮子）的指小形"}],
   "enrol": ["登记、注册（英式拼写）", ["enrol", "enrolment"], {"lang": "法语", "word": "enroller"}],
+  /* ambient 族（2026-10-08 用户报 ambient）：ambient/ambience/ambiance 都是 `ambi||??ent` 这类——
+     ambi 是**前缀**、ent/ence/ance 是**后缀**，中间没有词根，两条路都要求"中间得有东西"所以都走不通。
+     先试过给引擎补一条通用的"前缀+后缀"路径：实测灾难（147776 词里**丢失 40**、改写 1384，
+     如 abacus→`ab-ac|-us`、ability→`ab-il|-ity`、admission→`ad-mis|-sion`，空前缀还会被并成双前缀）
+     → **按测量否决**，改走项目惯例的专用词根。
+     ambient = ambi-（周围）+ ire（走）→ 拉丁 ambire；ambition 同源（ambitus 一圈、游说拉票绕着走）→ 补 ambit；
+     ambiguous ← ambiguus（ambi- + agere 驱动，两边都推得动）→ 补 ambigu。
+     实测含 ambien/ambian/ambit/ambigu 的 70 词：由无到有 58、丢失 0、改写 1（disambiguate 由
+     `di|same+big-uate` 改善为 `dis|ambigu-ate`）。 */
+  "ambient": ["周围的、环境氛围的", ["ambient", "ambiently", "ambience", "ambiance"], {"lang": "拉丁语", "word": "ambire", "note": "ambi-（周围）+ ire（走）"}],
+  "ambience": ["氛围、环境", ["ambience", "ambiances"], {"lang": "法语", "word": "ambiance"}],
+  "ambiance": ["氛围（ambience 的另一种拼写）", ["ambiance"], {"lang": "法语", "word": "ambiance"}],
+  "ambit": ["一圈、范围", ["ambition", "ambitious", "ambitiously"], {"lang": "拉丁语", "word": "ambitus", "note": "ambire 的过去分词"}],
+  "ambigu": ["模糊不清", ["ambiguous", "ambiguity", "unambiguously"], {"lang": "拉丁语", "word": "ambiguus", "note": "ambi- + agere（驱动）→ 两边都推得动"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -7991,6 +8005,9 @@ const MORPH_EN_EXTRA = {
   "wavi": "wavy (comparative stem)",
   "sway": "sway, swing, influence (Old Norse sveigja)",
   "roll": "roll, scroll, list (Latin rotula, little wheel)", "enrol": "enrol, register (British spelling)",
+  "ambient": "surrounding, ambient (Latin ambire: ambi- around + ire go)",
+  "ambience": "atmosphere, surroundings", "ambiance": "atmosphere (variant of ambience)",
+  "ambit": "circuit, scope (Latin ambitus, going around)", "ambigu": "ambiguous, unclear (Latin ambiguus)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
