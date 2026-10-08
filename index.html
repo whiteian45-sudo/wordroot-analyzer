@@ -2287,8 +2287,8 @@ const ROOTS = {
      顺带试过把「去 e 还原」扩到 -ly（想让 unduly←undue+ly）：实测 9807 个 -ly 词里
      probably→pro|babe-ly、chilly→chile-ly、sharply→sharpe-ly 全错，按测量否决，只留 unduly 拦截。
      实测含 und/redund 的 9807 词：由无到有 11、丢失 0、改写 7（全是改善）。 */
-  "undul": ["波浪状、起伏", ["undulate", "undulation", "undulant", "undulatory"], {"lang": "拉丁语", "word": "undula", "note": "unda（波浪）的指小形"}],
-  "redund": ["溢出、多余", ["redundant", "redundancy", "redundantly"], {"lang": "拉丁语", "word": "redundare"}],
+  "undul": ["波浪状、起伏", ["undulate", "undulation", "undulant", "undulatory"], {"lang": "拉丁语", "word": "undula", "note": "unda（波浪）的指小形", "rel": ["und"]}],
+  "redund": ["溢出、多余", ["redundant", "redundancy", "redundantly"], {"lang": "拉丁语", "word": "redundare", "rel": ["redound", "und"]}],
   /* wavy 词族（2026-10-06 用户报词）：wavy 无拆解、wavier/waviest/wavily/waviness 全是 `-er|??wavi`；
      顺带发现 **wave 本身也没拆解**（它只在变形语境里被认：waved→wave-ed 靠 BASEWORDS_BATCH 的闸门），
      microwave→`micro||??wave`、wavelength/waveform 也无拆解。
@@ -2333,7 +2333,7 @@ const ROOTS = {
      所以既不含 "redund"（redundant 的词根）也拆不出 re+und，只能单独补一条整词根、
      并在 note 里把词素结构写给学习者看。
      实测含 redound 的 4 词：由无到有 4、丢失 0、改写 0（redundant/redundancy 不受影响）。 */
-  "redound": ["回涌、溢出、归于", ["redound", "redounds", "redounded", "redounding"], {"lang": "拉丁语", "word": "redundare", "note": "re-（回）+ undare（涌起）← unda 波浪，同 inundate 的 und"}],
+  "redound": ["回涌、溢出、归于", ["redound", "redounds", "redounded", "redounding"], {"lang": "拉丁语", "word": "redundare", "note": "re-（回）+ undare（涌起）← unda 波浪，同 inundate 的 und", "rel": ["und", "redund"]}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -3836,7 +3836,7 @@ const ROOTS = {
   "turb": ["扰乱、骚动", ["disturb", "turbine", "turbulent"]],
   "ultim": ["最后、末端", ["ultimate", "ultimatum"]],
   "umbr": ["影子", ["umbrella", "penumbra"], {"lang": "拉丁语", "word": "umbra"}],
-  "und": ["波浪、涌动", ["abundant", "inundate"]],
+  "und": ["波浪、涌动", ["abundant", "inundate"], {"lang": "拉丁语", "word": "unda", "note": "波浪", "rel": ["undul", "redound", "redund"]}],
   "urb": ["城市", ["urban", "suburb"]],
   "vac": ["空", ["vacant", "vacation", "vacuum"]],
   "vad": ["走、入侵", ["invade", "evade"]],
@@ -4258,6 +4258,15 @@ const PEDO_FOOT = /^pedo(metr|meter|baro|dynamo)/;
    eur 一个词素形背两个词源：词首是「欧洲」（eurocentrism/eurozone，词根表里有权威来源 Europa），
    其余位置是法语施动后缀 -eur（poseur/amateur/amateurish，来源由 MORPH_SRC_PATCH 钉成法语）。
    MORPH_SRC 是按词素名建的表，一个名字存不下两个义项，只能在这里按位置挑。 */
+/* 关联词根（2026-10-08 用户提议）：词根可以在元数据里声明"同属一个词源家族的另一个词根"，
+   例如 redound 声明 rel:["und","redund"] —— 它的词素是 re- + undare（unda 波浪），
+   但英语拼写走岔了（re-d-ound），只能挂整词根，于是卡片上的同根词就只剩自己的变形，
+   看不到 inundate / abundant / redundant 这些真正的亲戚。有了 rel，查询时把那一支的词也列进来。 */
+function rootRel(m) {
+  const r = ROOTS[m];
+  const meta = r && r[2];
+  return (meta && Array.isArray(meta.rel)) ? meta.rel : [];
+}
 function morphSource(m, w) {
   const src = own(MORPH_SRC, m) ? MORPH_SRC[m] : null;
   if (m === 'pedo') {
@@ -5038,6 +5047,18 @@ function findCognates(word) {
         if (mates) {
           const list = [...mates].filter(x => x !== word);
           if (list.length) morphs.push({ m: rm, words: list });
+        }
+      }
+      /* 关联词根那一支：redound 的 rel 是 und/redund，就把 inundate、redundant 这些一并列出来
+         （按词根本身的名字分组显示，学习者能直接看出"这一家其实是波浪那个 und"） */
+      for (const rm of (bd.roots || []).map(x => x.m)) {
+        for (const r2 of rootRel(rm)) {
+          if (r2.length < 2 || seenMorph.has(r2)) continue;
+          seenMorph.add(r2);
+          const mates = MORPH_INDEX.get(r2);
+          if (!mates) continue;
+          const list = [...mates].filter(x => x !== word);
+          if (list.length) morphs.push({ m: r2, words: list });
         }
       }
       /* 同源词：非考试词也走这条路——用词的「来源」反查 SRC_INDEX。
