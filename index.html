@@ -2334,6 +2334,14 @@ const ROOTS = {
      并在 note 里把词素结构写给学习者看。
      实测含 redound 的 4 词：由无到有 4、丢失 0、改写 0（redundant/redundancy 不受影响）。 */
   "redound": ["回涌、溢出、归于", ["redound", "redounds", "redounded", "redounding"], {"lang": "拉丁语", "word": "redundare", "note": "re-（回）+ undare（涌起）← unda 波浪，同 inundate 的 und", "rel": ["und", "redund"]}],
+  /* dionysian 族（2026-10-09 用户报词）：dionysian→`-ian|??dionys`、dionysus→`-us|??dionys`、
+     dionysiac 干脆无拆解（-iac 不是后缀表中的后缀）。来源是希腊神话 **Dionysos**（酒神狄俄尼索斯）——
+     专有名词派生词，照项目惯例补专用词根：dionys（主根，接 -ian/-us）+ dionysiac（-ac 收尾的那一支，
+     -iac 不进后缀表，避免 maniac→man-iac 这类泛化误拆）。
+     两条词根的来源词都写 Dionysos，因此会被"同源自动关联"连成一家（无需手写 rel）。
+     实测含 dionys 的 6 词：由无到有 5、丢失 0、改写 0。 */
+  "dionys": ["酒神狄俄尼索斯（希腊神话）", ["dionysian", "dionysus", "dionysos"], {"lang": "希腊语", "word": "Dionysos"}],
+  "dionysiac": ["酒神节的、狂饮的", ["dionysiac", "dionysiacal"], {"lang": "希腊语", "word": "Dionysos", "note": "dionys + -ac"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -8084,6 +8092,7 @@ const MORPH_EN_EXTRA = {
   "ambience": "atmosphere, surroundings", "ambiance": "atmosphere (variant of ambience)",
   "ambit": "circuit, scope (Latin ambitus, going around)", "ambigu": "ambiguous, unclear (Latin ambiguus)",
   "redound": "overflow, contribute to (Old French redonder, from Latin redundare)",
+  "dionys": "Dionysus, Dionysian (Greek Dionysos)", "dionysiac": "of Dionysus, frenzied",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
