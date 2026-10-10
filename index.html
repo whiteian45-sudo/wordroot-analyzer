@@ -2342,6 +2342,15 @@ const ROOTS = {
      实测含 dionys 的 6 词：由无到有 5、丢失 0、改写 0。 */
   "dionys": ["酒神狄俄尼索斯（希腊神话）", ["dionysian", "dionysus", "dionysos"], {"lang": "希腊语", "word": "Dionysos"}],
   "dionysiac": ["酒神节的、狂饮的", ["dionysiac", "dionysiacal"], {"lang": "希腊语", "word": "Dionysos", "note": "dionys + -ac"}],
+  /* bionic 族（2026-10-10 用户报词）：bionic 原来读成 `bio+nice`（bio 生命 + nice 好）——
+     拆得"成功"但语义完全错，是典型的假阳性；bionics 是 `bio|??nics`、biont 是 `bio|??nt`。
+     词源：希腊语 **bios**（生命）的中性形 **bion**（生命体），bion 本身也是英语词（生物学里的"个体"）。
+     补 bion（主根，接 -ic/-ics）+ biont（-t 收尾那一支，symbiont 也用它）——
+     **没有**把 -onics/-nic 加进后缀表（那是 bio+electronics 的混成，泛化会误拆）。
+     两条词根来源词都写 bion，靠"同源自动关联"连成一家，无需手写 rel。
+     实测含 bion 的 108 词：由无到有 55、丢失 0、改写 9（全部为改善或中性）。 */
+  "bion": ["生命体、生物个体", ["bionic", "bionics", "bion"], {"lang": "希腊语", "word": "bion", "note": "bios（生命）的中性形"}],
+  "biont": ["生物个体", ["biont", "symbiont"], {"lang": "希腊语", "word": "bion", "note": "bion + -t"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -8093,6 +8102,7 @@ const MORPH_EN_EXTRA = {
   "ambit": "circuit, scope (Latin ambitus, going around)", "ambigu": "ambiguous, unclear (Latin ambiguus)",
   "redound": "overflow, contribute to (Old French redonder, from Latin redundare)",
   "dionys": "Dionysus, Dionysian (Greek Dionysos)", "dionysiac": "of Dionysus, frenzied",
+  "bion": "living thing, organism (Greek bion, neuter of bios)", "biont": "individual organism",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
