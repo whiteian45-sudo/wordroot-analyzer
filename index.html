@@ -2351,6 +2351,16 @@ const ROOTS = {
      实测含 bion 的 108 词：由无到有 55、丢失 0、改写 9（全部为改善或中性）。 */
   "bion": ["生命体、生物个体", ["bionic", "bionics", "bion"], {"lang": "希腊语", "word": "bion", "note": "bios（生命）的中性形"}],
   "biont": ["生物个体", ["biont", "symbiont"], {"lang": "希腊语", "word": "bion", "note": "bion + -t"}],
+  /* occupy 族（2026-10-11 用户报词）：occupy→`oc|??cupy`，全族都是 `oc|??cup*`——
+     oc-（ob 的变体）认出来了，但 cup 不认识。词源两边都写着 ob- + **capere**（拿取），
+     而 capere 的词根已经有 cap/capt/cept，缺的正是 **cup** 这个复合词里的弱化形
+     （occupy = oc- + cup + -y），与项目里 vad→vas 那种"变体根"同一套路。
+     来源词写 capere，于是靠同源自动关联与 cap/capt/cept 连成一家，无需手写 rel。
+     实测含 cup 的 390 词：由无到有 158、丢失 0、改写 3。
+     副作用处理：cup 这个词根会把"杯子"那一串也吸进来（cup/cupid/cupola/porcupine…），
+     它们来自拉丁 cupa（桶）/ cupere（渴望），与 capere 无关 —— 逐个加 ROOT_BLOCK 拦掉；
+     cupped 原来读 cup-ed（正确），新词根会让它变成 cup+ped（ped 脚），也一并拦。 */
+  "cup": ["抓、拿（cap 的变体）", ["occupy", "occupation", "occupant", "recuperate"], {"lang": "拉丁语", "word": "capere", "note": "capere（拿取）在复合词里的弱化形，如 occupy = oc- + cup + -y"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -6817,6 +6827,10 @@ const ROOT_BLOCK = {
   'unduly': ['undul'],   // unduly = undue + ly，跟 unda（波浪）无关
   'wavered': ['red'],    // waver+ed，别被 wave+red（red=红）抢走
   'enrolling': ['ling'], 'disenrolling': ['ling'],   // enroll+ing，别把 -ling（小…）当后缀
+  'cupped': ['ped'],   // 杯子捧起来，不是 cup+ped（ped 脚）
+  'cup': ['cup'], 'cups': ['cup'], 'cupid': ['cup'], 'cupidity': ['cup'],
+  'cupola': ['cup'], 'porcupine': ['cup'],   // 这些来自 cupa（桶）/ cupere（渴望），与 capere 无关
+
   'disenrolled': ['sen'],                            // dis+enroll+ed，别切成 di|sen+roll
 
 
@@ -6998,6 +7012,18 @@ function decompose(w, depth) {
   if (w.length < 2 || depth > 4) return null;
   let candidates = [];
 
+  /* 词根撞名基本词时的自保（2026-10-11）：ROOT_BLOCK 里禁用了自身的词 ——
+     目前只有 cup（杯子）与 cup 词根（抓、拿 ← capere）撞名 —— 第 0 步优先给基本词读法。
+     为什么不能用 BASEWORD_OVERRIDE：那张表按名字全局生效，会把 occupy 里的真词根 cup 也变成"杯子"；
+     而候选级过滤（decompose 中段）与 partialDecompose 的整词作废都管不到这条最短路径。 */
+  if (own(ROOT_BLOCK, w) && ROOT_BLOCK[w].indexOf(w) >= 0) {
+    /* 基本词可能在任意一张基本词表里（cup 在 BASEWORDS_SHORT —— 三字母动词表，用手捧成杯状） */
+    const bm = own(BASEWORDS, w) ? BASEWORDS[w]
+      : own(BASEWORDS_SHORT, w) ? BASEWORDS_SHORT[w]
+      : own(BASEWORDS_SHORT_ADJ, w) ? BASEWORDS_SHORT_ADJ[w]
+      : own(WHOLE_ONLY, w) ? WHOLE_ONLY[w] : null;
+    if (bm) return { prefix: null, roots: [{ m: w, meaning: bm, cognates: [], isBase: true }], suffixes: [] };
+  }
   // 0. 整段本身是词根/基本词
   const whole = rootOf(w, depth);
   if (whole) {
@@ -7617,10 +7643,13 @@ function morphBlockHTML(w, bd) {
        而前一个 span 已经印过名字 → 演变链出现「exex-port」「subsub-mar」「antianti-malari」的重复。
        与 bdToChunks 的三色块同口径走 prefMeaning（含 in-/im- 的向内/否定消歧）。 */
     .concat(bd.prefix ? [{ m: bd.prefix.m.replace(/-.*$/, ''), meaning: prefMeaning(bd.prefix, bd.roots[0] && bd.roots[0].m), isPre: true }] : [])
-    .concat(bd.roots.map(rr => ({ m: rr.m, meaning: rr.meaning || '' })))
+    .concat(bd.roots.map(rr => ({ m: rr.m, meaning: rr.meaning || '', isBase: !!rr.isBase })))
     .concat(bd.suffixes.map(ss => ({ m: ss.m, meaning: ss.meaning || '' })));
   for (const mp of allMorphs) {
-    let src = morphSource(mp.m, w);   // 词根表显式来源（blank→古法语 blanc）；eur 按位置分流，见 morphSource
+    /* 基本词语素不借"同名那个词根"的词源（2026-10-11）：cup（杯子）与 cup 词根（抓、拿 ← capere）
+       撞名，man（人）/man 词根（手）、path（小路）/path 词根（感受）同理。判别看语素**自身**的 isBase——
+       occupy 里的 cup 是真词根（要 capere），而 cup / cupped 里的是基本词（不要）。 */
+    let src = mp.isBase ? null : morphSource(mp.m, w);   // 词根表显式来源（blank→古法语 blanc）；eur 按位置分流，见 morphSource
     if (!src && mp.m.length >= 3) {
       // 变体映射：aut→auto, motor→motor, net→net
       for (const cand of [mp.m + 'o', mp.m + 'e', mp.m.slice(0, -1), mp.m.slice(0, -1) + 'o']) {
@@ -8103,6 +8132,7 @@ const MORPH_EN_EXTRA = {
   "redound": "overflow, contribute to (Old French redonder, from Latin redundare)",
   "dionys": "Dionysus, Dionysian (Greek Dionysos)", "dionysiac": "of Dionysus, frenzied",
   "bion": "living thing, organism (Greek bion, neuter of bios)", "biont": "individual organism",
+  "cup": "seize, take (weakened form of Latin capere, as in occupy)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）

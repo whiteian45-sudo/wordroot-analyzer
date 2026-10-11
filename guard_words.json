@@ -1266,6 +1266,57 @@
     },
     "bions": {
       "d": "bion-s"
+    },
+    "occupy": {
+      "d": "oc+cup-y"
+    },
+    "occupied": {
+      "d": "oc+cup-i-ed"
+    },
+    "occupying": {
+      "d": "oc+cup-y-ing"
+    },
+    "occupant": {
+      "d": "oc+cup-ant"
+    },
+    "occupation": {
+      "d": "oc+cup-ation"
+    },
+    "occupational": {
+      "d": "oc+cup-ation-al"
+    },
+    "occupancy": {
+      "d": "oc+cup-ancy"
+    },
+    "occupier": {
+      "d": "oc+cup-ier"
+    },
+    "preoccupied": {
+      "d": "pre|oc+cup-i-ed"
+    },
+    "preoccupation": {
+      "d": "pre|oc+cup-ation"
+    },
+    "preoccupy": {
+      "d": "pre|oc+cup-y"
+    },
+    "reoccupy": {
+      "d": "re|oc+cup-y"
+    },
+    "recuperate": {
+      "d": "re|cup-er-ate"
+    },
+    "cup": {
+      "d": "cup"
+    },
+    "cupped": {
+      "d": "cup-ed"
+    },
+    "cupful": {
+      "d": "cup-ful"
+    },
+    "cupcake": {
+      "d": "cup+cake"
     }
   },
   "partial词": {
