@@ -7063,6 +7063,15 @@ const BASEWORD_OVERRIDE = {
    · dorough/eavestrough 的 rough 是撞车基本词（eavestrough 实为 eaves+trough）
    新增词根后跑全量 diff，把新误拆词补进这里 */
 const ROOT_BLOCK = {
+  "traces": ["trac"],   // 批次6 尾巴：traces 被 trac 抢
+  "traced": ["trac"],   // 批次6 尾巴：traced 被 trac 抢
+  "tracing": ["trac"],   // 批次6 尾巴：tracing 被 trac 抢
+  "carpenter": ["carpe"],   // 批次6 尾巴：carpenter 被 carpe 抢
+  "carpentry": ["carpe"],   // 批次6 尾巴：carpentry 被 carpe 抢
+  "carpentered": ["carpe"],   // 批次6 尾巴：carpentered 被 carpe 抢
+  "carpentering": ["carpe"],   // 批次6 尾巴：carpentering 被 carpe 抢
+  "uncarpentered": ["carpe"],   // 批次6 尾巴：uncarpentered 被 carpe 抢
+  "carpenters": ["carpe"],   // 批次6 尾巴：carpenters 被 carpe 抢
   // category 源自希腊语 kategoria（kata 向下 + agoreuein 宣告），
   // 但 cat(猫)+ego(自我)+ry 这个"两词根"拆法比分段路径分高，只能拦掉
   'category': ['cat', 'ego'], 'categories': ['cat', 'ego'],
