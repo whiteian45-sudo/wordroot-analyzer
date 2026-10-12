@@ -1827,6 +1827,16 @@ const PREFIXES = {
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
+  /* 批次 5 第三片：补 -ulate 与 -acy。
+     -ical 本来就有（实测 751 词 0 变化）。
+     -ulate：扫 107 词 → 由无到有 38、丢失 0、改写 2
+       （calculate→calc-ulate、capitulate→capit-ulate、congratulate→con|grat-ulate、
+        coagulate→co|ag-ulate、deregulate→de|reg-ulate、ejaculate→e|jac-ulate）。
+     -acy：扫 81 词 → 由无到有 33、丢失 0、改写 2
+       （advocacy→ad|voc-acy、conspiracy→con|spir-acy、fallacy→fall-acy、
+        delicacy→de|lic-acy、efficacy→ef|fic-acy、episcopacy→epi|scop-acy）。 */
+  "ulate": "动词后缀，表反复/使…（拉丁 -ulare）",
+  "acy": "名词后缀，表状态、性质、职务（拉丁 -acia）",
   /* 批次 5 第二片：补 -um（拉丁中性名词词尾；helium/sternum/forum/spectrum/dictum 一族）。
      实测扫 274 个 -um 词：**由无到有 49、丢失 0、改写 7**，改写多数是改好
      （album: al|bum→alb-um、medium: med-ium→medi-um、bacterium→bacteri-um），
@@ -8560,6 +8570,7 @@ const MORPH_EN_EXTRA = {
   "trick": "trick, deceit (Latin tricae, trifles)", "tricki": "tricky (comparative stem)",
   "ator": "agent noun suffix (Latin -ator)",
   "um": "neuter noun ending (Latin -um)",
+  "ulate": "verb suffix (Latin -ulare)", "acy": "noun suffix of state (Latin -acia)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
