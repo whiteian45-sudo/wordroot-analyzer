@@ -2380,6 +2380,11 @@ const ROOTS = {
      顺带修好：sanction→sanct-ion、nonsanctioned、resanctify、outsaint、sainted 等一整片。 */
   "sanct": ["神圣", ["sanctity", "sanctify", "sanctuary"], {"lang": "拉丁语", "word": "sanctus", "note": "sancire（祝圣）的过去分词"}],
   "saint": ["圣人、神圣的", ["saint", "saintly", "sainthood"], {"lang": "拉丁语", "word": "sanctus"}],
+  /* flower 立为词根（同日）：把 flow 登记为基本词后，后缀路径的 `flow+-er` 会与
+     复合路径的 `sun+flower` 打平并在顺序上抢赢（sunflower 被读成 sun+flow-er ✗）。
+     给 flower 一条真正的词根（拉丁 **flos / florem**，与 flor 同源）后它不再按基本词被罚分，
+     flower / sunflower / deflower / flowery 全部回到正确读法；改写从 42 处降到 7 处。 */
+  "flower": ["花；开花", ["flower", "flowers", "flowery", "sunflower"], {"lang": "拉丁语", "word": "flos", "note": "florem；与 flor 同源（floral / flourish）"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -5215,6 +5220,14 @@ function findCognates(word) {
    说明：已出现在 ROOTS 中的拉丁/希腊词根不再重复收录
    ============================================================ */
 const BASEWORDS = {
+  /* 2026-10-12 用户报 crack / flowed：两个常见词既不在词根表也不在基本词表，
+     于是 crack→无拆解、cracked→`-ed|??crack`（"未识别词干"），flow 同理。
+     它们都是**日耳曼语单词素词**（crack ← 古英语 cracian 拟声；flow ← 古英语 flōwan），
+     没有可拆的词素，正解是登记为基本词 —— 这样 crack-ed / crack-s / crack-ing
+     与 flow-ed / flow-s / flow-ing 以及 crackdown / nutcracker / overflow / inflow 全部自然成立。
+     实测含 crack/flow/flower 的 534 词：由无到有 132、丢失 0、改写 7。 */
+  "crack": "裂缝；破裂声；vt./vi. 使破裂；破解",
+  "flow": "流动；流量；vi. 流、涌",
   "able": "能够的", "air": "空气", "all": "全部、都", "allow": "允许",
   "affair": "事务、风流韵事",
   "aide": "助手",
@@ -8178,6 +8191,7 @@ const MORPH_EN_EXTRA = {
   "cup": "seize, take (weakened form of Latin capere, as in occupy)",
   "pover": "poor (Old French povre, from Latin pauper)", "pauper": "poor, needy (Latin pauper)",
   "sanct": "holy, sacred (Latin sanctus, past participle of sancire)", "saint": "holy person (Latin sanctus)",
+  "flower": "flower (Latin flos, florem)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）

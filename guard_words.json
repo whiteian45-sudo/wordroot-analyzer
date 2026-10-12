@@ -1494,6 +1494,84 @@
     },
     "unoccupied": {
       "d": "un|oc+cup-i-ed"
+    },
+    "crack": {
+      "d": "crack"
+    },
+    "cracked": {
+      "d": "crack-ed"
+    },
+    "cracks": {
+      "d": "crack-s"
+    },
+    "cracking": {
+      "d": "crack-ing"
+    },
+    "cracker": {
+      "d": "crack-er"
+    },
+    "crackers": {
+      "d": "crack-er-s"
+    },
+    "crackdown": {
+      "d": "crack+down"
+    },
+    "crackhead": {
+      "d": "crack-head"
+    },
+    "firecracker": {
+      "d": "fire+crack"
+    },
+    "nutcracker": {
+      "d": "nut+crack"
+    },
+    "flow": {
+      "d": "flow"
+    },
+    "flowed": {
+      "d": "flow-ed"
+    },
+    "flows": {
+      "d": "flow-s"
+    },
+    "flowing": {
+      "d": "flow-ing"
+    },
+    "flower": {
+      "d": "flower"
+    },
+    "flowers": {
+      "d": "flower-s"
+    },
+    "flowering": {
+      "d": "flower-ing"
+    },
+    "flowery": {
+      "d": "flower-y"
+    },
+    "deflower": {
+      "d": "de|flower"
+    },
+    "sunflower": {
+      "d": "sun+flower"
+    },
+    "wallflower": {
+      "d": "wall+flower"
+    },
+    "coneflower": {
+      "d": "con-e|flower"
+    },
+    "overflow": {
+      "d": "over|flow"
+    },
+    "inflow": {
+      "d": "in|flow"
+    },
+    "outflow": {
+      "d": "out|flow"
+    },
+    "airflow": {
+      "d": "a-ir|flow"
     }
   },
   "partial词": {
