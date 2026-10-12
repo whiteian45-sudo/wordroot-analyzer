@@ -1974,6 +1974,9 @@
     },
     "grains": {
       "d": "grain-s"
+    },
+    "anastrophe": {
+      "d": "ana|strophe"
     }
   },
   "partial词": {
@@ -2073,9 +2076,6 @@
       "d": null
     },
     "dorough": {
-      "d": null
-    },
-    "anastrophe": {
       "d": null
     },
     "retropatellar": {

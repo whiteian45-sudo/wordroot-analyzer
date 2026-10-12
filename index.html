@@ -2204,6 +2204,33 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 3（2026-10-13）：Webster 词表体检的"真前缀 + 缺词根"一族。
+     对读法为 partial 的词，用它的 prefix/suffixes 反推中间那截未知词干作为新词根；
+     释义取最短来源词的 ECDICT 释义，语源语言按前缀猜希腊/拉丁。
+     机械切分出 78 条 → 硬规则剔 40 条（来源是屈折形式 / 词根本身是常见词 / 双辅音开头 /
+     以词缀结尾 / 太短）→ 人工从 38 条里只留干净词根 17 条，碎片一律不要
+     （bolical←diabolical、tagonist←protagonist、chondriac←hypochondriac 这类）。
+     测量（扫含这些词根的 534 词）：由无到有 371 | 丢失 0 | 改写 23。
+     覆盖 persuade/dissuade、condemn、consult、symptom、epitaph、discriminate、
+     antebellum、concoct、catastrophe、conceal、triptych、concrete、subjugate、
+     dysphagia、dyslexia、dysplasia、dissipate。 */
+  "suade": ["vt. 劝, 使相信, 恳求, 敦促, 说服；v", ["persuade", "dissuade"], {"lang": "拉丁语", "word": "suade"}],
+  "bellum": ["a. 战前的, 南北战争前的", ["antebellum"], {"lang": "拉丁语", "word": "bellum"}],
+  "demn": ["vt. 判刑, 责备, 谴责；[法] 定罪, 判", ["condemn"], {"lang": "拉丁语", "word": "demn"}],
+  "criminate": ["v. 区别, 差别待遇", ["discriminate"], {"lang": "拉丁语", "word": "criminate"}],
+  "ptom": ["n. 症状, 征候, 征兆；[医] 症状", ["symptom"], {"lang": "希腊语", "word": "ptom"}],
+  "sult": ["vi. 商讨, 商量, 协商, 会诊；vt. 向", ["consult"], {"lang": "拉丁语", "word": "sult"}],
+  "taph": ["n. 墓志铭, 碑文", ["epitaph"], {"lang": "希腊语", "word": "taph"}],
+  "sipate": ["vt. 散失, 驱散, 浪费；vi. 消散, 放", ["dissipate"], {"lang": "拉丁语", "word": "sipate"}],
+  "phagia": ["n. 咽下困难, 吞咽困难；[医] 咽下困难", ["dysphagia"], {"lang": "希腊语", "word": "phagia"}],
+  "lexia": ["n. 诵读困难；[医] 诵读困难", ["dyslexia"], {"lang": "希腊语", "word": "lexia"}],
+  "plasia": ["n. 发育异常, 发育不良；[医] 发育异常, ", ["dysplasia"], {"lang": "希腊语", "word": "plasia"}],
+  "coct": ["vt. 调合, 捏造, 编造；[建] 调制, 混", ["concoct"], {"lang": "拉丁语", "word": "coct"}],
+  "strophe": ["n. 撇号, 呼语法", ["apostrophe"], {"lang": "希腊语", "word": "strophe"}],
+  "ceal": ["vt. 隐藏, 掩盖, 隐瞒；[法] 隐瞒, 隐", ["conceal"], {"lang": "拉丁语", "word": "ceal"}],
+  "crete": ["n. 凝结物, 混凝土；a. 具体的, 实在的,", ["concrete"], {"lang": "拉丁语", "word": "crete"}],
+  "ptych": ["n. 三张相联的图画, 三幅一联", ["triptych"], {"lang": "拉丁语", "word": "ptych"}],
+  "jugate": ["vt. 征服, 使服从, 抑制, 克制", ["subjugate"], {"lang": "拉丁语", "word": "jugate"}],
   /* 低匹配误拆补根（2026-10-03，--audit 分诊）：这一批都是「引擎把基本词当构件」的误拆
      （abrasion→a|brae+s+ion、traditional→trade+ition+al、tremendous→tree+mend+ous…），
      补根让正确读法存在，比 ROOT_BLOCK 打成 MISS 更好（补数据优于拦截）。
