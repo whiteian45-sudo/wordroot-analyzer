@@ -5237,6 +5237,15 @@ function findCognates(word) {
    说明：已出现在 ROOTS 中的拉丁/希腊词根不再重复收录
    ============================================================ */
 const BASEWORDS = {
+  /* trace / place 登记为基本词（2026-10-13，用户报 tracks/races 那类变形）：
+     两个都是极常见的词，但一个什么表都不在（trace）、一个只在词根表（place），
+     于是变形剥完后只能落到"长得像的词根"上：traces→trac-es（trac 拉）、placed→plac-ed（plac 抚慰）。
+     试过把「去 e 还原」扩到词根表 —— 扫 25546 个 -ed/-ing 词，虽然 55 处转正、0 丢失，
+     但 298 处改写里冒出约 25 处**假词干**（cramped→crampe-ed、crested→creste-ed、
+     evening→e|vene-ing），因为词根表里有 crampe/creste/corne/evene 这类冷僻词根也会被命中，
+     数据不支持，撤回，改走逐词登记。 */
+  "trace": "痕迹；追踪；vt. 追踪、描绘",
+  "place": "地方；位置；vt. 放置",
   /* 2026-10-12 用户报 crack / flowed：两个常见词既不在词根表也不在基本词表，
      于是 crack→无拆解、cracked→`-ed|??crack`（"未识别词干"），flow 同理。
      它们都是**日耳曼语单词素词**（crack ← 古英语 cracian 拟声；flow ← 古英语 flōwan），

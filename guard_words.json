@@ -1767,6 +1767,69 @@
     },
     "opponents": {
       "d": "op|pon-ent-s"
+    },
+    "trace": {
+      "d": "trace"
+    },
+    "tracing": {
+      "d": "trace-ing"
+    },
+    "traced": {
+      "d": "trace-ed"
+    },
+    "tracer": {
+      "d": "trace-er"
+    },
+    "tracers": {
+      "d": "trace-er-s"
+    },
+    "place": {
+      "d": "place"
+    },
+    "places": {
+      "d": "place-s"
+    },
+    "placing": {
+      "d": "place-ing"
+    },
+    "placed": {
+      "d": "place-ed"
+    },
+    "replace": {
+      "d": "re|place"
+    },
+    "replaced": {
+      "d": "re|place-ed"
+    },
+    "replacing": {
+      "d": "re|place-ing"
+    },
+    "misplaced": {
+      "d": "mis|place-ed"
+    },
+    "unplaced": {
+      "d": "un|place-ed"
+    },
+    "displaced": {
+      "d": "dis|place-ed"
+    },
+    "races": {
+      "d": "race-s"
+    },
+    "racing": {
+      "d": "race-ing"
+    },
+    "raced": {
+      "d": "race-ed"
+    },
+    "tracks": {
+      "d": "track-s"
+    },
+    "tracking": {
+      "d": "track-ing"
+    },
+    "tracked": {
+      "d": "track-ed"
     }
   },
   "partial词": {
