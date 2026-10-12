@@ -2371,6 +2371,15 @@ const ROOTS = {
      变为 pauper-ized，是改善）。 */
   "pover": ["贫穷", ["impoverish", "poverty"], {"lang": "拉丁语", "word": "pauper", "note": "古法语 povre；与 pauper 同源"}],
   "pauper": ["贫穷、穷人", ["pauper", "pauperize", "pauperism"], {"lang": "拉丁语", "word": "pauper"}],
+  /* sanctity 族（2026-10-12 用户报词）：sanctity→`san|??ctity`（san 被当前缀剥掉），
+     整族 sanctify / sanctification / sanctimonious / sanctuary / sanctum 都是 `san|??ct*`，
+     sacrosanct→`sacr|??osanct`；词根表里 sacr 有、**sanct 没有**。
+     真词源：拉丁 **sanctus**（神圣，sancire 祝圣的过去分词）；Etymonline 还特意写 "see saint"，
+     所以 saint 是同一家，一并补上（来源词都写 sanctus，靠同源自动关联成一家）。
+     实测含 sanct/saint/sacro 的 180 词：**由无到有 100、丢失 0、改写 0**。
+     顺带修好：sanction→sanct-ion、nonsanctioned、resanctify、outsaint、sainted 等一整片。 */
+  "sanct": ["神圣", ["sanctity", "sanctify", "sanctuary"], {"lang": "拉丁语", "word": "sanctus", "note": "sancire（祝圣）的过去分词"}],
+  "saint": ["圣人、神圣的", ["saint", "saintly", "sainthood"], {"lang": "拉丁语", "word": "sanctus"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -8146,6 +8155,7 @@ const MORPH_EN_EXTRA = {
   "bion": "living thing, organism (Greek bion, neuter of bios)", "biont": "individual organism",
   "cup": "seize, take (weakened form of Latin capere, as in occupy)",
   "pover": "poor (Old French povre, from Latin pauper)", "pauper": "poor, needy (Latin pauper)",
+  "sanct": "holy, sacred (Latin sanctus, past participle of sancire)", "saint": "holy person (Latin sanctus)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
