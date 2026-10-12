@@ -1827,6 +1827,11 @@ const PREFIXES = {
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
+  /* 批次 5 第二片：补 -um（拉丁中性名词词尾；helium/sternum/forum/spectrum/dictum 一族）。
+     实测扫 274 个 -um 词：**由无到有 49、丢失 0、改写 7**，改写多数是改好
+     （album: al|bum→alb-um、medium: med-ium→medi-um、bacterium→bacteri-um），
+     转正例 dictum→dict-um、cranium→crani-um、cerebrum→cerebr-um、arboretum→arbor-et-um。 */
+  "um": "名词后缀，拉丁中性词尾",
   /* 批次 5（2026-10-13）：补 -ator（curator/spectator/radiator/predator 一族）。
      -atory 本来就有，-ator 缺，于是这族词全读成 `curate-or` / `pre|date-or` / `reply+cat-or` 之类。
      实测扫 488 个 -ator/-atory 词：**由无到有 109、丢失 0、改写 36**，改写绝大多数是改好
@@ -8554,6 +8559,7 @@ const MORPH_EN_EXTRA = {
   'penna': 'feather, pen (Latin penna)',
   "trick": "trick, deceit (Latin tricae, trifles)", "tricki": "tricky (comparative stem)",
   "ator": "agent noun suffix (Latin -ator)",
+  "um": "neuter noun ending (Latin -um)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
