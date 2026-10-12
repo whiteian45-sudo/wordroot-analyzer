@@ -1698,6 +1698,75 @@
     },
     "predries": {
       "d": "pred-ry-es"
+    },
+    "penalties": {
+      "d": "pen-al-ty-es"
+    },
+    "penalty": {
+      "d": "pen-al-ty"
+    },
+    "penal": {
+      "d": "pen-al"
+    },
+    "penalize": {
+      "d": "pen-al-ize"
+    },
+    "penalized": {
+      "d": "pen-al-ized"
+    },
+    "penance": {
+      "d": "pen-ance"
+    },
+    "penances": {
+      "d": "pen-ance-s"
+    },
+    "penitent": {
+      "d": "pen-it-ent"
+    },
+    "penitence": {
+      "d": "pen-it-ence"
+    },
+    "penitentiary": {
+      "d": "pen-it-ent-i-ary"
+    },
+    "penology": {
+      "d": "pen-ology"
+    },
+    "peninsula": {
+      "d": "pen+insula"
+    },
+    "peninsulas": {
+      "d": "pen+insula-s"
+    },
+    "penultimate": {
+      "d": "pen+ultim-ate"
+    },
+    "penultimately": {
+      "d": "pen+ultim-ate-ly"
+    },
+    "penis": {
+      "d": "pen-is"
+    },
+    "penile": {
+      "d": "pen-ile"
+    },
+    "penmanship": {
+      "d": "pen-manship"
+    },
+    "claimed": {
+      "d": "claim-ed"
+    },
+    "claiming": {
+      "d": "claim-ing"
+    },
+    "claim": {
+      "d": "claim"
+    },
+    "removing": {
+      "d": "re|move-ing"
+    },
+    "opponents": {
+      "d": "op|pon-ent-s"
     }
   },
   "partial词": {

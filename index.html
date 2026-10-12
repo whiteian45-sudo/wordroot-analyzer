@@ -4306,6 +4306,15 @@ function baseSrc(morph) {
    拉丁 pes 脚（pedometer/pedometry/pedobarometer）。 */
 const PEDO_CHILD = /^ped(ophi|odont|obapt|omorph|ogam)/;
 const PEDO_FOOT = /^pedo(metr|meter|baro|dynamo)/;
+/* pen 这个拼写底下有四个来源（2026-10-13，用户报 penalties）：
+     poena（惩罚）→ penal / penalty / penance / penitent / penology
+     penis（尾巴）→ penis / penile
+     penna（羽毛→笔）→ pen / penmanship / penful / pencil
+     paene（几乎）→ peninsula / penultimate（默认这一支）
+   与 PEDO_* 同一口径：morphSource 分流来源、演变链改释义、同根词按 sense 过滤。 */
+const PEN_POENA = /^(penal|penalt|penanc|penit|penolog|poen)/;
+const PEN_PENIS = /^(penis|penile)/;
+const PEN_PENNA = /^(penman|penful|pencil|pen$)/;
 
 /* 词素来源（带词形 w，为了按位置分流同形异源的词素）。
    eur 一个词素形背两个词源：词首是「欧洲」（eurocentrism/eurozone，词根表里有权威来源 Europa），
@@ -4370,6 +4379,9 @@ function morphSource(m, w) {
   const src = own(MORPH_SRC, m) ? MORPH_SRC[m] : null;
   if (m === 'pedo') {
     const ww = String(w || '');
+    if (PEN_POENA.test(ww)) return { lang: '拉丁语', word: 'poena', note: '惩罚；与 paene（几乎）同形异源' };
+    if (PEN_PENIS.test(ww)) return { lang: '拉丁语', word: 'penis', note: '尾巴；与 paene（几乎）、poena（惩罚）同形异源' };
+    if (PEN_PENNA.test(ww)) return { lang: '拉丁语', word: 'penna', note: '羽毛→笔；与上面几支同形异源' };
     if (PEDO_CHILD.test(ww)) return { lang: '希腊语', word: 'pais', note: '儿童的构词形式，与表土壤的 pedon 同形异源' };
     if (PEDO_FOOT.test(ww)) return { lang: '拉丁语', word: 'pes', note: '脚的构词形式，与表土壤的 pedon 同形异源' };
   }
@@ -5102,6 +5114,11 @@ function buildIndex() {
    pedology 一起列出来，查 poseur（法语后缀 -eur）会列出 eurozone。这里按词形把"另一支"剔掉，
    与 morphSource / 三色块 / PEDO_* 的分流保持同一口径。 */
 function homographMateOk(word, morph, mate) {
+  if (morph === 'pen') {
+    const sense = x => (PEN_POENA.test(x) ? 'poena'
+      : (PEN_PENIS.test(x) ? 'penis' : (PEN_PENNA.test(x) ? 'penna' : 'paene')));
+    return sense(word) === sense(mate);
+  }
   if (morph === 'pedo') {
     const sense = x => (PEDO_CHILD.test(x) ? 'child' : (PEDO_FOOT.test(x) ? 'foot' : 'soil'));
     return sense(word) === sense(mate);
@@ -7214,7 +7231,19 @@ function decompose(w, depth) {
       best.set(key, c);
     }
   }
-  return [...best.values()].sort((a, b) => b.score - a.score)[0];
+  const winner = [...best.values()].sort((a, b) => b.score - a.score)[0];
+  /* pen 的释义按词形分流（2026-10-13）：三色块直接用词根对象的释义，
+     所以必须在收口处改写，只改演变链不够。**复制对象**再改——词根对象是共享的，
+     原地改会把 penalty 的「惩罚」漏给 peninsula。与 morphSource / homographMateOk 同口径。 */
+  if (winner) {
+    winner.roots = winner.roots.map(r => {
+      if (r.m !== 'pen') return r;
+      const sense = PEN_POENA.test(w) ? '惩罚'
+        : (PEN_PENIS.test(w) ? '尾巴' : (PEN_PENNA.test(w) ? '羽毛、笔' : ''));
+      return sense ? { ...r, meaning: sense } : r;
+    });
+  }
+  return winner;
 }
 
 /* 把一段字母拆成 2~3 个已知词根（支持复合词和连接元音） */
@@ -7724,6 +7753,11 @@ function morphBlockHTML(w, bd) {
      这里按词形改掉，英文模式同样走别名键（paed→child、ped→foot）。 */
   for (const cp of chainParts) {
     if (cp.m !== 'pedo') continue;
+    if (cp.m === 'pen') {
+      if (PEN_POENA.test(ww)) cp.meaning = gl('poena', '惩罚');
+      else if (PEN_PENIS.test(ww)) cp.meaning = gl('penis_sense', '尾巴');
+      else if (PEN_PENNA.test(ww)) cp.meaning = gl('penna', '羽毛、笔');
+    }
     if (PEDO_CHILD.test(ww)) cp.meaning = gl('paed', '儿童');
     else if (PEDO_FOOT.test(ww)) cp.meaning = gl('ped', '脚');
   }
@@ -8194,6 +8228,8 @@ const MORPH_EN_EXTRA = {
   "pover": "poor (Old French povre, from Latin pauper)", "pauper": "poor, needy (Latin pauper)",
   "sanct": "holy, sacred (Latin sanctus, past participle of sancire)", "saint": "holy person (Latin sanctus)",
   "flower": "flower (Latin flos, florem)",
+  'poena': 'penalty, punishment (Latin poena)', 'penis_sense': 'tail (Latin penis)',
+  'penna': 'feather, pen (Latin penna)',
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
