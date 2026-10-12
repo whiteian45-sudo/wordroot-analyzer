@@ -1422,6 +1422,78 @@
     },
     "presanctify": {
       "d": "pre|sanct-ify"
+    },
+    "sanctified": {
+      "d": "sanct-ify-ed"
+    },
+    "sanctifies": {
+      "d": "sanct-ify-es"
+    },
+    "justified": {
+      "d": "just-ify-ed"
+    },
+    "unjustified": {
+      "d": "un|just-ify-ed"
+    },
+    "satisfied": {
+      "d": "satis-fy-ed"
+    },
+    "unsatisfied": {
+      "d": "un|satis-fy-ed"
+    },
+    "dissatisfied": {
+      "d": "dis|satis-fy-ed"
+    },
+    "terrified": {
+      "d": "terr-ify-ed"
+    },
+    "signified": {
+      "d": "sign-ify-ed"
+    },
+    "dignified": {
+      "d": "dign-ify-ed"
+    },
+    "undignified": {
+      "d": "und+ign-ify-ed"
+    },
+    "citified": {
+      "d": "cit-ify-ed"
+    },
+    "applied": {
+      "d": "ap|ply-ed"
+    },
+    "misapplied": {
+      "d": "mis-ap|ply-ed"
+    },
+    "reapplied": {
+      "d": "re-ap|ply-ed"
+    },
+    "unapplied": {
+      "d": "un-ap|ply-ed"
+    },
+    "preapplied": {
+      "d": "pre-ap|ply-ed"
+    },
+    "specified": {
+      "d": "specify-ed"
+    },
+    "unspecified": {
+      "d": "un|specify-ed"
+    },
+    "modified": {
+      "d": "modify-ed"
+    },
+    "unmodified": {
+      "d": "un|modify-ed"
+    },
+    "identified": {
+      "d": "ident-ify-ed"
+    },
+    "unidentified": {
+      "d": "uni+ident-ify-ed"
+    },
+    "unoccupied": {
+      "d": "un|oc+cup-i-ed"
     }
   },
   "partial词": {

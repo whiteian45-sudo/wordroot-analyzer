@@ -7091,6 +7091,28 @@ function decompose(w, depth) {
     // （aerophoto 的 aero|photo→aero|phot-o、albino 的 alb+ino→albin-o），只留给下面 3.5 兜底
     if (suf === 'o') continue;
     const rest = w.slice(0, w.length - suf.length);
+    /* y->i 还原，只追加候选（2026-10-12）：sanctified / applies / justified 这类 y 结尾词，
+       y->i 的拼写变化让 rest 变成 sanctifi / appli，拆不出来（-ied / -ies 不在后缀表里）。
+       把结尾 i 换回 y 试一次，能完整拆解就额外推一个候选——原来那条路径照走，
+       不会像第一版（直接替换 rest）那样顶掉 arteri-es 这类正确读法（那版丢了 8 个词）。
+       再加一道闸：只有原 rest 拆不动时才追加，否则 unmarried 的 un|marry-ed 会被换成 un|mar-ry-ed。
+       只认非基本词根的拆解，避免引入基本词词根的假结构。
+       实测 -ies/-ied 结尾词 5653 个：由无到有 1023、丢失 0、改写 12（多数为改善）。 */
+    if (/i$/.test(rest) && (suf === 'ed' || suf === 'es' || suf === 's') && !decompose(rest, depth + 1)) {
+      const subY = decompose(rest.slice(0, -1) + 'y', depth + 1);
+      if (subY && subY.roots.length && !subY.roots.some(r => r.isBase)) {
+        const rootLenY = subY.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
+        candidates.push({
+          prefix: subY.prefix,
+          roots: subY.roots,
+          suffixes: (subY.suffixes || []).concat([{ m: suf, meaning: sufM }]),
+          score: rootLenY * 2 + (subY.prefix ? subY.prefix.m.length * SCORE.PRE : 0)
+            - (subY.roots.length + subY.suffixes.length) * SCORE.MORPH
+            + (subY.suffixes.length + 1) * SCORE.SUF
+            - (subY.roots.some(r => r.flex) ? SCORE.FLEX : 0)
+        });
+      }
+    }
     SUF_CTX = suf;   // 剥后缀期间给递归一个"正在剥什么"的上下文，供 baseRoot 判断能否用批量基词
     // 弱后缀(s/es/e)只允许直接接在整词词根后，避免过度拆分(如 revers→rever+s 假拆分)
     // 复数s兜底：剥掉s/es后剩余部分能完整拆解才放行(acquaintances→quaint+ance+s)。防误伤三门槛：
