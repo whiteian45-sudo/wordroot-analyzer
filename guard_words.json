@@ -1977,6 +1977,12 @@
     },
     "anastrophe": {
       "d": "ana|strophe"
+    },
+    "eviscerated": {
+      "d": "eviscerate-ed"
+    },
+    "incarcerated": {
+      "d": "incarcerate-ed"
     }
   },
   "partial词": {
@@ -1998,10 +2004,6 @@
     "coops": {
       "d": null,
       "p": null
-    },
-    "eviscerated": {
-      "d": null,
-      "p": "-ed|??eviscerat"
     },
     "isolate": {
       "d": null,
@@ -2085,9 +2087,6 @@
       "d": null
     },
     "zoonose": {
-      "d": null
-    },
-    "incarcerated": {
       "d": null
     },
     "aerophoto": {
