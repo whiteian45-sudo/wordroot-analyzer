@@ -1827,6 +1827,12 @@ const PREFIXES = {
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
+  /* 批次 5（2026-10-13）：补 -ator（curator/spectator/radiator/predator 一族）。
+     -atory 本来就有，-ator 缺，于是这族词全读成 `curate-or` / `pre|date-or` / `reply+cat-or` 之类。
+     实测扫 488 个 -ator/-atory 词：**由无到有 109、丢失 0、改写 36**，改写绝大多数是改好
+     （predator: pre|date-or→pred-ator、replicator: reply+cat-or→re|plic-ator、
+     animator: any+mat-or→anim-ator、demonstrator→de|monstr-ator）。 */
+  "ator": "名词后缀，表施动者、器具（拉丁 -ator）",
   "acea": "动物类群（分类学）",
   "aceae": "含种子植物的科（分类学）",
   "aceous": "构成形容词（…性质的）",
@@ -8547,6 +8553,7 @@ const MORPH_EN_EXTRA = {
   'poena': 'penalty, punishment (Latin poena)', 'penis_sense': 'tail (Latin penis)',
   'penna': 'feather, pen (Latin penna)',
   "trick": "trick, deceit (Latin tricae, trifles)", "tricki": "tricky (comparative stem)",
+  "ator": "agent noun suffix (Latin -ator)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
