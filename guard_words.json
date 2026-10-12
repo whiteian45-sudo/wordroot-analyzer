@@ -1454,7 +1454,7 @@
       "d": "dign-ify-ed"
     },
     "undignified": {
-      "d": "und+ign-ify-ed"
+      "d": "un|dign-ify-ed"
     },
     "citified": {
       "d": "cit-ify-ed"
@@ -1478,7 +1478,7 @@
       "d": "specify-ed"
     },
     "unspecified": {
-      "d": "un|specify-ed"
+      "d": "un|spec-ify-ed"
     },
     "modified": {
       "d": "modify-ed"
@@ -1490,7 +1490,7 @@
       "d": "ident-ify-ed"
     },
     "unidentified": {
-      "d": "uni+ident-ify-ed"
+      "d": "un|ident-ify-ed"
     },
     "unoccupied": {
       "d": "un|oc+cup-i-ed"
@@ -1572,6 +1572,132 @@
     },
     "airflow": {
       "d": "a-ir|flow"
+    },
+    "occupies": {
+      "d": "oc+cup-y-es"
+    },
+    "parties": {
+      "d": "part-y-es"
+    },
+    "species": {
+      "d": "spec-y-es"
+    },
+    "veterinaries": {
+      "d": "veterin-ary-es"
+    },
+    "companies": {
+      "d": "com|pan-y-es"
+    },
+    "salaried": {
+      "d": "sal-ary-ed"
+    },
+    "histories": {
+      "d": "histor-y-es"
+    },
+    "allegories": {
+      "d": "allegor-y-es"
+    },
+    "intensified": {
+      "d": "in|tens-ify-ed"
+    },
+    "intensifies": {
+      "d": "in|tens-ify-es"
+    },
+    "nonsalaried": {
+      "d": "non|sal-ary-ed"
+    },
+    "unsalaried": {
+      "d": "un|sal-ary-ed"
+    },
+    "primaried": {
+      "d": "prim-ary-ed"
+    },
+    "inventoried": {
+      "d": "in|vent-ory-ed"
+    },
+    "necropsied": {
+      "d": "necro+opsy-ed"
+    },
+    "autopsied": {
+      "d": "auto+opsy-ed"
+    },
+    "liveried": {
+      "d": "liv-ery-ed"
+    },
+    "traceried": {
+      "d": "trac-ery-ed"
+    },
+    "vanitied": {
+      "d": "van-ity-ed"
+    },
+    "nectaried": {
+      "d": "nect-ary-ed"
+    },
+    "topiaried": {
+      "d": "top-i-ary-ed"
+    },
+    "territoried": {
+      "d": "terr-it-ory-ed"
+    },
+    "necessitied": {
+      "d": "necess-ity-ed"
+    },
+    "prehistories": {
+      "d": "pre|hist-ory-es"
+    },
+    "underhistories": {
+      "d": "under|hist-ory-es"
+    },
+    "unhistories": {
+      "d": "un|hist-ory-es"
+    },
+    "subcities": {
+      "d": "sub|cit-y-es"
+    },
+    "megacities": {
+      "d": "mega|cit-y-es"
+    },
+    "minicities": {
+      "d": "min-ic-ity-es"
+    },
+    "outcities": {
+      "d": "out+cit-y-es"
+    },
+    "intercities": {
+      "d": "inter+cit-y-es"
+    },
+    "opacities": {
+      "d": "op-a|cit-y-es"
+    },
+    "nonopacities": {
+      "d": "non-op-a|cit-y-es"
+    },
+    "precocities": {
+      "d": "pre-co|cit-y-es"
+    },
+    "basicities": {
+      "d": "basic-ity-es"
+    },
+    "nordicities": {
+      "d": "nor|dic-ity-es"
+    },
+    "sporadicities": {
+      "d": "spor-a|dic-ity-es"
+    },
+    "andries": {
+      "d": "andr-y-es"
+    },
+    "outsallies": {
+      "d": "out|sal-ly-es"
+    },
+    "outcries": {
+      "d": "out|cry-es"
+    },
+    "remarries": {
+      "d": "re|mar-ry-es"
+    },
+    "predries": {
+      "d": "pred-ry-es"
     }
   },
   "partial词": {
