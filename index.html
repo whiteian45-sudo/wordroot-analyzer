@@ -1827,6 +1827,17 @@ const PREFIXES = {
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
+  /* 批次 5 第四片：补五条后缀，实测全部**丢失 0**。 */
+  /* pedestrian→ped-estrian、equestrian→equestr-estrian（扫 5 词，转正 5、丢失 0） */
+  "estrian": "名词/形容词后缀，表…的人（拉丁 -estris）",
+  /* medieval→medi-eval、primeval→prim-eval（扫 14 词，转正 6、丢失 0） */
+  "eval": "形容词后缀，表…时代的（拉丁 aevum 时代）",
+  /* sonata→son-ata、cantata→cant-ata（扫 37 词，转正 6、丢失 0） */
+  "ata": "名词后缀，表…的作品/集合（拉丁 -ata）",
+  /* cathedral→cat-hedral、polyhedral→poly-hedral（扫 3 词，转正 1、丢失 0） */
+  "hedral": "形容词后缀，表…面的（希腊 hedra 座位、面）",
+  /* annuity→ann-uity、gratuity→grat-uity（扫 34 词，转正 5、丢失 0、改写 3） */
+  "uity": "名词后缀，表性质、状态（拉丁 -uitas）",
   /* 批次 5 第三片：补 -ulate 与 -acy。
      -ical 本来就有（实测 751 词 0 变化）。
      -ulate：扫 107 词 → 由无到有 38、丢失 0、改写 2
@@ -8571,6 +8582,9 @@ const MORPH_EN_EXTRA = {
   "ator": "agent noun suffix (Latin -ator)",
   "um": "neuter noun ending (Latin -um)",
   "ulate": "verb suffix (Latin -ulare)", "acy": "noun suffix of state (Latin -acia)",
+  "estrian": "suffix of person (Latin -estris)", "eval": "suffix of age (Latin aevum)",
+  "ata": "noun suffix (Latin -ata)", "hedral": "suffix of faces (Greek hedra)",
+  "uity": "noun suffix of state (Latin -uitas)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
