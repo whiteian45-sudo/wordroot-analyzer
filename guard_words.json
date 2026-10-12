@@ -1317,6 +1317,57 @@
     },
     "cupcake": {
       "d": "cup+cake"
+    },
+    "impoverish": {
+      "d": "im|pover-ish"
+    },
+    "impoverished": {
+      "d": "im|pover-ish-ed"
+    },
+    "impoverishes": {
+      "d": "im|pover-ish-es"
+    },
+    "impoverishing": {
+      "d": "im|pover-ish-ing"
+    },
+    "impoverishment": {
+      "d": "im|pover-ish-ment"
+    },
+    "impoverisher": {
+      "d": "im|pover-ish-er"
+    },
+    "unimpoverished": {
+      "d": "un-im|pover-ish-ed"
+    },
+    "poverty": {
+      "d": "pover-ty"
+    },
+    "antipoverty": {
+      "d": "anti|pover-ty"
+    },
+    "pauper": {
+      "d": "pauper"
+    },
+    "paupers": {
+      "d": "pauper-s"
+    },
+    "pauperize": {
+      "d": "pauper-ize"
+    },
+    "pauperism": {
+      "d": "pauper-ism"
+    },
+    "pauperization": {
+      "d": "pauper-ization"
+    },
+    "pauperous": {
+      "d": "pauper-ous"
+    },
+    "depauperate": {
+      "d": "de|pauper-ate"
+    },
+    "dispauper": {
+      "d": "dis|pauper"
     }
   },
   "partial词": {

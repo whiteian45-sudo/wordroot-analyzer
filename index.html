@@ -2361,6 +2361,16 @@ const ROOTS = {
      它们来自拉丁 cupa（桶）/ cupere（渴望），与 capere 无关 —— 逐个加 ROOT_BLOCK 拦掉；
      cupped 原来读 cup-ed（正确），新词根会让它变成 cup+ped（ped 脚），也一并拦。 */
   "cup": ["抓、拿（cap 的变体）", ["occupy", "occupation", "occupant", "recuperate"], {"lang": "拉丁语", "word": "capere", "note": "capere（拿取）在复合词里的弱化形，如 occupy = oc- + cup + -y"}],
+  /* impoverished 族（2026-10-12 用户报词）：impoverished→`-ed|??impoverish`、
+     impoverish→`-ish|??impover`、poverty→`-ty|??pover`、pauper→`-er|??paup` —— 全族都断在 pover/paup 上。
+     **它自己的数据就写着答案**：enhanced 词源说"前缀 im- + 词根 **pover-**（贫穷）+ 后缀 -ish"，
+     Etymonline 说 from em- + **povre** "poor"，拉丁语 **pauper**。
+     补两条：pover（古法语 povre 那一支，管 impoverish/poverty）+
+     pauper（拉丁本形，管 pauper/pauperize/pauperism）；来源词都写 pauper，靠同源自动关联成一家。
+     实测含 pover/paup 的 74 词：由无到有 45、丢失 0、改写 2（pauperized 由 pauperize-ed
+     变为 pauper-ized，是改善）。 */
+  "pover": ["贫穷", ["impoverish", "poverty"], {"lang": "拉丁语", "word": "pauper", "note": "古法语 povre；与 pauper 同源"}],
+  "pauper": ["贫穷、穷人", ["pauper", "pauperize", "pauperism"], {"lang": "拉丁语", "word": "pauper"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -8133,6 +8143,7 @@ const MORPH_EN_EXTRA = {
   "dionys": "Dionysus, Dionysian (Greek Dionysos)", "dionysiac": "of Dionysus, frenzied",
   "bion": "living thing, organism (Greek bion, neuter of bios)", "biont": "individual organism",
   "cup": "seize, take (weakened form of Latin capere, as in occupy)",
+  "pover": "poor (Old French povre, from Latin pauper)", "pauper": "poor, needy (Latin pauper)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
