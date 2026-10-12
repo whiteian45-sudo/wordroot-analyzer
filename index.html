@@ -2385,6 +2385,16 @@ const ROOTS = {
      给 flower 一条真正的词根（拉丁 **flos / florem**，与 flor 同源）后它不再按基本词被罚分，
      flower / sunflower / deflower / flowery 全部回到正确读法；改写从 42 处降到 7 处。 */
   "flower": ["花；开花", ["flower", "flowers", "flowery", "sunflower"], {"lang": "拉丁语", "word": "flos", "note": "florem；与 flor 同源（floral / flourish）"}],
+  /* tricky 族（2026-10-12 用户报词）：整族都是 `tri||??ck*` —— trick 什么表都不在，
+     于是引擎先抢了前缀 tri-（三），剩下的 ck* 全不认识：tricky→tri||??cky、
+     trick→tri||??ck、tricks/tricked/tricking 同样。
+     词源：拉丁 **tricae**（琐事、诡计）→ 古法语 trichier → 英语 trick。
+     补两条：trick（主根）+ tricki（tricky 的 y→i 词干，管 trickier/trickiest/trickily/
+     trickiness——比照项目里已有的 happi / gori / wavi）。来源词都写 tricae，靠同源自动关联成一家。
+     实测含 trick 的 91 词：由无到有 47、丢失 0、改写 2（trickling 被 -ling 抢成 trick-ling，
+     已用 ROOT_BLOCK 拦回 trickle-ing）。 */
+  "trick": ["诡计、戏法；vt. 欺骗", ["trick", "tricks", "tricky", "trickery"], {"lang": "拉丁语", "word": "tricae", "note": "琐事、诡计；经古法语 trichier 入英语"}],
+  "tricki": ["棘手的、狡猾的（tricky 的 y→i 词干）", ["trickier", "trickiest", "trickily"], {"lang": "拉丁语", "word": "tricae", "note": "tricky 的 y→i 词干"}],
   "abdomin": ["腹部", ["abdominal","abdominousness"]],
   "abort": ["流产、夭折", ["abortive", "abortion", "abort"], {"lang": "拉丁语", "word": "abortus"}],
   "acanth": ["棘、刺", ["acanthine","acanthion"], {"lang": "希腊语", "word": "akantha"}],
@@ -6886,6 +6896,8 @@ const ROOT_BLOCK = {
   'pyroninophilia': ['nine'], 'dermatophiliasis': ['philia'],
   'unduly': ['undul'],   // unduly = undue + ly，跟 unda（波浪）无关
   'wavered': ['red'],    // waver+ed，别被 wave+red（red=红）抢走
+  'trickling': ['ling'], 'tricklingly': ['ling'],   // trickle+ing，别被 -ling（小…）抢走
+
   'enrolling': ['ling'], 'disenrolling': ['ling'],   // enroll+ing，别把 -ling（小…）当后缀
   'cupped': ['ped'],   // 杯子捧起来，不是 cup+ped（ped 脚）
   'cup': ['cup'], 'cups': ['cup'], 'cupid': ['cup'], 'cupidity': ['cup'],
@@ -8248,6 +8260,7 @@ const MORPH_EN_EXTRA = {
   "flower": "flower (Latin flos, florem)",
   'poena': 'penalty, punishment (Latin poena)', 'penis_sense': 'tail (Latin penis)',
   'penna': 'feather, pen (Latin penna)',
+  "trick": "trick, deceit (Latin tricae, trifles)", "tricki": "tricky (comparative stem)",
   // 前缀（1）
   "deca": "ten",
   // 后缀（8）
