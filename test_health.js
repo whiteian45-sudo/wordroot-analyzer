@@ -91,6 +91,21 @@ out.smoke = { n: W_IN.length, miss: miss, part: part, bad: bad.slice(0, 8), badN
 var probeWords = ['transport','delicti','contrarian','pedophilia','pineapple','sequitur','cryptography','biopsy','necropolis','photography'];
 var t0 = Date.now();
 for (var i2 = 0; i2 < 2000; i2++) decompose(probeWords[i2 % probeWords.length], 0);
+/* 同形异源释义断言（2026-10-13）：pedo / pen 这两组词根的释义是按词形分流的
+   （pedophilia 儿童 / pedology 土壤 / pedometer 脚；penalties 惩罚 / peninsula 几乎 /
+   penile 尾巴 / penmanship 羽毛笔）。守护表只记拆解结构、不记释义——这类回归它看不见，
+   而 2026-10-13 就真出现过（penalty 显示成「几乎」），所以补在这里。 */
+var HOMO = [
+  ['pedophilia', 'pedo', '儿童'], ['pedology', 'pedo', '土壤'], ['pedometer', 'pedo', '脚'],
+  ['penalties', 'pen', '惩罚'], ['peninsula', 'pen', '几乎'],
+  ['penile', 'pen', '尾巴'], ['penmanship', 'pen', '羽毛、笔']
+];
+out.homo = HOMO.map(function (row) {
+  var d = decompose(row[0], 0) || partialDecompose(row[0]);
+  var got = '';
+  if (d) { for (var hi = 0; hi < (d.roots || []).length; hi++) { if (d.roots[hi].m === row[1]) got = String(d.roots[hi].meaning || ''); } }
+  return [row[0], row[1], row[2], got];
+});
 out.perf = Date.now() - t0;
 JSON.stringify(out);
 `;
@@ -110,6 +125,10 @@ else say('✓ 危险词冒烟：' + r.danger.map(d => d[0]).join(' ') + ' 全部
 
 if (r.chainUndef.length) { fatal++; console.log('✗ 来源缺 word（演变链会渲染 undefined）: ' + r.chainUndef.join(' ')); }
 else say('✓ 词素来源：无「有语言无源词」的条目');
+
+const badHomo = r.homo.filter(h => h[3].indexOf(h[2]) < 0);
+if (badHomo.length) { fatal++; console.log('✗ 同形异源释义错误: ' + badHomo.map(h => h[0] + ' 的 ' + h[1] + ' 期望「' + h[2] + '」实得「' + h[3] + '」').join(' | ')); }
+else say('✓ 同形异源释义：pedo（儿童/土壤/脚）与 pen（惩罚/几乎/尾巴/羽毛笔）按词形分流正确');
 
 if (r.smoke.badN || r.smoke.errN) {
   fatal++;

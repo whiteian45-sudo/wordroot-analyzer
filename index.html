@@ -7237,10 +7237,19 @@ function decompose(w, depth) {
      原地改会把 penalty 的「惩罚」漏给 peninsula。与 morphSource / homographMateOk 同口径。 */
   if (winner) {
     winner.roots = winner.roots.map(r => {
-      if (r.m !== 'pen') return r;
-      const sense = PEN_POENA.test(w) ? '惩罚'
-        : (PEN_PENIS.test(w) ? '尾巴' : (PEN_PENNA.test(w) ? '羽毛、笔' : ''));
-      return sense ? { ...r, meaning: sense } : r;
+      if (r.m === 'pen') {
+        const sense = PEN_POENA.test(w) ? '惩罚'
+          : (PEN_PENIS.test(w) ? '尾巴' : (PEN_PENNA.test(w) ? '羽毛、笔' : ''));
+        return sense ? { ...r, meaning: sense } : r;
+      }
+      /* pedo 也有同样的问题，而且是**既有 bug**（2026-10-13 加断言时才暴露）：
+         morphSource 与演变链早就按词形分流了，但三色块直接取词根对象的释义，
+         于是 pedophilia 显示「土壤」、pedometer 也显示「土壤」。这里一并修掉。 */
+      if (r.m === 'pedo') {
+        const sense = PEDO_CHILD.test(w) ? '儿童' : (PEDO_FOOT.test(w) ? '脚' : '');
+        return sense ? { ...r, meaning: sense } : r;
+      }
+      return r;
     });
   }
   return winner;
