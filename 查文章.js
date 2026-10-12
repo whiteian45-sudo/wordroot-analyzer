@@ -124,7 +124,28 @@ lines.push('=== 全部词条（按出现顺序）===');
 rows.forEach(r => lines.push([LABEL[r.kind], r.w, r.text, r.gl ? '‖ ' + r.gl : ''].join('  ')));
 fs.writeFileSync(path.join(DIR, '查文章报告.txt'), lines.join('\n'), 'utf8');
 
-console.log('读入 ' + inPath + '：' + rows.length + ' 个不重复单词，可疑 ' + susp.length + ' 个');
+// ---------- 台账：跨文章累积、自动去重（判定列留空，由人工/助手填） ----------
+const LEDGER = path.join(DIR, '待修清单.md');
+const prev = fs.existsSync(LEDGER) ? fs.readFileSync(LEDGER, 'utf8') : '';
+const known = new Set((prev.match(/^\| `([^`]+)`/gm) || []).map(x => x.slice(3, -1)));
+const fresh = susp.filter(r => !known.has(r.w));
+if (fresh.length) {
+  let block = '';
+  if (!prev) {
+    block += '# 待修清单（文章体检累积）\n\n'
+      + '由 查文章.js 自动追加，跨文章去重。判定列留空，由助手逐条填：'
+      + '**正确 / 假阳性 / 待修（附原因）**。\n\n'
+      + '| 词 | 类型 | 当前读法 | 整词释义 | 来源文章 | 判定 |\n|---|---|---|---|---|---|\n';
+  }
+  const stamp = '（' + new Date().toISOString().slice(0, 10) + ' ' + path.basename(inPath) + '）';
+  block += '\n' + stamp + '\n\n';
+  fresh.forEach(r => {
+    block += '| `' + r.w + '` | ' + LABEL[r.kind] + ' | ' + r.text + ' | ' + (r.gl || '') + ' | ' + path.basename(inPath) + ' |  |\n';
+  });
+  fs.appendFileSync(LEDGER, block, 'utf8');
+}
+console.log('读入 ' + inPath + '：' + rows.length + ' 个不重复单词，可疑 ' + susp.length + ' 个'
+  + '（台账新增 ' + fresh.length + ' 条）');
 const by = {};
 susp.forEach(r => { by[r.kind] = (by[r.kind] || 0) + 1; });
 Object.keys(by).forEach(k => console.log('  ' + LABEL[k] + ' ' + by[k] + ' 个'));
