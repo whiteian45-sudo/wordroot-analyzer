@@ -2248,6 +2248,11 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：colostom / ileostom / myorrhaph。
+     测量：扫 5 → 由无到有 4、丢失 0、回归 0、吞并 0、改写 1。 */
+  "colostom": ["结肠造口", ["colostomy", "colostomies"], {"lang": "希腊语", "word": "kolon + stoma"}],
+  "ileostom": ["回肠造口", ["ileostomy", "ileostomies"], {"lang": "拉丁语", "word": "ileum + stoma"}],
+  "myorrhaph": ["肌缝合", ["myorrhaphy", "myorrhaphies"], {"lang": "希腊语", "word": "mys + rhaphe"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：stethoscop / kaleidoscop / polariscop。
      测量：扫 8 → 由无到有 7、丢失 0、回归 0、吞并 0、改写 1。 */
   "stethoscop": ["听诊器", ["stethoscope", "stethoscopic"], {"lang": "希腊语", "word": "stethos + skopein"}],
