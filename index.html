@@ -2248,6 +2248,23 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 25（2026-10-13，② 余量 · 第 6 批）：照"卡住的截.txt"**原样**挑的 13 条真派生词根：
+     mechan / veget / antagon / innov / narciss / ancest / hesit / irrit / duplic / qual / quant / nucle / reli。
+     修正：① 词根与卡住的截完全一致 ② 新词根吸收旧伪语素不算回归。
+     测量：扫 75 → 由无到有 61、丢失 0、回归 0、改写 2。 */
+  "mechan": ["机械；装置", ["mechanical", "mechanism", "mechanics"], {"lang": "希腊语", "word": "mekhane"}],
+  "veget": ["生长；有生气", ["vegetable", "vegetation", "vegetarian"], {"lang": "拉丁语", "word": "vegetare"}],
+  "antagon": ["对抗；争胜", ["antagonist", "antagonize", "antagonism"], {"lang": "希腊语", "word": "anti + agon"}],
+  "innov": ["更新；使新", ["innovate", "innovation", "innovative"], {"lang": "拉丁语", "word": "in + novus"}],
+  "narciss": ["水仙；自恋", ["narcissism", "narcissistic", "narcissus"], {"lang": "希腊语", "word": "Narkissos"}],
+  "ancest": ["先行者；祖先", ["ancestor", "ancestry", "ancestral"], {"lang": "拉丁语", "word": "antecessor"}],
+  "hesit": ["黏住；犹豫", ["hesitate", "hesitation", "hesitant"], {"lang": "拉丁语", "word": "haerere"}],
+  "irrit": ["激怒；刺激", ["irritate", "irritable", "irritation"], {"lang": "拉丁语", "word": "irritare"}],
+  "duplic": ["双重；复制", ["duplicate", "duplicity", "duplication"], {"lang": "拉丁语", "word": "duplex"}],
+  "qual": ["何种性质", ["quality", "qualify", "qualification"], {"lang": "拉丁语", "word": "qualis"}],
+  "quant": ["多少", ["quantity", "quantum", "quantify"], {"lang": "拉丁语", "word": "quantus"}],
+  "nucle": ["核；仁", ["nuclear", "nucleus", "nucleotide"], {"lang": "拉丁语", "word": "nucleus"}],
+  "reli": ["绑紧；依靠", ["reliance", "reliable", "religion"], {"lang": "拉丁语", "word": "religare"}],
   /* 批次 23（2026-10-13，② 余量 · 人工挑词源第 4 批）：entr / bapt / quar / util / nobil / nost / typh / reve / harmon / testim / patrim / matrim / acrim / parsim。
      三次机械失败的教训：真派生与"结尾长得像词缀"分不开 → 只人工挑，且不碰形态简单的常见词。
      测量：扫 50 词 → 由无到有 25、丢失 0、回归 0、改写 3。 */
