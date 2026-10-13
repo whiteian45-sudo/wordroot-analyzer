@@ -2248,6 +2248,12 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 31（2026-10-13，② 余量 · 第 12 批）：前缀**之后**那一截的高频词根（上轮否证给出的正确词干）：
+     spond / mitt。
+     四道护栏：由无到有>0 / 丢失 0 / 长词根横跨 0 / 吞并 0；已在表中则跳过。
+     测量：扫 19 → 由无到有 2、丢失 0、回归 0、吞并 0、改写 0。 */
+  "spond": ["承诺；倾注", ["respond", "correspond", "despondent"], {"lang": "拉丁语", "word": "spondere"}],
+  "mitt": ["送；放", ["transmit", "submit", "permit"], {"lang": "拉丁语", "word": "mittere"}],
   /* 批次 29（2026-10-13，② 余量 · 第 10 批）：fidel / pung / grav / simil / clar / cert / magn / liber。
      只取批次 28 里没吞前后缀的词源（brevit/verit/levi/unanim 那几条会吞 -ity / un-，已弃）。
      护栏新增：**语素数不得减少**（吞前后缀就会被拦）。
