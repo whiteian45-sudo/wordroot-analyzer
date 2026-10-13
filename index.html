@@ -2245,6 +2245,22 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 16（2026-10-13）：② 余量里**人工挑选**的真词源（机械规则分不开好坏，见批次 15 的教训）。
+     只取词源明确的 11 条：circul / eccentr / exerc / opin / integ / mixt / viol / pati / chamb /
+     emphas / angu。像 husband→husb（整词被切）这类一律不要。
+     测量面含"所有含该词根的精编词"，专查常见词有没有被切坏。
+     测量：扫 67 词 → 由无到有 41、丢失 0、改写 5。 */
+  "circul": ["圆；环", ["circular", "circulate", "circulation"], {"lang": "拉丁语", "word": "circulus"}],
+  "eccentr": ["偏离中心", ["eccentric", "eccentrical"], {"lang": "希腊语", "word": "ekkentros"}],
+  "exerc": ["练习；驱赶", ["exercise", "exercised"], {"lang": "拉丁语", "word": "exercere"}],
+  "opin": ["认为；意见", ["opinion", "opine"], {"lang": "拉丁语", "word": "opinari"}],
+  "integ": ["完整；未触动", ["integral", "integrate", "integrity"], {"lang": "拉丁语", "word": "integer"}],
+  "mixt": ["混合", ["mixture", "mixt"], {"lang": "拉丁语", "word": "mixtus"}],
+  "viol": ["暴力；紫", ["violate", "violet", "violence"], {"lang": "拉丁语", "word": "violare"}],
+  "pati": ["忍受；感受", ["patient", "passion"], {"lang": "拉丁语", "word": "pati"}],
+  "chamb": ["房间", ["chamber", "chambers"], {"lang": "拉丁语", "word": "camera"}],
+  "emphas": ["强调；显示", ["emphasis", "emphasize"], {"lang": "希腊语", "word": "emphasis"}],
+  "angu": ["痛苦；窄", ["anguish", "angle"], {"lang": "拉丁语", "word": "angere"}],
   /* 批次 10（2026-10-13）：释义正文"部分拆解"里抽出的词根。
      来源：webster_defs.txt 的部分拆解词 → 反推中间未知词干 → 质量过滤（≥4 字母、
      不双辅音开头、不以 -ly/-tion/-sion/-ish/-ing/-ed 结尾、不是常见词/词缀、表中没有）。
