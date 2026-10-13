@@ -2248,6 +2248,22 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 26（2026-10-13，② 余量 · 第 7 批）：legisl / medit / ornam / territ / ignom / navig / ceremoni / instru / toler / medic / senti / memor / celer。
+     词根与"卡住的截"完全一致；含批次 24 被误拦的 legisl/medit/ornam/territ（误报已修）。
+     测量：扫 83 → 由无到有 11、丢失 0、回归 0、改写 33。 */
+  "legisl": ["立法", ["legislate", "legislation", "legislative"], {"lang": "拉丁语", "word": "lex + latio"}],
+  "medit": ["沉思", ["meditate", "meditation", "meditative"], {"lang": "拉丁语", "word": "meditari"}],
+  "ornam": ["装饰", ["ornament", "ornamental", "ornamentation"], {"lang": "拉丁语", "word": "ornare"}],
+  "territ": ["土地", ["territory", "territorial"], {"lang": "拉丁语", "word": "territorium"}],
+  "ignom": ["耻辱", ["ignominy", "ignominious"], {"lang": "拉丁语", "word": "ignominia"}],
+  "navig": ["航行", ["navigate", "navigation", "navigable"], {"lang": "拉丁语", "word": "navigare"}],
+  "ceremoni": ["礼仪", ["ceremonial", "ceremonious"], {"lang": "拉丁语", "word": "caerimonia"}],
+  "instru": ["工具；建造", ["instrument", "instruct", "instruction"], {"lang": "拉丁语", "word": "instruere"}],
+  "toler": ["忍受", ["tolerate", "tolerance", "tolerant"], {"lang": "拉丁语", "word": "tolerare"}],
+  "medic": ["医", ["medical", "medicine", "medication"], {"lang": "拉丁语", "word": "medicus"}],
+  "senti": ["感觉", ["sentiment", "sentimental", "sentient"], {"lang": "拉丁语", "word": "sentire"}],
+  "memor": ["记忆", ["memory", "memorial", "memorize"], {"lang": "拉丁语", "word": "memor"}],
+  "celer": ["快速", ["accelerate", "celerity"], {"lang": "拉丁语", "word": "celer"}],
   /* 批次 25（2026-10-13，② 余量 · 第 6 批）：照"卡住的截.txt"**原样**挑的 13 条真派生词根：
      mechan / veget / antagon / innov / narciss / ancest / hesit / irrit / duplic / qual / quant / nucle / reli。
      修正：① 词根与卡住的截完全一致 ② 新词根吸收旧伪语素不算回归。
