@@ -2245,6 +2245,38 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 18（2026-10-13，② 余量·最后一轮）：人工挑词源的第 2 批，共 25 条。
+     全是词源明确的拉丁/希腊构词成分：experi / insur / intellig / behavi / traject /
+     stentor / impropri / univers / natur / cultiv / industri / academ / mediev / hospit /
+     polit / econom / philosoph / geograph / psycholog / technolog / sentenc / consequ /
+     eloqu / magnific / occup。
+     机械规则分不开好坏（批次 15/17 已两次证明并撤回），只有人工判词源安全。
+     测量面含源词变形 + 所有含该词根的精编词。
+     测量：扫 103 词 → 由无到有 17、丢失 0、改写 58。 */
+  "experi": ["试验；尝试", ["experiment", "experience"], {"lang": "拉丁语", "word": "experiri"}],
+  "insur": ["保险；使安全", ["insure", "insurance"], {"lang": "拉丁语", "word": "in + securus"}],
+  "intellig": ["理解；在…之间挑选", ["intelligence", "intelligible"], {"lang": "拉丁语", "word": "intellegere"}],
+  "behavi": ["举止；持有", ["behaviour", "behavioral"], {"lang": "古英语", "word": "be + habban"}],
+  "traject": ["投掷；横越", ["trajectory"], {"lang": "拉丁语", "word": "traicere"}],
+  "stentor": ["声音洪亮", ["stentorian"], {"lang": "希腊语", "word": "Stentor"}],
+  "impropri": ["不合适；非己有", ["impropriety"], {"lang": "拉丁语", "word": "improprius"}],
+  "univers": ["全体；转向一", ["universe", "university"], {"lang": "拉丁语", "word": "universum"}],
+  "natur": ["出生；天性", ["nature", "natural"], {"lang": "拉丁语", "word": "natura"}],
+  "cultiv": ["耕作；照料", ["cultivate", "cultivation"], {"lang": "拉丁语", "word": "cultivare"}],
+  "industri": ["勤勉；在…之内做", ["industry", "industrial"], {"lang": "拉丁语", "word": "industria"}],
+  "academ": ["学院", ["academy", "academic"], {"lang": "希腊语", "word": "Akademeia"}],
+  "mediev": ["中世纪", ["medieval"], {"lang": "拉丁语", "word": "medium aevum"}],
+  "hospit": ["客人；接待", ["hospital", "hospitality"], {"lang": "拉丁语", "word": "hospes"}],
+  "polit": ["城邦；治理", ["political", "politician"], {"lang": "希腊语", "word": "polis"}],
+  "econom": ["家计；管理", ["economy", "economic"], {"lang": "希腊语", "word": "oikonomia"}],
+  "philosoph": ["爱智慧", ["philosophy", "philosopher"], {"lang": "希腊语", "word": "philosophia"}],
+  "geograph": ["写大地", ["geography", "geographical"], {"lang": "希腊语", "word": "geographia"}],
+  "psycholog": ["研究心灵", ["psychology", "psychological"], {"lang": "希腊语", "word": "psyche + logos"}],
+  "technolog": ["技艺之学", ["technology", "technological"], {"lang": "希腊语", "word": "techne + logos"}],
+  "sentenc": ["感觉；意见", ["sentence"], {"lang": "拉丁语", "word": "sententia"}],
+  "consequ": ["随后而来", ["consequence", "consequent"], {"lang": "拉丁语", "word": "consequi"}],
+  "eloqu": ["说出；流畅", ["eloquent", "eloquence"], {"lang": "拉丁语", "word": "eloqui"}],
+  "magnific": ["做得伟大", ["magnificent", "magnificence"], {"lang": "拉丁语", "word": "magnificus"}],
   /* 批次 16（2026-10-13）：② 余量里**人工挑选**的真词源（机械规则分不开好坏，见批次 15 的教训）。
      只取词源明确的 11 条：circul / eccentr / exerc / opin / integ / mixt / viol / pati / chamb /
      emphas / angu。像 husband→husb（整词被切）这类一律不要。
