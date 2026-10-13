@@ -9719,7 +9719,7 @@ function enhancedMorphFallback(w) {
     + (bd.suffixes || []).reduce((n, x) => n + x.m.length, 0);
   const rootsum = (bd.roots || []).reduce((n, x) => n + x.m.length, 0);
   if (tot / w.length < 0.6) return '';                           // 7. 全识别覆盖≥60%
-  if (rootsum / w.length < 0.5) return '';                       // 8. 词根占比≥50%（防前后缀撑腰）
+  if (rootsum / w.length < 0.5 && !( !bd.unknown && tot / w.length >= 0.9 && chunks >= 3 && (bd.roots || []).every(r => r.m.length >= 4) )) return '';                       // 8. 词根占比≥50%（防前后缀撑腰）
   return morphBlockHTML(w, bd);
 }
 
