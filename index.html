@@ -2248,6 +2248,23 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 23（2026-10-13，② 余量 · 人工挑词源第 4 批）：entr / bapt / quar / util / nobil / nost / typh / reve / harmon / testim / patrim / matrim / acrim / parsim。
+     三次机械失败的教训：真派生与"结尾长得像词缀"分不开 → 只人工挑，且不碰形态简单的常见词。
+     测量：扫 50 词 → 由无到有 25、丢失 0、回归 0、改写 3。 */
+  "entr": ["进入", ["entrance", "entry"], {"lang": "拉丁语", "word": "intrare"}],
+  "bapt": ["浸入水中", ["baptize", "baptism"], {"lang": "希腊语", "word": "baptizein"}],
+  "quar": ["抱怨；四方", ["quarrel", "quart"], {"lang": "拉丁语", "word": "queri"}],
+  "util": ["有用", ["utilize", "utility"], {"lang": "拉丁语", "word": "utilis"}],
+  "nobil": ["高贵；知名", ["nobility", "noble"], {"lang": "拉丁语", "word": "nobilis"}],
+  "nost": ["返乡", ["nostalgia", "nostalgic"], {"lang": "希腊语", "word": "nostos"}],
+  "typh": ["烟；狂风", ["typhoon"], {"lang": "希腊语", "word": "typhon"}],
+  "reve": ["揭开", ["reveal", "revelation"], {"lang": "拉丁语", "word": "revelare"}],
+  "harmon": ["接合；和谐", ["harmony", "harmonious"], {"lang": "希腊语", "word": "harmonia"}],
+  "testim": ["见证", ["testimony", "testimonial"], {"lang": "拉丁语", "word": "testimonium"}],
+  "patrim": ["父传", ["patrimony"], {"lang": "拉丁语", "word": "patrimonium"}],
+  "matrim": ["母传；婚姻", ["matrimony", "matrimonial"], {"lang": "拉丁语", "word": "matrimonium"}],
+  "acrim": ["尖锐", ["acrimony", "acrimonious"], {"lang": "拉丁语", "word": "acer"}],
+  "parsim": ["节省", ["parsimony", "parsimonious"], {"lang": "拉丁语", "word": "parcere"}],
   /* 批次 18（2026-10-13，② 余量·最后一轮）：人工挑词源的第 2 批，共 25 条。
      全是词源明确的拉丁/希腊构词成分：experi / insur / intellig / behavi / traject /
      stentor / impropri / univers / natur / cultiv / industri / academ / mediev / hospit /

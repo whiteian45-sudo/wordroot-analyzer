@@ -1992,6 +1992,9 @@
     },
     "silly": {
       "d": "silly"
+    },
+    "pedobaptism": {
+      "d": "pedo+bapt-ism"
     }
   },
   "partial词": {
@@ -2051,10 +2054,6 @@
     "pinecone": {
       "d": null,
       "p": "-one|??pinec"
-    },
-    "pedobaptism": {
-      "d": null,
-      "p": "pedo|??baptism"
     },
     "pedocal": {
       "d": null,
