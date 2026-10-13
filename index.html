@@ -2248,6 +2248,13 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：carcin / papillom / myom / glaucom / trachom。
+     测量：扫 8 → 由无到有 1、丢失 0、回归 0、吞并 0、改写 1。 */
+  "carcin": ["癌", ["carcinoma", "carcinomas"], {"lang": "希腊语", "word": "karkinos"}],
+  "papillom": ["乳头瘤", ["papilloma", "papillomas"], {"lang": "拉丁语", "word": "papilla"}],
+  "myom": ["肌瘤", ["myoma", "myomas"], {"lang": "希腊语", "word": "mys"}],
+  "glaucom": ["青光眼", ["glaucoma", "glaucomas"], {"lang": "希腊语", "word": "glaukos"}],
+  "trachom": ["沙眼", ["trachoma"], {"lang": "希腊语", "word": "trachys"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：medull / cort / testicul / intestin / pituit。
      测量：扫 8 → 由无到有 7、丢失 0、回归 0、吞并 0、改写 0。 */
   "medull": ["髓", ["medullary", "medullated"], {"lang": "拉丁语", "word": "medulla"}],
