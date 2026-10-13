@@ -2248,6 +2248,18 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 29（2026-10-13，② 余量 · 第 10 批）：fidel / pung / grav / simil / clar / cert / magn / liber。
+     只取批次 28 里没吞前后缀的词源（brevit/verit/levi/unanim 那几条会吞 -ity / un-，已弃）。
+     护栏新增：**语素数不得减少**（吞前后缀就会被拦）。
+     测量：扫 30 → 由无到有 4、丢失 0、回归 0、吞并 0、改写 0。 */
+  "fidel": ["忠诚", ["fidelity", "fidelities"], {"lang": "拉丁语", "word": "fidelis"}],
+  "pung": ["刺；扎", ["pungent"], {"lang": "拉丁语", "word": "pungere"}],
+  "grav": ["重", ["gravity", "gravitate"], {"lang": "拉丁语", "word": "gravis"}],
+  "simil": ["相似", ["similar", "similitude"], {"lang": "拉丁语", "word": "similis"}],
+  "clar": ["清楚；明亮", ["clarify", "clarity"], {"lang": "拉丁语", "word": "clarus"}],
+  "cert": ["确定；分辨", ["certify", "certificate"], {"lang": "拉丁语", "word": "certus"}],
+  "magn": ["大", ["magnify", "magnitude"], {"lang": "拉丁语", "word": "magnus"}],
+  "liber": ["自由", ["liberty", "liberal"], {"lang": "拉丁语", "word": "liber"}],
   /* 批次 27（2026-10-13，② 余量 · 第 8 批）：从"安全候选.txt"里挑的真词源：
      frequ / brilli / rauc / dens / desir / matur / vuln / excell / foli / fabul / vicin / stup / camoufl。
      测量：扫 60 → 由无到有 52、丢失 0、回归 0、改写 4。 */
