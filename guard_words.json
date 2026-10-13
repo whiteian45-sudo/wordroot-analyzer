@@ -1983,6 +1983,15 @@
     },
     "incarcerated": {
       "d": "incarcerate-ed"
+    },
+    "benches": {
+      "d": "bench-es"
+    },
+    "lyceum": {
+      "d": "lyceum"
+    },
+    "silly": {
+      "d": "silly"
     }
   },
   "partial词": {
@@ -2062,9 +2071,6 @@
     "losses": {
       "d": null
     },
-    "benches": {
-      "d": null
-    },
     "services": {
       "d": null
     },
@@ -2108,9 +2114,6 @@
       "d": null
     },
     "lychees": {
-      "d": null
-    },
-    "lyceum": {
       "d": null
     },
     "lychgate": {
@@ -2221,9 +2224,6 @@
       "d": "sure"
     },
     "only": {
-      "d": null
-    },
-    "silly": {
       "d": null
     },
     "document": {
