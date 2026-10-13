@@ -2248,6 +2248,13 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 35（2026-10-13，② 余量 · 第 16 批）：-escent / -iferous 两族：evanesc / vocifer / odorifer / pestifer。
+     吞并判据精修（只拦"吞掉已知后缀或前缀"的真吞并）。
+     测量：扫 12 → 由无到有 4、丢失 0、回归 0、吞并 0、改写 8。 */
+  "evanesc": ["消散", ["evanescent", "evanescence"], {"lang": "拉丁语", "word": "evanescere"}],
+  "vocifer": ["大声喊", ["vociferous", "vociferously"], {"lang": "拉丁语", "word": "vociferari"}],
+  "odorifer": ["散发气味", ["odoriferous"], {"lang": "拉丁语", "word": "odorifer"}],
+  "pestifer": ["带瘟疫", ["pestiferous"], {"lang": "拉丁语", "word": "pestifer"}],
   /* 批次 32（2026-10-13，② 余量 · 第 13 批）：-acious/-acity 家族词干：audac / tenac / verac / sagac / loquac / pugnac / mendac / fallac / erudit。
      四道护栏：由无到有>0 / 丢失 0 / 长词根横跨 0 / 吞并 0；已在表中则跳过。
      测量：扫 37 → 由无到有 9、丢失 0、回归 0、吞并 0、改写 24。 */
