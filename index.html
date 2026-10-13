@@ -2248,6 +2248,18 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 32（2026-10-13，② 余量 · 第 13 批）：-acious/-acity 家族词干：audac / tenac / verac / sagac / loquac / pugnac / mendac / fallac / erudit。
+     四道护栏：由无到有>0 / 丢失 0 / 长词根横跨 0 / 吞并 0；已在表中则跳过。
+     测量：扫 37 → 由无到有 9、丢失 0、回归 0、吞并 0、改写 24。 */
+  "audac": ["大胆", ["audacious", "audacity"], {"lang": "拉丁语", "word": "audax"}],
+  "tenac": ["紧握；坚持", ["tenacious", "tenacity"], {"lang": "拉丁语", "word": "tenax"}],
+  "verac": ["真实", ["veracity", "veracious"], {"lang": "拉丁语", "word": "verax"}],
+  "sagac": ["敏锐；嗅", ["sagacious", "sagacity"], {"lang": "拉丁语", "word": "sagax"}],
+  "loquac": ["多话", ["loquacious", "loquacity"], {"lang": "拉丁语", "word": "loquax"}],
+  "pugnac": ["好斗", ["pugnacious", "pugnacity"], {"lang": "拉丁语", "word": "pugnax"}],
+  "mendac": ["说谎", ["mendacious", "mendacity"], {"lang": "拉丁语", "word": "mendax"}],
+  "fallac": ["欺骗", ["fallacious", "fallacy"], {"lang": "拉丁语", "word": "fallax"}],
+  "erudit": ["博学；去除粗野", ["erudite", "erudition"], {"lang": "拉丁语", "word": "erudire"}],
   /* 批次 31（2026-10-13，② 余量 · 第 12 批）：前缀**之后**那一截的高频词根（上轮否证给出的正确词干）：
      spond / mitt。
      四道护栏：由无到有>0 / 丢失 0 / 长词根横跨 0 / 吞并 0；已在表中则跳过。
