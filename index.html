@@ -1827,6 +1827,9 @@ const PREFIXES = {
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
+  /* 批次 19：补 -uary（拉丁 -uarium：sanctuary / actuary / February…），
+     并让 y→i 还原也覆盖 -ous/-ious（sanctimony→sanctimonious、glory→glorious）。 */
+  "uary": "名词后缀，表场所、职位（拉丁 -uarium）",
   /* 批次 5 第四片：补五条后缀，实测全部**丢失 0**。 */
   /* pedestrian→ped-estrian、equestrian→equestr-estrian（扫 5 词，转正 5、丢失 0） */
   "estrian": "名词/形容词后缀，表…的人（拉丁 -estris）",
@@ -9037,7 +9040,7 @@ function decompose(w, depth) {
        （occupies / parties / species 因此转正）。比「先查是否完整」更直接：交给评分去判。
        只认非基本词根的拆解，避免引入基本词词根的假结构。
        实测 -ies/-ied 结尾词 5653 个：由无到有 1023、丢失 0、改写 12（多数为改善）。 */
-    if (/i$/.test(rest) && (suf === 'ed' || suf === 'es' || suf === 's')) {
+    if (/i$/.test(rest) && (suf === 'ed' || suf === 'es' || suf === 's' || suf === 'ous' || suf === 'ious')) {
       const subY = decompose(rest.slice(0, -1) + 'y', depth + 1);
       if (subY && subY.roots.length && !subY.roots.some(r => r.isBase)) {
         const rootLenY = subY.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
