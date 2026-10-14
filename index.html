@@ -2250,6 +2250,17 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：uncial / kerning / cedilla / umlaut / tilde / macron / circumflex / caron / ogonek。
+     测量：扫 15 → 由无到有 14、丢失 0、回归 0、吞并 0、改写 0。 */
+  "uncial": ["安色尔体", ["uncial", "uncially"], {"lang": "拉丁语", "word": "uncia"}],
+  "kerning": ["字距调整", ["kerning", "kerned"], {"lang": "英语", "word": "kern"}],
+  "cedilla": ["下加符", ["cedilla", "cedillas"], {"lang": "西班牙语", "word": "zedilla"}],
+  "umlaut": ["变音", ["umlaut", "umlauts"], {"lang": "德语", "word": "um + Laut"}],
+  "tilde": ["波浪号", ["tilde", "tildes"], {"lang": "西班牙语", "word": "titulus"}],
+  "macron": ["长音符", ["macron", "macrons"], {"lang": "希腊语", "word": "makros"}],
+  "circumflex": ["扬抑符", ["circumflex", "circumflexes"], {"lang": "拉丁语", "word": "circum + flectere"}],
+  "caron": ["抑扬符", ["caron", "carons"], {"lang": "捷克语", "word": "carek"}],
+  "ogonek": ["尾钩符", ["ogonek", "ogoneks"], {"lang": "波兰语", "word": "ogonek"}],
   /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：octavo / duodecimo / colophon / incunabula / palimpsest / vellum / parchment / paleography / frontispiece / tailpiece / marginalia / errata。
      测量：扫 21 → 由无到有 16、丢失 0、回归 0、吞并 0、改写 2。 */
   "octavo": ["八开本", ["octavo", "octavos"], {"lang": "拉丁语", "word": "octavus"}],
