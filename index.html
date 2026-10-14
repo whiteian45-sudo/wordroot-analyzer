@@ -2250,6 +2250,16 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：gerund / gerundive / dative / aorist / pluperfect / protasis / anacoluthon / enclitic。
+     测量：扫 14 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 3。 */
+  "gerund": ["动名词", ["gerund", "gerunds"], {"lang": "拉丁语", "word": "gerere"}],
+  "gerundive": ["动形词", ["gerundive", "gerundives"], {"lang": "拉丁语", "word": "gerere"}],
+  "dative": ["与格", ["dative", "datives"], {"lang": "拉丁语", "word": "dare"}],
+  "aorist": ["不定过去时", ["aorist", "aoristic"], {"lang": "希腊语", "word": "aoristos"}],
+  "pluperfect": ["过去完成时", ["pluperfect"], {"lang": "拉丁语", "word": "plus + perfectus"}],
+  "protasis": ["条件句", ["protasis"], {"lang": "希腊语", "word": "pro + teinein"}],
+  "anacoluthon": ["错格", ["anacoluthon"], {"lang": "希腊语", "word": "an + akolouthos"}],
+  "enclitic": ["附读词", ["enclitic", "enclitics"], {"lang": "希腊语", "word": "en + klinein"}],
   /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：aporia / lemma / syllogistic。
      测量：扫 5 → 由无到有 5、丢失 0、回归 0、吞并 0、改写 0。 */
   "aporia": ["困境", ["aporia", "aporias"], {"lang": "希腊语", "word": "a + poros"}],
