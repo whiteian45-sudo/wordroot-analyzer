@@ -1827,6 +1827,8 @@ const PREFIXES = {
 
 /* 后缀表：后缀 -> 含义（含词性标注） */
 const SUFFIXES = {
+  /* 批次 81（2026-10-14，清尾）：补 -eous（courageous/advantageous/piteous/plenteous 等） */
+  "eous": "形容词后缀，…多的（拉丁 -eus；如 courageous 勇敢的）",
   /* 批次 19：补 -uary（拉丁 -uarium：sanctuary / actuary / February…），
      并让 y→i 还原也覆盖 -ous/-ious（sanctimony→sanctimonious、glory→glorious）。 */
   "uary": "名词后缀，表场所、职位（拉丁 -uarium）",
@@ -2248,6 +2250,8 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 81（2026-10-14，清尾）：advantag（advantageous 原来切成 advanta+geo-us ✗） */
+  "advantag": ["优势；有利", ["advantageous", "advantage"], {"lang": "法语", "word": "avantage"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：spermatogen / morphogen / angiogen / hypoplas / cirrhos / psorias。
      测量：扫 13 → 由无到有 9、丢失 0、回归 0、吞并 0、改写 0。 */
   "spermatogen": ["精子生成", ["spermatogenesis", "spermatogenic"], {"lang": "希腊语", "word": "sperma + genesis"}],
