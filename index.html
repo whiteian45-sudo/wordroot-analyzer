@@ -2250,6 +2250,18 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：leukopenia / thrombocytopenia / pancytopenia / cytopenia / leukocytosis / erythrocytosis / thrombocytosis / lymphocytosis / reticulocytosis / spherocytosis。
+     测量：扫 12 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 0。 */
+  "leukopenia": ["白细胞减少", ["leukopenia", "leukopenic"], {"lang": "希腊语", "word": "leukos + penia"}],
+  "thrombocytopenia": ["血小板减少", ["thrombocytopenia"], {"lang": "希腊语", "word": "thrombos + kytos"}],
+  "pancytopenia": ["全血细胞减少", ["pancytopenia"], {"lang": "希腊语", "word": "pan + kytos"}],
+  "cytopenia": ["血细胞减少", ["cytopenia", "cytopenic"], {"lang": "希腊语", "word": "kytos + penia"}],
+  "leukocytosis": ["白细胞增多", ["leukocytosis"], {"lang": "希腊语", "word": "leukos + kytos"}],
+  "erythrocytosis": ["红细胞增多", ["erythrocytosis"], {"lang": "希腊语", "word": "erythros + kytos"}],
+  "thrombocytosis": ["血小板增多", ["thrombocytosis"], {"lang": "希腊语", "word": "thrombos + kytos"}],
+  "lymphocytosis": ["淋巴细胞增多", ["lymphocytosis"], {"lang": "拉丁语", "word": "lympha + kytos"}],
+  "reticulocytosis": ["网织红细胞增多", ["reticulocytosis"], {"lang": "拉丁语", "word": "reticulum + kytos"}],
+  "spherocytosis": ["球形红细胞症", ["spherocytosis"], {"lang": "希腊语", "word": "sphaira + kytos"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：hemorrhagia / diarrhea / gonorrhea / logorrhea / seborrhea / steatorrhea / rhinorrhea / otorrhea / galactorrhea / leukorrhea / pyorrhea / hemoptysis。
      测量：扫 17 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 0。 */
   "hemorrhagia": ["大出血", ["hemorrhagia", "hemorrhagic"], {"lang": "希腊语", "word": "haima + rhegnynai"}],
