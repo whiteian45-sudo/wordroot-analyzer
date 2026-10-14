@@ -2250,6 +2250,20 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：cnidarian / gorgonian / alcyonarian / anthozoan / scyphozoan / hydrozoan / cubozoan / strobila / ephyra / calice / coenosarc / medusa。
+     测量：扫 20 → 由无到有 19、丢失 0、回归 0、吞并 0、改写 1。 */
+  "cnidarian": ["刺胞动物", ["cnidarian", "cnidarians"], {"lang": "希腊语", "word": "knide"}],
+  "gorgonian": ["柳珊瑚", ["gorgonian", "gorgonians"], {"lang": "希腊语", "word": "Gorgo"}],
+  "alcyonarian": ["海鸡头类", ["alcyonarian"], {"lang": "希腊语", "word": "alkyon"}],
+  "anthozoan": ["珊瑚虫类", ["anthozoan", "anthozoans"], {"lang": "希腊语", "word": "anthos + zoon"}],
+  "scyphozoan": ["钵水母类", ["scyphozoan", "scyphozoans"], {"lang": "希腊语", "word": "skyphos + zoon"}],
+  "hydrozoan": ["水螅类", ["hydrozoan", "hydrozoans"], {"lang": "希腊语", "word": "hydor + zoon"}],
+  "cubozoan": ["立方水母", ["cubozoan", "cubozoans"], {"lang": "希腊语", "word": "kybos + zoon"}],
+  "strobila": ["横裂体", ["strobila", "strobilae"], {"lang": "希腊语", "word": "strobilos"}],
+  "ephyra": ["碟状幼体", ["ephyra", "ephyrae"], {"lang": "希腊语", "word": "ephyra"}],
+  "calice": ["萼部", ["calice", "calices"], {"lang": "拉丁语", "word": "calix"}],
+  "coenosarc": ["共肉", ["coenosarc"], {"lang": "希腊语", "word": "koinos + sarx"}],
+  "medusa": ["水母体", ["medusa", "medusae"], {"lang": "希腊语", "word": "Medousa"}],
   /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：elasmobranch / teleost / ostracoderm / bowfin / bream / tench / gudgeon / loach / barbel / smelt / cisco / vendace。
      测量：扫 19 → 由无到有 18、丢失 0、回归 0、吞并 0、改写 1。 */
   "elasmobranch": ["板鳃类", ["elasmobranch", "elasmobranchs"], {"lang": "希腊语", "word": "elasmos + branchia"}],
