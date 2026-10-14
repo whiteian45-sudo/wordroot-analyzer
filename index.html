@@ -2250,6 +2250,14 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：obstruent / uvular / velar / alveolar / retroflex / monophthong。
+     测量：扫 11 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 0。 */
+  "obstruent": ["阻音", ["obstruent", "obstruents"], {"lang": "拉丁语", "word": "obstruere"}],
+  "uvular": ["小舌音", ["uvular", "uvulars"], {"lang": "拉丁语", "word": "uvula"}],
+  "velar": ["软腭音", ["velar", "velars"], {"lang": "拉丁语", "word": "velum"}],
+  "alveolar": ["齿龈音", ["alveolar", "alveolars"], {"lang": "拉丁语", "word": "alveolus"}],
+  "retroflex": ["卷舌音", ["retroflex", "retroflexes"], {"lang": "拉丁语", "word": "retro + flectere"}],
+  "monophthong": ["单元音", ["monophthong", "monophthongs"], {"lang": "希腊语", "word": "monos + phthongos"}],
   /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：gerund / gerundive / dative / aorist / pluperfect / protasis / anacoluthon / enclitic。
      测量：扫 14 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 3。 */
   "gerund": ["动名词", ["gerund", "gerunds"], {"lang": "拉丁语", "word": "gerere"}],
