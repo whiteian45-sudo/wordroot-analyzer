@@ -11768,10 +11768,21 @@ function examplesBlock(word, primary) {
    卡片（synAntBlock）与深度讲解（explainMaterials）共用同一份干净列表。 */
 function thesClean(word, arr) {
   const w = String(word || '').toLowerCase();
+  /* 2026-10-14：用户报 ceremonial 的反义显示成 ceremony（名词派生词，不是反义）。抓取时把
+     "同根不同词性/同根近形"的词也写进了反义表（thes.json 里同类约 5600 条）。除原有的
+     "词缀开头"与"原词子串"两类，再加一条：与词条共享 ≥4 字符前缀者视为同根派生词滤掉；
+     un-/in-/im-/il-/ir-/dis-/non-/anti- 开头的**真反义**不受影响（它们首字母就与词条不同）。 */
+  const NEG = /^(un|in|im|il|ir|dis|non|anti)/;
   return (Array.isArray(arr) ? arr : []).filter(x => {
     const s = String(x == null ? '' : x).trim();
     if (!s || s.charAt(0) === '-') return false;
-    if (w && w.indexOf(s.toLowerCase()) >= 0) return false;
+    const t = s.toLowerCase();
+    if (w && w.indexOf(t) >= 0) return false;
+    if (w && !NEG.test(t)) {
+      let n = 0;
+      while (n < w.length && n < t.length && w.charAt(n) === t.charAt(n)) n++;
+      if (n >= 4) return false;
+    }
     return true;
   });
 }
