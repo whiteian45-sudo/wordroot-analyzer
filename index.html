@@ -2250,6 +2250,20 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：octavo / duodecimo / colophon / incunabula / palimpsest / vellum / parchment / paleography / frontispiece / tailpiece / marginalia / errata。
+     测量：扫 21 → 由无到有 16、丢失 0、回归 0、吞并 0、改写 2。 */
+  "octavo": ["八开本", ["octavo", "octavos"], {"lang": "拉丁语", "word": "octavus"}],
+  "duodecimo": ["十二开本", ["duodecimo"], {"lang": "拉丁语", "word": "duodecimus"}],
+  "colophon": ["版权页题记", ["colophon", "colophons"], {"lang": "希腊语", "word": "kolophon"}],
+  "incunabula": ["摇篮本", ["incunabula", "incunabulum"], {"lang": "拉丁语", "word": "incunabula"}],
+  "palimpsest": ["重写本", ["palimpsest", "palimpsests"], {"lang": "希腊语", "word": "palin + psestos"}],
+  "vellum": ["犊皮纸", ["vellum", "vellums"], {"lang": "法语", "word": "velin"}],
+  "parchment": ["羊皮纸", ["parchment", "parchments"], {"lang": "希腊语", "word": "Pergamon"}],
+  "paleography": ["古文字学", ["paleography", "paleographic"], {"lang": "希腊语", "word": "palaios + graphein"}],
+  "frontispiece": ["卷首插图", ["frontispiece", "frontispieces"], {"lang": "法语", "word": "frontispice"}],
+  "tailpiece": ["尾饰", ["tailpiece", "tailpieces"], {"lang": "英语", "word": "tail + piece"}],
+  "marginalia": ["页边注", ["marginalia"], {"lang": "拉丁语", "word": "margo"}],
+  "errata": ["勘误表", ["erratum"], {"lang": "拉丁语", "word": "errare"}],
   /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：habeas / laches / gravamen / nolle / contendere / meruit / curiae。
      测量：扫 5 → 由无到有 4、丢失 0、回归 0、吞并 0、改写 1。 */
   "habeas": ["人身保护令", ["habeas"], {"lang": "拉丁语", "word": "habere"}],
