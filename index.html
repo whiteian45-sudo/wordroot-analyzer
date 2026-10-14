@@ -2250,6 +2250,12 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：angiorrhexis / cardiorrhexis / hysterorrhexis / metrorrhexis。
+     测量：扫 4 → 由无到有 4、丢失 0、回归 0、吞并 0、改写 0。 */
+  "angiorrhexis": ["血管破裂", ["angiorrhexis"], {"lang": "希腊语", "word": "angeion + rhexis"}],
+  "cardiorrhexis": ["心破裂", ["cardiorrhexis"], {"lang": "希腊语", "word": "kardia + rhexis"}],
+  "hysterorrhexis": ["子宫破裂", ["hysterorrhexis"], {"lang": "希腊语", "word": "hystera + rhexis"}],
+  "metrorrhexis": ["子宫破裂", ["metrorrhexis"], {"lang": "希腊语", "word": "metra + rhexis"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：osteoclasis / arthroclasis / iridoclasis / osteoclasia / arthroclasia / culdocentesis / iontophoresis / erythropoietin / thrombopoietin。
      测量：扫 10 → 由无到有 7、丢失 0、回归 0、吞并 0、改写 0。 */
   "osteoclasis": ["骨断术", ["osteoclasis", "osteoclast"], {"lang": "希腊语", "word": "osteon + klasis"}],
