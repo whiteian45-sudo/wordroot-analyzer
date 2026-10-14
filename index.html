@@ -2250,6 +2250,25 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：camellia / assam / pekoe / souchong / oolong / matcha / sencha / gyokuro / tisane / rooibos / genmaicha / hojicha / arabica / robusta / crema / portafilter / ristretto。
+     测量：扫 15 → 由无到有 15、丢失 0、回归 0、吞并 0、改写 0。 */
+  "camellia": ["山茶属", ["camellia", "camellias"], {"lang": "拉丁语", "word": "Kamal"}],
+  "assam": ["阿萨姆茶", ["assam"], {"lang": "阿萨姆语", "word": "Assam"}],
+  "pekoe": ["白毫", ["pekoe"], {"lang": "汉语", "word": "pek ho"}],
+  "souchong": ["小种", ["souchong"], {"lang": "汉语", "word": "siao chung"}],
+  "oolong": ["乌龙", ["oolong"], {"lang": "汉语", "word": "wu long"}],
+  "matcha": ["抹茶", ["matcha"], {"lang": "日语", "word": "matcha"}],
+  "sencha": ["煎茶", ["sencha"], {"lang": "日语", "word": "sencha"}],
+  "gyokuro": ["玉露", ["gyokuro"], {"lang": "日语", "word": "gyokuro"}],
+  "tisane": ["花草茶", ["tisane", "tisanes"], {"lang": "希腊语", "word": "ptisane"}],
+  "rooibos": ["路易波士", ["rooibos"], {"lang": "南非语", "word": "rooibos"}],
+  "genmaicha": ["玄米茶", ["genmaicha"], {"lang": "日语", "word": "genmai + cha"}],
+  "hojicha": ["焙茶", ["hojicha"], {"lang": "日语", "word": "hoji + cha"}],
+  "arabica": ["阿拉比卡", ["arabica"], {"lang": "阿拉伯语", "word": "arab"}],
+  "robusta": ["罗布斯塔", ["robusta"], {"lang": "拉丁语", "word": "robustus"}],
+  "crema": ["咖啡油脂", ["crema"], {"lang": "意大利语", "word": "crema"}],
+  "portafilter": ["手柄粉碗", ["portafilter"], {"lang": "英语", "word": "porta + filter"}],
+  "ristretto": ["意式浓缩短萃", ["ristretto"], {"lang": "意大利语", "word": "ristretto"}],
   /* 批次 112（2026-10-14）：-malacia 软化 / -rrhexis 破裂 / -lith 结石：stalagmite / helictite / anthodite / karst / polje / uvala / cenote / swallet / speleothem / phreatic / vadose。
      测量：扫 12 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 1。 */
   "stalagmite": ["石笋", ["stalagmite", "stalagmites"], {"lang": "希腊语", "word": "stalagma"}],
