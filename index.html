@@ -2250,6 +2250,23 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：myoglobin / keratin / albumin / globulin / fibrin / pepsin / trypsin / renin / thrombin / myosin / elastin / gelatin / casein / collagen / glycogen。
+     测量：扫 30 → 由无到有 21、丢失 0、回归 0、吞并 0、改写 6。 */
+  "myoglobin": ["肌红蛋白", ["myoglobin", "myoglobins"], {"lang": "希腊语", "word": "mys + globus"}],
+  "keratin": ["角蛋白", ["keratin", "keratinous"], {"lang": "希腊语", "word": "keras"}],
+  "albumin": ["白蛋白", ["albumin", "albuminous"], {"lang": "拉丁语", "word": "albus"}],
+  "globulin": ["球蛋白", ["globulin", "globulins"], {"lang": "拉丁语", "word": "globulus"}],
+  "fibrin": ["纤维蛋白", ["fibrin", "fibrinous"], {"lang": "拉丁语", "word": "fibra"}],
+  "pepsin": ["胃蛋白酶", ["pepsin", "pepsins"], {"lang": "希腊语", "word": "pepsis"}],
+  "trypsin": ["胰蛋白酶", ["trypsin", "tryptic"], {"lang": "希腊语", "word": "tryein"}],
+  "renin": ["肾素", ["renin", "renins"], {"lang": "拉丁语", "word": "ren"}],
+  "thrombin": ["凝血酶", ["thrombin", "thrombins"], {"lang": "希腊语", "word": "thrombos"}],
+  "myosin": ["肌球蛋白", ["myosin", "myosins"], {"lang": "希腊语", "word": "mys"}],
+  "elastin": ["弹性蛋白", ["elastin", "elastins"], {"lang": "希腊语", "word": "elastos"}],
+  "gelatin": ["明胶", ["gelatin", "gelatinous"], {"lang": "拉丁语", "word": "gelare"}],
+  "casein": ["酪蛋白", ["casein", "caseins"], {"lang": "拉丁语", "word": "caseus"}],
+  "collagen": ["胶原蛋白", ["collagen", "collagenous"], {"lang": "希腊语", "word": "kolla + genes"}],
+  "glycogen": ["糖原", ["glycogen", "glycogenic"], {"lang": "希腊语", "word": "glykys + genes"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：polymerase / hydrolase / isomerase / peptidase / maltase / cellulase / urease / trypsinogen / pepsinogen。
      测量：扫 12 → 由无到有 12、丢失 0、回归 0、吞并 0、改写 0。 */
   "polymerase": ["聚合酶", ["polymerase", "polymerases"], {"lang": "希腊语", "word": "polys + meros"}],
