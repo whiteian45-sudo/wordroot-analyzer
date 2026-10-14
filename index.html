@@ -2250,6 +2250,17 @@ const SUFFIXES = {
 
 /* 词根表：词根(含变体) -> [含义, [示例词]] */
 const ROOTS = {
+  /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：osteoclasis / arthroclasis / iridoclasis / osteoclasia / arthroclasia / culdocentesis / iontophoresis / erythropoietin / thrombopoietin。
+     测量：扫 10 → 由无到有 7、丢失 0、回归 0、吞并 0、改写 0。 */
+  "osteoclasis": ["骨断术", ["osteoclasis", "osteoclast"], {"lang": "希腊语", "word": "osteon + klasis"}],
+  "arthroclasis": ["关节断离术", ["arthroclasis"], {"lang": "希腊语", "word": "arthron + klasis"}],
+  "iridoclasis": ["虹膜断离术", ["iridoclasis"], {"lang": "希腊语", "word": "iris + klasis"}],
+  "osteoclasia": ["骨断", ["osteoclasia"], {"lang": "希腊语", "word": "osteon + klasis"}],
+  "arthroclasia": ["关节松解", ["arthroclasia"], {"lang": "希腊语", "word": "arthron + klasis"}],
+  "culdocentesis": ["后穹窿穿刺", ["culdocentesis"], {"lang": "拉丁语", "word": "cul-de-sac + kentesis"}],
+  "iontophoresis": ["离子导入", ["iontophoresis", "iontophoretic"], {"lang": "希腊语", "word": "ion + phoresis"}],
+  "erythropoietin": ["促红细胞生成素", ["erythropoietin"], {"lang": "希腊语", "word": "erythros + poiein"}],
+  "thrombopoietin": ["促血小板生成素", ["thrombopoietin"], {"lang": "希腊语", "word": "thrombos + poiein"}],
   /* 批次 37（2026-10-13，② 余量 · 第 18 批）：-aneous/-uous 一带：leukopenia / thrombocytopenia / pancytopenia / cytopenia / leukocytosis / erythrocytosis / thrombocytosis / lymphocytosis / reticulocytosis / spherocytosis。
      测量：扫 12 → 由无到有 11、丢失 0、回归 0、吞并 0、改写 0。 */
   "leukopenia": ["白细胞减少", ["leukopenia", "leukopenic"], {"lang": "希腊语", "word": "leukos + penia"}],
