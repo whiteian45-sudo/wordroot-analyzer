@@ -66,7 +66,14 @@ pip install kokoro soundfile torch --index-url https://download.pytorch.org/whl/
 
 装好后 Windows 下不用管：`start.bat` 会自动另开一个「Kokoro TTS」窗口跑它（端口 8757），也可以单独双击 `tts_start.bat`；其他系统手动 `python tts_server.py`。
 
-Kokoro 没装或没启动时，页面会自动退回浏览器内置发音，不报错。有 N 卡的话换 CUDA 版 torch 能快好几倍（整段朗读实测约 6 倍）。
+Kokoro 没装或没启动时，页面会自动退回浏览器内置发音，不报错。
+
+Windows 上 `tts_start.bat` 按「独立 GPU 环境 → 装了 Kokoro 的 Python 环境 → 系统 Python」三级回退找解释器，
+起哪个都行；它开的那个黑窗口第一行会打印**推理设备（GPU 显卡名 / CPU）**，怀疑"怎么变慢了"先看这行。
+有 N 卡且走 GPU 时比 CPU 快约 6 倍（整段 260 字符 8.3s → 1.1s）。
+
+装 CUDA 版 torch 有个坑：**Pascal 架构老卡（GTX 10 系，sm_61）只能用 CUDA 12.6 构建的 torch ≤ 2.7.x**，
+装了 2.8+ 会报 `no kernel image is available`；下载走阿里云镜像 `mirrors.aliyun.com/pytorch-wheels/cu126/` 比官方源快。
 
 ## 本地 AI（可选）
 
@@ -101,11 +108,25 @@ Ollama 默认监听 `127.0.0.1:11434`。server.py 默认用上面这个模型，
 | `ex.json` | — | 朗文 / 柯林斯补充例句 | ❌ |
 | `us_ipa.json` | 约 12.6 万词 | 美音音标 | ❌ |
 | `ecdict.json` | 约 76 万词 | 全量英汉词典，兜底用 | ✅ 64MB |
-| 内置规则引擎 | — | 词根词缀表（前缀 / 词根 / 后缀 / 基本词，共三千余条），最后兜底 | ✅ 在 `index.html` 里 |
+| 内置规则引擎 | — | 词根词缀表（词根 3145 条 + 前缀 / 后缀 / 基本词表）和逐词切分表（5668 条），全在 `index.html` 里，最后兜底 | ✅ |
 
 `history.json` / `favs.json` 是查词记录与收藏，运行时由本地服务自动写在项目目录，属于个人数据，不进仓库。
 
 全量词典支持可选的**分片加载**：项目目录下有 `dict/` 分片时就逐个在空闲时解析，没有就整文件读 `ecdict.json`，功能完全一样（分片只是让加载不卡输入）。
+
+### 拆解是哪儿来的（口径说明）
+
+卡片上的拆解有三个来源，可靠程度不一样，别混成一个数字看：
+
+| 来源 | 规模 | 说明 | 例子 |
+|---|---|---|---|
+| 规则引擎 | — | 按前缀 / 词根 / 后缀表加变形还原规则**现场拆** | `abstractions → abs + tract + ion + s` |
+| 逐词切分表 `WORD_SPLIT` | 5668 词 | 逐词写死的切分，只在该词命中时生效，不参与别的词的拆解 | `observation → ob + serv + ation` |
+| 整词当基本词 | — | 英语里的简单词本身不再往下拆，卡片直接当「基本词」显示 | `apple` / `able` / `wage` |
+
+第三个来源只是「没得拆」，不算拆解；第二个虽然是数据但确实给出了正确切分。
+`node test_decompose.js --audit` 现在分三行报数（未拆出 / 预置表给出 / 规则引擎真拆），
+不把预置表命中算成引擎能力。
 
 ## 数据来源
 
@@ -135,21 +156,35 @@ Ollama 默认监听 `127.0.0.1:11434`。server.py 默认用上面这个模型，
 改拆解引擎或词素表后跑一遍回归（Windows 直接双击 `回归.bat`，等价于依次执行下面三条）：
 
 ```bash
-node test_decompose.js --guard         # 守护清单：401 个已验证词的拆解结果不许回退
-node test_decompose.js --audit --brief # 词源审计：以 enhanced 自带词源为基准，看总量
+node test_decompose.js --guard         # 守护清单：738 个已验证词的拆解结果不许回退
+node test_decompose.js --audit --brief # 词源审计：以 enhanced 自带词源为基准，分层看总量
 node test_health.js                    # 一体化体检：表完整性、原型链、渲染冒烟、覆盖率、性能
 ```
+
+三条的职责：`--guard` 防回归（任何一批改动不许把已验证的词改坏）、`--audit` 看进度、
+`test_health.js` 防脏数据（重复 key、原型链 `constructor` 陷阱、行尾混用、渲染冒烟）。
+任何一批改动三查不过就回滚，这是既有惯例。
+
+**行尾**：`index.html` 必须全 CRLF —— 补丁脚本按 CRLF 切片，`test_health.js` 也会把孤立 LF
+当致命错误。仓库内归一化成 LF 存、检出一律还原成 CRLF（见 `.gitattributes`），
+所以克隆下来和提交前都是 CRLF，别用会写出 LF 的工具直接改它。
 
 配套工具：
 
 | 文件 | 用途 |
 |---|---|
-| `test_decompose.js` | 查单词拆解（`node test_decompose.js word`）；`--diff` 全量对比 git HEAD；`--enhanced` 查兜底误触发；`--audit` 列出低匹配词 |
+| `test_decompose.js` | 查单词拆解（`node test_decompose.js word`）；`--diff` 对比 git HEAD 全量 diff；`--enhanced` 查兜底误触发；`--audit` 分层审计并列出低匹配词 |
 | `test_health.js` | 一体化体检，退出码非 0 表示有致命问题 |
 | `test_ui.js` | 真机 UI 验证（需主服务在跑 + Chrome） |
 | `tune_scoring.js` | 拆解评分调参实验（结论：调参解不了误拆，靠拦截表） |
-| `guard_words.json` | 守护清单数据 |
+| `guard_words.json` | 守护清单数据（转正 665 / partial 16 / 防误伤 46 / 其它 11） |
 | `audit_report.md` | `--audit` 的输出存档 |
+| `wr_gap_batch.js` | 缺口词注入批次：自动挑「拆不出」的词、加整词词根、自带自测（由无到有>0、丢失=0 才写盘） |
+| `wr_split_table.js` | 从 enhanced 词源链生成逐词切分表 `WORD_SPLIT` |
+| `wr_verify.js` / `wr_left_diag.js` | 批次结果校验 / 剩余缺口分诊 |
+| `wr_batch.ps1` | 批处理循环驱动（一批一提交，三查不过自动回滚） |
+| `wr_webster*.js` | Webster 词表体检（常见词漏拆筛查） |
+| `进展与恢复指南.md` | 上次会话的进度快照与恢复步骤（跑批次前先看它） |
 
 ## License
 

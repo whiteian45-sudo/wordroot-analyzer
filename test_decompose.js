@@ -4,6 +4,8 @@
    node test_decompose.js --guard       → 守护清单回归（对照 guard_words.json 的期望值）
    node test_decompose.js --diff [子串] → 对比 git HEAD 与当前，全量 diff 受影响词
    node test_decompose.js --audit [--brief] → 用 enhanced 的真实词源当基准，统计完整拆解/低匹配
+                                        （分层报：WORD_SPLIT 预置表给出多少 / 规则引擎真拆多少，
+                                          基准词源与预置表同源，混在一起算等于自己出题自己答）
    node test_decompose.js --enhanced    → 检查 enhanced 空 breakdown 词是否被误触发
    改引擎/词素表后按 --guard → --diff → --audit 的顺序跑；一键版见 回归.bat。
    注意：eval 是 const 作用域隔离，测试代码需拼进同一 eval。
@@ -137,22 +139,30 @@ function matchRate(cms, ems) {
   return cms.length ? m / cms.length : 1;
 }
 const words = __WORDS__;
-const stat = { total: 0, null: 0, partialOnly: 0, complete: 0, low: 0 };
+/* 口径分层（2026-10-15）：基准是 enhanced 的 chain，而 WORD_SPLIT（逐词切分表）正是从 chain 挖出来的，
+   把它算进"引擎拆解"等于自己出题自己答。所以分开报：预置表给出多少、规则引擎真拆多少。 */
+const stat = { total: 0, null: 0, partialOnly: 0, complete: 0, low: 0, table: 0, whole: 0, lowTable: 0 };
 const low = [];
 for (const item of words) {
   const w = item.w;
+  const fromTable = own(WORD_SPLIT, w);      // 整词查表命中（decompose 第 0 步直接返回）
   const ems = emorphs(w);
   stat.total++;
   if (!ems) { stat.null++; continue; }
   const rate = matchRate(item.chain, ems);
   if (rate === 0) { stat.null++; continue; }  // 引擎词素完全对不上，当漏拆
   stat.complete++;
+  if (fromTable) stat.table++;
+  if (ems.length === 1 && ems[0] === w) stat.whole++;   // 整词当词根/基本词，不算真拆解
   if (rate < 0.4) {
     stat.low++;
-    low.push(w + '  chain=[' + item.chain.join(',') + ']  引擎=[' + ems.join(',') + '] 匹配率=' + rate.toFixed(2));
+    if (fromTable) stat.lowTable++;
+    low.push(w + '  chain=[' + item.chain.join(',') + ']  引擎=[' + ems.join(',') + '] 匹配率=' + rate.toFixed(2) + (fromTable ? ' [预置表]' : ''));
   }
 }
 console.log('总词数:', stat.total, ' 引擎未拆出:', stat.null, ' 完整拆解:', stat.complete, ' 低匹配(<0.4):', stat.low);
+console.log('  · 其中 WORD_SPLIT 预置切分表直接给出:', stat.table, '（规则引擎真拆解:', stat.complete - stat.table, '）');
+console.log('  · 其中整词当词根/基本词:', stat.whole, ' · 低匹配里来自预置表:', stat.lowTable);
 if (!__BRIEF__) { console.log('=== 低匹配词（疑似误拆）==='); console.log(low.join('\\n')); }
 `;
   const auditOut = eval(currentCore + probe.replace('__WORDS__', JSON.stringify(words)).replace('__BRIEF__', args.includes('--brief') ? 'true' : 'false'));

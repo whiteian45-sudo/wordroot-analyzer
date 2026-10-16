@@ -49,3 +49,37 @@ _affcache/
 # 全量融入实验产物（对照用，勿提交）
 index_fullmerge.html
 index_merged5.html
+
+# 工作过程中的候选词表（挖掘产物，可随时重新生成）
+/候选*.txt
+/webster_defs.txt
+/webster_words.txt
+/article.txt
+/升级名单.txt
+/卡住的截.txt
+/安全候选.txt
+/将就读法工单.txt
+/归类报告*.txt
+/改写清单.txt
+/查文报告.txt
+/待修清单.md
+
+# 一次性挖掘/校验脚本（用完即弃，工具类正式脚本另用 wr_/test_ 前缀入库）
+/mine_*.js
+/proto_unigram.js
+/test_audit.js
+/test_hfw.js
+/test_oxford.js
+/test_sem_gen.js
+/test_sem_review.py
+/test_ai_review.py
+/add_roots.py
+/add_us_pron.py
+/build_affixes.py
+/bulk_add.py
+/dedupe_offenders.py
+/etym_check.py
+/fullmerge.py
+/mergefiltered5.py
+/scan_etym_errors.py
+/split_ecdict.py
