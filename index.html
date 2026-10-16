@@ -10763,6 +10763,9 @@ BASE_PREFIXES.iso = ['isol'];
 /* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
 /* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
 const WORD_SPLIT = {
+  "ectopically": {"prefix":"ecto","roots":[["top","位置、地方（希腊 topos）"]],"suffixes":[["ic","形容词后缀，…的"],["al","形容词后缀，…的"],["ly","副词后缀"]]},
+  "ectopia": {"prefix":"ecto","roots":[["top","位置、地方（希腊 topos）"]],"suffixes":[["ia","名词后缀，表状态、病症"]]},
+  "ectopic": {"prefix":"ecto","roots":[["top","位置、地方（希腊 topos）"]],"suffixes":[["ic","形容词后缀，…的"]]},
   /* 逐词切分覆盖表（2026-10-15）：仅对下面这些词生效，作用域限定在词本身，不污染其他词。
      数据来自 enhanced 的 chain（真实词素链）+ breakdown（释义）。 */
   "abandon": {"prefix":null,"roots":[["a","加强"],["bandon","控制 拉丁语 bannum “公告/法令”"]],"suffixes":[]},
