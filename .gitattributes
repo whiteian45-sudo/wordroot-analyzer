@@ -1,6 +1,8 @@
 # 启动脚本是 GBK+CRLF 编码（Windows cmd 按 GBK 解析），强制保留 CRLF，避免 git 换行转换破坏
 *.bat text eol=crlf
 *.py text eol=lf
-*.html text eol=lf
+# index.html 是 CRLF（test_health.js 会查孤立 LF，补丁脚本也按 CRLF 切片）：
+# 仓库内归一化成 LF 存，检出一律还原成 CRLF —— 否则重新克隆/checkout 后文件变 LF，体检直接报致命
+*.html text eol=crlf
 *.json text eol=lf
 *.md text eol=lf
