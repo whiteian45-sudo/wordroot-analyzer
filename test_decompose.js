@@ -2,7 +2,7 @@
    用法：
    node test_decompose.js 词1 词2 ...   → 打印每个词的拆解+演变链+同根词
    node test_decompose.js --guard       → 守护清单回归（对照 guard_words.json 的期望值）
-   node test_decompose.js --diff [子串] → 对比 git HEAD 与当前，全量 diff 受影响词
+   node test_decompose.js --diff [--from <rev>] [子串] → 对比 <rev>（默认 HEAD）与当前，全量 diff 受影响词
    node test_decompose.js --audit [--brief] → 用 enhanced 的真实词源当基准，统计完整拆解/低匹配
                                         （分层报：WORD_SPLIT 预置表给出多少 / 规则引擎真拆多少，
                                           基准词源与预置表同源，混在一起算等于自己出题自己答）
@@ -33,13 +33,16 @@ const args = process.argv.slice(2);
 const currentCore = loadCore(fs.readFileSync(DIR + '/index.html', 'utf8'));
 
 if (args.includes('--diff')) {
-  const oldCore = loadCore(execSync(`git -C "${DIR}" show HEAD:index.html`).toString('utf8'));
+  // execSync 默认 maxBuffer 只有 1MB，而 index.html 已 2MB —— 不调大直接被 SIGTERM 掐断
+  const fromIdx = args.indexOf('--from');
+  const from = fromIdx >= 0 ? (args[fromIdx + 1] || 'HEAD') : 'HEAD';
+  const oldCore = loadCore(execSync(`git -C "${DIR}" show ${from}:index.html`, { maxBuffer: 64 * 1024 * 1024 }).toString('utf8'));
   const dict = JSON.parse(fs.readFileSync(DIR + '/ecdict.json', 'utf8'));
   // 默认定向子串：没传子串时自动对比 git HEAD 与当前，取词根/前缀/后缀表【新增或删减】的词素当子串过滤。
   // 裸 --diff 不再全扫 75.7 万词——那是每词跑一遍 decompose 的计算开销（数据本就全在内存，换数据库提速不了）；
   // 对"仅增删词素"的改动，子串过滤是受影响词的精确超集。评分 SCORE 或拆解算法改变才牵连任意词→需全量。
   // 也可手动传子串（优先用自选）：node test_decompose.js --diff proto zoa zoo stice
-  const subs = args.filter(a => a !== '--diff');
+  const subs = args.filter((a, i) => a !== '--diff' && i !== fromIdx && i !== fromIdx + 1);
   const tableKeys = core => {
     const load = `JSON.stringify({r:Object.keys(ROOTS),p:Object.keys(PREFIXES),s:Object.keys(SUFFIXES)})`;
     return JSON.parse(eval(core + load));
@@ -168,7 +171,8 @@ if (!__BRIEF__) { console.log('=== 低匹配词（疑似误拆）==='); console.
   const auditOut = eval(currentCore + probe.replace('__WORDS__', JSON.stringify(words)).replace('__BRIEF__', args.includes('--brief') ? 'true' : 'false'));
   if (!args.includes('--brief')) console.log(auditOut);   // --brief 时总量已由探针打印，别再印 eval 的返回值（undefined）
 } else if (args.includes('--enhanced')) {
-  const oldCore = loadCore(execSync(`git -C "${DIR}" show HEAD:index.html`).toString('utf8'));
+  // execSync 默认 maxBuffer 只有 1MB，而 index.html 已 2MB —— 不调大直接被 SIGTERM 掐断
+  const oldCore = loadCore(execSync(`git -C "${DIR}" show HEAD:index.html`, { maxBuffer: 64 * 1024 * 1024 }).toString('utf8'));
   const enh = JSON.parse(fs.readFileSync(DIR + '/enhanced.json', 'utf8'));
   const ws = Object.entries(enh).filter(([, e]) => !e.breakdown || !e.breakdown.length).map(([w]) => w);
   const probe = `
