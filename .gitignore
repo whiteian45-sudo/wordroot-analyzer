@@ -55,13 +55,13 @@ index_merged5.html
 /webster_defs.txt
 /webster_words.txt
 /article.txt
-/升级名单.txt
+/升格名单.txt
 /卡住的截.txt
 /安全候选.txt
 /将就读法工单.txt
 /归类报告*.txt
 /改写清单.txt
-/查文报告.txt
+/查文章报告.txt
 /待修清单.md
 
 # 一次性挖掘/校验脚本（用完即弃，工具类正式脚本另用 wr_/test_ 前缀入库）
