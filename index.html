@@ -16438,6 +16438,10 @@ const WORD_SPLIT = {
   "zone": {"prefix":null,"roots":[["zon","带 希腊语 zōnē（ζώνη）"]],"suffixes":[["e","无实义后缀"]]},
 };
 const WHOLE_ONLY = {
+  "fiancee": "未婚妻（fiancée 的 ASCII 拼法；法语 fiance 承诺 + -ée 阴性）",
+  "fiance": "未婚夫（fiancé 的 ASCII 拼法；法语 fiance 承诺）",
+  "fiancée": "未婚妻（法语借词：fiancer 许诺 ← fiance 承诺；-ée 阴性）",
+  "fiancé": "未婚夫（法语借词：fiancer 许诺 ← fiance 承诺；-é 阳性过去分词）",
   /* 批次 160（2026-10-14）：释义正文里剩余"无拆解"的 <=5 字母短词，走整词读法（目标④）。
      释义取自 ecdict 第一条中文释义（去词性标记、截到首个标点）。
      测量：缺口 5404 → 本批 1842 条。自检：仅收当前拆不出的词；跳过已存在 key。 */
@@ -19240,6 +19244,17 @@ function lemmaOf(w) {
     if (d.length > 2 && d[d.length - 1] === d[d.length - 2]) cands.push(d.slice(0, -1));
   }
   if (w.endsWith('er') || w.endsWith('est')) cands.push(w.slice(0, -2));            // bigger→bigg→big
+  /* 派生副词/名词/形容词（2026-10-18 用户报"加 ly 查不到"）：原先没有这几条规则，
+     导致 forcefully→forceful 这一步根本不存在，只能整词硬查 → 词表里没有就查不到。 */
+  if (w.length > 4 && w.endsWith('ly')) {                                           // forcefully→forceful
+    cands.push(w.slice(0, -2));
+    if (w.endsWith('ily')) cands.push(w.slice(0, -3) + 'y');                        // happily→happy
+    if (w.endsWith('ally')) cands.push(w.slice(0, -4) + 'al', w.slice(0, -2));      // basically→basic/basical
+    if (w.endsWith('fully')) cands.push(w.slice(0, -2));                            // carefully→careful
+  }
+  if (w.length > 5 && w.endsWith('ness')) cands.push(w.slice(0, -4));               // happiness→happi
+  if (w.length > 5 && w.endsWith('less')) cands.push(w.slice(0, -4));               // careless→care
+  if (w.length > 5 && w.endsWith('ful')) cands.push(w.slice(0, -3));                // forceful→force
   for (const c of cands) if (ENHANCED[c] || OXFORD[c] || ECDICT[c]) return c;
   return w;
 }
@@ -19289,11 +19304,14 @@ function analyze(raw) {
   if (w.length < 2) return { found: false, reason: '请输入至少两个字母的单词', query: raw };
   const r0 = lookup(w);
   if (r0.found) return Object.assign({ query: raw }, r0);
-  // 词形还原：原词查不到，还原原形再查（命中词表才生效，失败回退原 miss）
-  const lm = lemmaOf(w);
-  if (lm !== w) {
+  // 词形还原：原词查不到，**逐级**还原原形再查（forcefully→forceful→force，最多 3 级）
+  let cur = w;
+  for (let i = 0; i < 3; i++) {
+    const lm = lemmaOf(cur);
+    if (lm === cur) break;
     const r1 = lookup(lm);
     if (r1.found) return Object.assign({ query: raw }, r1);
+    cur = lm;
   }
   return Object.assign({ query: raw }, r0);
 }
