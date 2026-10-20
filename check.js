@@ -6,7 +6,9 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const DIR = __dirname;
-const HIST = path.join(DIR, 'history.json');
+/* 注意：history.json 是**应用自己的查词历史**（server.py 的 HISTORY_FILE），
+   绝不能被这里占用/覆盖 —— 我用独立的 check-history.json。 */
+const HIST = path.join(DIR, 'check-history.json');
 
 function run(cmd) {
   try {
