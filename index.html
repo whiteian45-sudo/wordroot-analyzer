@@ -10763,6 +10763,17 @@ BASE_PREFIXES.iso = ['isol'];
 /* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
 /* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
 const WORD_SPLIT = {
+  "catatonias": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ia","名词后缀"],["s","复数"]]},
+  "catatonia": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ia","名词后缀，表病症、状态"]]},
+  "catatonically": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ic","形容词后缀"],["al","形容词后缀"],["ly","副词后缀"]]},
+  "catatonic": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ic","形容词后缀，…的"]]},
+  "contraindicative": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["at","动词词干"],["ive","形容词后缀，…的"]]},
+  "contraindications": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["ation","名词后缀"],["s","复数"]]},
+  "contraindication": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["ation","名词后缀，表行为、状态"]]},
+  "contraindicating": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["at","动词词干"],["ing","现在分词后缀"]]},
+  "contraindicates": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["ate","动词后缀"],["s","第三人称单数"]]},
+  "contraindicated": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["at","动词词干"],["ed","过去分词/形容词后缀"]]},
+  "contraindicate": {"prefix":"contra","roots":[["indic","指出、指示（拉丁 indicare ← dicere 说）"]],"suffixes":[["ate","动词后缀，使…"]]},
   "ectopically": {"prefix":"ecto","roots":[["top","位置、地方（希腊 topos）"]],"suffixes":[["ic","形容词后缀，…的"],["al","形容词后缀，…的"],["ly","副词后缀"]]},
   "ectopia": {"prefix":"ecto","roots":[["top","位置、地方（希腊 topos）"]],"suffixes":[["ia","名词后缀，表状态、病症"]]},
   "ectopic": {"prefix":"ecto","roots":[["top","位置、地方（希腊 topos）"]],"suffixes":[["ic","形容词后缀，…的"]]},
