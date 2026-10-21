@@ -10,7 +10,7 @@
    退出码非 0 表示有致命问题（原型链泄漏 / 渲染 undefined / 抛异常）。
    注意：core 块里的渲染函数会调用 UI 块的 gl()/EN_MODE()，这里按测试惯例补 shim。 */
 const fs = require('fs');
-const DIR = 'D:/Program Files/词根词缀';
+const DIR = __dirname;
 const SHIM = "var LANG='zh';function EN_MODE(){return false;}function gl(m,zh){return zh||'';}function langEn(s){return s;}\n";
 function loadCore(c) {
   const L = c.split('\n');

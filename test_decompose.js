@@ -12,7 +12,7 @@
 */
 const fs = require('fs');
 const { execSync } = require('child_process');
-const DIR = 'D:/Program Files/词根词缀';
+const DIR = __dirname;
 
 /* core 块里的渲染函数（morphBlockHTML 等）会调用 UI 块的 gl()/EN_MODE()，
    测试环境只挂 core，得先补上这三个名字，否则查词模式直接 ReferenceError。
