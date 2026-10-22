@@ -18,6 +18,7 @@ from urllib.parse import urlsplit
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 PORT = 8756
+TTS_PORT = 8757   # Kokoro TTS 服务端口，与 tts_server.py / tts_start.bat / 前端保持一致
 
 # MIME 类型（保证 json 正常加载）
 MIME = {
@@ -629,6 +630,10 @@ def iter_chat_stream(text, model, system=None):
         headers={'Content-Type': 'application/json'},
         method='POST',
     )
+    # 超时只能给**一个数字**（urllib 不像 requests 支持 (connect, read) 元组）：
+    # 写成元组会直接抛 "'tuple' object cannot be interpreted as an integer"，
+    # 又被 _stream_ollama 包成"无法连接本地 Ollama"——误导排查（2026-10-22 修）。
+    # 本机 Ollama 没启动时 connect 会立刻 ECONNREFUSED，不依赖超时；故这里放宽到 300s 供长文流式。
     resp = urllib.request.urlopen(req, timeout=300)
     for raw in resp:
         line = raw.decode('utf-8').strip()
