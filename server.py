@@ -426,6 +426,35 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             # 连 clearedAt 一起给前端：多标签页要靠这个水位知道「别人清空过没有」
             self._send_json({'version': 1, 'clearedAt': doc['clearedAt'], 'items': doc['items']})
             return
+        # /lookup?word=xxx：按词从 dict.db（SQLite）取 ecdict/oxford/thes 三个源（2026-10-25 加）
+        # 目的：前端不必再把 100MB+ 的大 JSON 整包拉进浏览器内存；按需取一个词即可。
+        if p == '/lookup':
+            import sqlite3, urllib.parse
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            w = (q.get('word') or [''])[0].strip().lower()
+            if not w:
+                self._send_json({'ok': False, 'err': '缺少 word 参数'}, 400)
+                return
+            dbp = os.path.join(DIR, 'dict.db')
+            if not os.path.exists(dbp):
+                self._send_json({'ok': False, 'err': 'dict.db 不存在，请先运行 python build_dict_db.py'}, 500)
+                return
+            out = {}
+            try:
+                db = sqlite3.connect('file:' + dbp + '?mode=ro', uri=True)
+                try:
+                    for src, doc in db.execute('SELECT src, doc FROM dict WHERE word=?', (w,)):
+                        try:
+                            out[src] = json.loads(doc)
+                        except Exception:
+                            pass
+                finally:
+                    db.close()
+            except Exception as e:
+                self._send_json({'ok': False, 'err': 'dict.db 查询失败：' + str(e)}, 500)
+                return
+            self._send_json({'ok': True, 'word': w, 'sources': out})
+            return
         super().do_GET()
 
     def do_POST(self):
