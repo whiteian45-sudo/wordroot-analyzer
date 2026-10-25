@@ -84,3 +84,6 @@ index_merged5.html
 /scan_etym_errors.py
 /split_ecdict.py
 dict.db
+
+# 归档：一次性过程稿（候选词表 / 报告 / 工单）按月份收进这里，根目录只留正式文件
+/_archive/
