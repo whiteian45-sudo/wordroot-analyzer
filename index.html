@@ -19369,6 +19369,93 @@ function analyze(raw) {
   return Object.assign({ query: raw }, r0);
 }
 
+/* ============================================================
+   按需词典（2026-10-25）：dict.db 可用时，不再把 76 万词的 ecdict 整包拉进内存。
+   查词前按词向 /lookup 取一条（35 万条短语、40 万条长尾词都在服务端），
+   内存里只留这次会话真正查过的词。没有 dict.db（刚 clone、还没跑 build_dict_db.py）
+   就整包加载，行为和以前完全一致 —— 两条路都走 ECDICT 这张表，下游代码不用改。
+   ============================================================ */
+let LAZY_DICT = false;        // 由 loadData() 探测后置位：true = 按词取，false = 整包加载
+const DICT_SEEN = new Set();  // 已经问过服务端的 key（含"确认没有"的），别重复问
+const DICT_PENDING = new Map();   // key → 正在取它的 Promise（并发调用要等它，不能当已完成）
+
+/* 把一个 key 归一成服务端的口径：小写、只留字母与空格、压空白。
+   必须和 analyze()（单词去标点）与 normalizePhrase()（短语压空白）一致，
+   否则同一串在浏览器和服务端算成两个 key，缓存永远命中不了。 */
+function dictKey(w) {
+  return String(w == null ? '' : w).toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/* 把一批词补进 ECDICT。批量走一个 POST：段落模式一段话几十个词、历史清理一批词都只打一次；
+   失败就把占位撤掉，下次自动重试（离线、服务重启都能自愈）。
+
+   并发是这里唯一的坑：启动时 pruneJunkHistory 会在后台把整份历史（几百个词）批量补进来，
+   用户这时随便查一个词可能落进同一批。若"已请求过"就直接跳过，调用方会拿到还没写进
+   ECDICT 的空结果 —— 表现成"这个长尾词查不到"（test_lazy.js 就是这么抓到的）。
+   所以正在取的那一批用 DICT_PENDING 记成 Promise，后来者 await 它，而不是当它已完成。 */
+async function ensureDict(words) {
+  if (!LAZY_DICT) return;
+  const batch = [];
+  const waits = [];              // 别人正在取：等它们的 Promise
+  for (const w of (words || [])) {
+    const k = dictKey(w);
+    if (!k) continue;
+    const p = DICT_PENDING.get(k);
+    if (p) { waits.push(p); continue; }
+    if (DICT_SEEN.has(k)) continue;
+    DICT_SEEN.add(k);            // 先占位：同一批词不会被本函数的并发调用重复请求
+    batch.push(k);
+  }
+  if (batch.length) {
+    const job = (async () => {
+      for (let i = 0; i < batch.length; i += 200) {
+        const chunk = batch.slice(i, i + 200);
+        try {
+          const res = await fetch('/lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ words: chunk })
+          });
+          const j = await res.json();
+          if (!j || !j.ok) throw new Error((j && j.err) || ('HTTP ' + res.status));
+          const src = j.sources || {};
+          for (const k of chunk) if (src[k] && src[k].ecdict) ECDICT[k] = src[k].ecdict;
+        } catch (e) {
+          chunk.forEach(k => DICT_SEEN.delete(k));   // 没拿到就允许重试
+          console.warn('按需词典取词失败（' + chunk.length + ' 词）：', e);
+          return;
+        }
+      }
+    })();
+    batch.forEach(k => DICT_PENDING.set(k, job));
+    try { await job; } finally { batch.forEach(k => DICT_PENDING.delete(k)); }
+  }
+  if (waits.length) await Promise.all(waits);
+}
+
+/* 查词前的补词。顺序：先按原词走一遍 analyze（考试词库/牛津命中就零请求），
+   没命中再取一次服务端；仍没有就取词形还原链上的候选（forcefully → forceful → force）。
+   只在未命中时才会发请求，常用词不会为一个请求多等一次。 */
+async function analyzeLazy(w) {
+  if (!LAZY_DICT) return analyze(w);
+  let r = analyze(w);
+  if (r.found) return r;
+  await ensureDict([w]);
+  r = analyze(w);
+  if (r.found) return r;
+  const chain = [];
+  let cur = String(w || '').toLowerCase().replace(/[^a-z]/g, '');
+  for (let i = 0; i < 3; i++) {
+    const lm = lemmaOf(cur);
+    if (lm === cur) break;
+    chain.push(lm);
+    cur = lm;
+  }
+  if (!chain.length) return r;
+  await ensureDict(chain);
+  return analyze(w);
+}
+
 /* 构成逻辑：把各部分含义拼成一句话 */
 function compose(b) {
   const parts = [];
@@ -20519,28 +20606,41 @@ async function loadData() {
     } catch (e) { console.warn('stress.json 加载失败', e); }
     LOAD_STATE.done = 5; setPill('词库装载中 ' + loadFrac());
     textEl.textContent = T('例句完成，正在加载全量词典…');
-    // 全量词典优先走分片（dict/ 目录，由 split_ecdict.py 生成）：
-    // 66MB 一次性 JSON.parse 会同步卡主线程约 1.4 秒，而那时遮罩早已撤掉、用户可能正在打字，
-    // 这一下会砸在输入上。切成 40 来片逐个在空闲时解析，每次只卡几十毫秒，基本察觉不到。
-    // 没有分片（比如刚 clone 下来还没生成）就退回整文件加载，功能不受影响。
-    // 顺带：换行归一化也不再做全表遍历（原 600ms），改由渲染时的 nl() 按需处理。
+    // 全量词典（2026-10-25）：dict.db 在就**按词取**，启动零成本。
+    // 以前这里要把 63MB / 76 万条 ecdict 整包拉进内存（单次解析 2.3 秒、常驻堆 400MB+），
+    // 而其中 35 万条是短语、40 万条是长尾词 —— 一次会话真正会查到的可能只有几十个。
+    // 探测失败（刚 clone 还没跑 build_dict_db.py、或 dict.db 坏了）就退回整包/分片，行为与以前一致。
     const idle = window.requestIdleCallback || (f => setTimeout(f, 0));
-    let shards = null;
-    try { shards = await (await fetch('dict/index.json')).json(); } catch (e) { shards = null; }
-    if (Array.isArray(shards) && shards.length) {
-      DICT_SHARDS.total = shards.length;
-      for (const name of shards) {
-        try {
-          const body = await fetchText('dict/' + name);
-          await new Promise(r => idle(r));      // 先取回来，等主线程空了再解析
-          Object.assign(ECDICT, JSON.parse(body));
-        } catch (e) { console.warn('分片加载失败', name, e); }
-        DICT_SHARDS.done++;
-        setPill('词库装载中 ' + loadFrac());
-      }
+    try {
+      const probe = await (await fetch('/lookup?word=test')).json();
+      LAZY_DICT = !!(probe && probe.ok);
+    } catch (e) { LAZY_DICT = false; }
+    if (LAZY_DICT) {
+      setProg(100);
+      console.info('按需词典已启用：查词时按词取（dict.db），不再整包加载 ecdict.json');
     } else {
-      const dict = await fetchJSON('ecdict.json', setProg, 62, 100);
-      Object.assign(ECDICT, dict);
+      // 整包模式优先走分片（dict/ 目录，由 split_ecdict.py 生成）：
+      // 63MB 一次性 JSON.parse 会同步卡主线程 2 秒多，那时遮罩早已撤掉、用户可能正在打字，
+      // 这一下会砸在输入上。切成 40 来片逐个在空闲时解析，每次只卡几十毫秒，基本察觉不到。
+      // 没有分片（比如刚 clone 下来还没生成）就退回整文件加载，功能不受影响。
+      // 顺带：换行归一化也不再做全表遍历（原 600ms），改由渲染时的 nl() 按需处理。
+      let shards = null;
+      try { shards = await (await fetch('dict/index.json')).json(); } catch (e) { shards = null; }
+      if (Array.isArray(shards) && shards.length) {
+        DICT_SHARDS.total = shards.length;
+        for (const name of shards) {
+          try {
+            const body = await fetchText('dict/' + name);
+            await new Promise(r => idle(r));      // 先取回来，等主线程空了再解析
+            Object.assign(ECDICT, JSON.parse(body));
+          } catch (e) { console.warn('分片加载失败', name, e); }
+          DICT_SHARDS.done++;
+          setPill('词库装载中 ' + loadFrac());
+        }
+      } else {
+        const dict = await fetchJSON('ecdict.json', setProg, 62, 100);
+        Object.assign(ECDICT, dict);
+      }
     }
     LOAD_STATE.done = 6;
     DATA_READY = true;          // 六个表齐了，"查不到"从现在起才可信
@@ -21404,7 +21504,7 @@ function hideSuggest() {
 /* 「保留原词」的一次性豁免：置为原词后，同一个词不再被自动纠正（见 search 里的纠错分支）。 */
 let autoCorrectSkip = '';
 
-function search() {
+async function search() {
   const v = input.value.trim();
   if (!v) return;
   pushNav(v, 'main');
@@ -21422,11 +21522,12 @@ function search() {
   // 含空格：先智能判断是否命中 ECDICT 短语 → 整串查短语卡；否则段落阅读逐词展开
   if (/\s/.test(v)) {
     const ph = normalizePhrase(v);
+    if (!ECDICT[ph]) await ensureDict([ph]);     // 按需词典：整串可能是收录的短语
     if (ECDICT[ph]) { renderPhrase(ph, ECDICT[ph], v); return; }
     renderParagraph(v);
     return;
   }
-  const r = analyze(v);
+  const r = await analyzeLazy(v);
   if (!r.found && !DATA_READY) { renderLoadingCard(v); return; }   // 装完之前不轻言"没这个词"
   // 单候选自动纠正：词没查到、拼写建议唯一确定 → 自动改查建议词，并在卡片顶部说明改了什么。
   // autoCorrectSkip 是「保留原词」的豁免：没有它的话，点「保留原词」会走回这里、被同一个建议
@@ -21434,7 +21535,7 @@ function search() {
   if (!r.found && r.suggestion && r.suggestion !== v && autoCorrectSkip !== v) {
     const corrected = r.suggestion;
     input.value = corrected;
-    const rCorrected = analyze(corrected);
+    const rCorrected = await analyzeLazy(corrected);
     // 撤销按钮走事件委托（data-ac-undo），不用内联 onclick：词里带引号时手写转义极易写坏，
     // 也跟全文件「委托 + data-*」的风格一致。横幅文案进 T()，英文界面跟着切。
     const bannerHTML = '<div class="spell-autocorrect"><span>' + T('自动纠正') + '</span>'
@@ -21535,7 +21636,7 @@ function noteHasValue(r, w) {
   return true;  // enhanced/ecdict
 }
 
-function renderParagraph(text) {
+async function renderParagraph(text) {
   // 按单词切分，保留标点空格。词: [A-Za-z']+，其余原样。
   const tokens = text.split(/([A-Za-z']+)/);
   const analyzed = new Map();  // word -> {r, note} 缓存，避免重复拆解
@@ -21544,6 +21645,13 @@ function renderParagraph(text) {
     '<button class="trans-btn" data-trans="' + escapeHtml(text).replace(/"/g, '&quot;') + '" title="本地 LLM 翻译整段">🌐 译整段</button>';
   // 反向提示：这一整串恰好是词典收录的短语？给「作为短语查询」入口
   const phKey = normalizePhrase(text).replace(/[^a-z\s]/g, '').trim();
+  // 按需词典：先把这一段的词一次取回来（几十个词只打一个请求），
+  // 否则下面逐词 analyze 时每个词都要各等一次网络。
+  if (LAZY_DICT) {
+    const words = tokens.filter(t => /^[A-Za-z']+$/.test(t)).map(t => t.toLowerCase().replace(/[^a-z]/g, ''));
+    if (phKey) words.push(phKey);
+    await ensureDict(words);
+  }
   if (ECDICT[phKey]) {
     html += '<button class="switch-btn" data-switch-phr="' + escapeHtml(phKey) + '">整串是短语「' + escapeHtml(phKey) + '」？作为短语查询 →</button>';
   }
@@ -21714,12 +21822,12 @@ function navForward() {
 
 /* 右侧滑出面板：段落深读用，复用 cardHTML 渲染完整卡片 */
 let lastPanelWord = '';   // 面板当前显示的词，装载完成后要拿它补查
-function openPanel(word) {
+async function openPanel(word) {
   lastPanelWord = word;
   pushNav(word, 'panel');
   panelBack = null;            // 新的一屏词条详情：返回栈清空
   updatePanelBack();
-  const r = analyze(word);
+  const r = await analyzeLazy(word);   // 按需词典：面板要挂的词可能还没取回来
   const body = document.getElementById('panel-body');
   if (!r.found && !DATA_READY) {
     // 段落模式点词走的是这条路径，绕过了 search() 的就绪判断，必须单独兜
@@ -21855,6 +21963,8 @@ async function initFavs() {
     if (server.length) { try { localStorage.setItem(FAV_KEY, JSON.stringify(favItems())); } catch (e) {} }
     else if (local.length) saveFavs();
   } catch (e) { /* 服务未就绪：维持 localStorage 兜底 */ }
+  // 按需词典：收藏列表要显示释义（summaryFor 会读 ECDICT），先把收藏的词一次取回来
+  await ensureDict(favItems());
   renderFavs();
 }
 window.addEventListener('focus', () => { favPull().then(ch => { if (ch) renderFavs(); }); });
@@ -22469,10 +22579,13 @@ function worthRecording(r) {
    必须在词典装载完成之后跑（analyze 要查词典），且跑完在 localStorage 打标记、不再重复。
    句子练习条目（kind=ex）和带空格的短语条目不动。
    触发点有两处（装载完成、历史加载完成），谁后到谁负责跑，条件不满足就先退出等下一次。 */
-function pruneJunkHistory() {
+async function pruneJunkHistory() {
   try { if (localStorage.getItem(HIST_PRUNED_KEY) === '1') return; } catch (e) { return; }
   if (!DATA_READY || !HISTORY || !HISTORY.length) return;
   try {
+    // 按需词典：先把记录里出现的词一次取回来。不取的话，整包没加载时
+    // analyze() 会把真词判成"查不到"，worthRecording 一票否决 —— 那是误删用户记录。
+    await ensureDict(HISTORY.map(x => x.w));
     const keep = HISTORY.filter(x =>
       (x.kind === 'ex' || /\s/.test(x.w || '')) ? true : worthRecording(analyze(x.w)));
     if (keep.length !== HISTORY.length) {
@@ -22536,7 +22649,7 @@ function shuffled(a) {
 }
 /* 复习入口。all=true 洗牌全部；默认只复习到期的词、按到期先后排。
    没有到期的词就回落到洗牌全部，保证按钮永不空转。 */
-function startReview(all) {
+async function startReview(all) {
   const h = loadHistory().slice();          // 拷贝再动，别打乱权威顺序
   if (!h.length) { renderHistory(); return; }
   let list;
@@ -22547,15 +22660,19 @@ function startReview(all) {
   }
   reviewState = { list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0, requeued: 0, finished: false };
   input.blur();   // 同上：焦点留在搜索框会让空格/评分键失灵
+  // 按需词典：揭晓时会 analyze 当前词（拆解提示 + 助记素材），先把这一轮的词一次取回来
+  await ensureDict(list.map(x => x.w));
   renderReview();
 }
 
 /* 按词频级别抽一批测一测：复用复习闪卡的交互（空格揭晓、1/2 自评），不另做一套。
    评分走同一个 gradeCurrent，所以结果会写进历史并进 SRS 排程——
    测出来的生词明天自动出现在「复习」里，"测 → 排程 → 巩固"的闭环不用额外写。 */
-function startFreqTest(level, n) {
+async function startFreqTest(level, n) {
   if (!BNC_FAMILIES || !BNC_FAMILIES[level]) return;
   const pick = shuffled(Object.keys(BNC_FAMILIES[level]).slice()).slice(0, n || 20);
+  // 按需词典：卡片上的释义走 summaryFor(w)，先把这一批词取回来，否则整屏都是"(暂无释义)"
+  await ensureDict(pick);
   const list = pick.map(w => normHistItem({ k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word' }));
   reviewState = { list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0, requeued: 0, finished: false,
     fromTab: 'freq' };   // 记下来源：退出复习时回到词频目录（见 #history 的 quit 分支）

@@ -7,14 +7,16 @@
 import http.server
 import socketserver
 import os
+import re
 import webbrowser
 import threading
 import socket
+import sqlite3
 import json
 import time
 import urllib.request
 import urllib.error
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlparse, parse_qs
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 PORT = 8756
@@ -288,6 +290,49 @@ EXPLAIN_SYSTEM_EN = (
     '## Summary\n(one or two sentences worth remembering)\n'
     'Aim for 350-500 words.')
 
+# ---------- 按需词典（dict.db）----------
+def _dict_db_path():
+    """dict.db 的路径；不存在返回 None（前端据此退回整包加载 ecdict.json）。"""
+    p = os.path.join(DIR, 'dict.db')
+    return p if os.path.exists(p) else None
+
+
+def _norm_lookup_word(w):
+    """归一化查词 key：小写、只留字母与空格、压空白。
+
+    必须和前端 analyze() 的口径一致（那边是 w.toLowerCase().replace(/[^a-z]/g,'')，
+    短语走 normalizePhrase 只压空白），否则同一串在两边算成两个 key，
+    按需缓存在浏览器里永远命中不了。dict.db 里存的 key 是 build 时的 str(w).strip().lower()，
+    所以这里再去标点只是让"don't → dont"这类查询和整包模式表现一致（整包模式下 analyze 也会去标点）。
+    """
+    s = re.sub(r'[^a-z\s]', '', str(w or '').strip().lower())
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+def _lookup_rows(dbp, words):
+    """一次连接取一批词，返回 {word: {src: doc}}。
+
+    只读打开（mode=ro），缺词就是不在结果里，不当错误。
+    批量是一件事的关键：段落模式一段话几十个词、历史清理一次上百个词，
+    一个请求全取回来，别让前端对每个词各打一次网络。
+    """
+    out = {}
+    db = sqlite3.connect('file:' + dbp + '?mode=ro', uri=True)
+    try:
+        for w in words:
+            row = {}
+            for src, doc in db.execute('SELECT src, doc FROM dict WHERE word=?', (w,)):
+                try:
+                    row[src] = json.loads(doc)
+                except Exception:
+                    pass      # 单条坏数据跳过，不影响同词其它源
+            if row:
+                out[w] = row
+    finally:
+        db.close()
+    return out
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIR, **kwargs)
@@ -429,31 +474,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # /lookup?word=xxx：按词从 dict.db（SQLite）取 ecdict/oxford/thes 三个源（2026-10-25 加）
         # 目的：前端不必再把 100MB+ 的大 JSON 整包拉进浏览器内存；按需取一个词即可。
         if p == '/lookup':
-            import sqlite3, urllib.parse
-            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            w = (q.get('word') or [''])[0].strip().lower()
+            q = parse_qs(urlparse(self.path).query)
+            w = _norm_lookup_word((q.get('word') or [''])[0])
             if not w:
                 self._send_json({'ok': False, 'err': '缺少 word 参数'}, 400)
                 return
-            dbp = os.path.join(DIR, 'dict.db')
-            if not os.path.exists(dbp):
+            dbp = _dict_db_path()
+            if not dbp:
                 self._send_json({'ok': False, 'err': 'dict.db 不存在，请先运行 python build_dict_db.py'}, 500)
                 return
-            out = {}
             try:
-                db = sqlite3.connect('file:' + dbp + '?mode=ro', uri=True)
-                try:
-                    for src, doc in db.execute('SELECT src, doc FROM dict WHERE word=?', (w,)):
-                        try:
-                            out[src] = json.loads(doc)
-                        except Exception:
-                            pass
-                finally:
-                    db.close()
+                out = _lookup_rows(dbp, [w])
             except Exception as e:
                 self._send_json({'ok': False, 'err': 'dict.db 查询失败：' + str(e)}, 500)
                 return
-            self._send_json({'ok': True, 'word': w, 'sources': out})
+            self._send_json({'ok': True, 'word': w, 'sources': out.get(w, {})})
             return
         super().do_GET()
 
@@ -556,6 +591,38 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                       + '\n\n请按系统提示的格式，只依据上面这份素材写讲解。')
             model = body.get('model') or OLLAMA_MODEL
             self._stream_ollama(iter_chat_stream(prompt, model, EXPLAIN_SYSTEM_EN if want_en else EXPLAIN_SYSTEM), model)
+            return
+        # /lookup（POST {words:[...]}）：批量按词取。前端不再整包加载 ecdict，
+        # 改在查词前把要用的词一次取回来（段落模式一段话、历史清理一批词都只走一个请求）。
+        if path == '/lookup':
+            ok, body = self._read_body()
+            if not ok:
+                return
+            if not isinstance(body, dict):
+                body = {}
+            words = body.get('words')
+            if isinstance(words, str):
+                words = [words]
+            if not isinstance(words, list):
+                self._send_json({'ok': False, 'err': 'words 必须是数组'}, 400)
+                return
+            norm, seen = [], set()
+            for w in words[:300]:        # 单次上限 300 词：够一整段文章，也不至于被灌满
+                k = _norm_lookup_word(w)
+                if k and k not in seen:
+                    seen.add(k)
+                    norm.append(k)
+            if not norm:
+                self._send_json({'ok': False, 'err': '没有有效的 words'}, 400)
+                return
+            dbp = _dict_db_path()
+            if not dbp:
+                self._send_json({'ok': False, 'err': 'dict.db 不存在，请先运行 python build_dict_db.py'}, 500)
+                return
+            try:
+                self._send_json({'ok': True, 'sources': _lookup_rows(dbp, norm)})
+            except Exception as e:
+                self._send_json({'ok': False, 'err': 'dict.db 查询失败：' + str(e)}, 500)
             return
         # /history、/favs：与磁盘旧数据合并后写入（不是整表覆盖，见 _merge_items 的说明）
         if path in ('/history', '/favs'):
