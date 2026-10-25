@@ -401,6 +401,17 @@
   }
   .memo-box[hidden] { display: none; }
   .memo-err { color: var(--gold); font-size: 13.5px; }
+  /* 来源角标：区分 AI 归纳内容与真实词典素材 */
+  .src-badge {
+    display: inline-block; padding: 1px 7px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; letter-spacing: .3px;
+    vertical-align: middle; margin-left: 6px; opacity: .85;
+    position: relative; top: -1px;
+  }
+  .src-badge.ai  { background: #ede5ff; color: #6a39c0; border: 1px solid #c4a8f0; }
+  .src-badge.dict { background: #e6f9ed; color: #1a7a3c; border: 1px solid #8ed4a8; }
+  .dark .src-badge.ai   { background: #2a1a4a; color: #c89ef8; border-color: #6a3ab0; }
+  .dark .src-badge.dict { background: #0e2a18; color: #5cd488; border-color: #2a7a4a; }
   /* 📖 深度讲解：正文用极简 markdown 渲染（见 mdToHTML）；流式期间是纯文本，靠 pre-wrap 保换行 */
   .explain-box { white-space: pre-wrap; font-size: 14px; line-height: 1.85; }
   .explain-h { color: var(--accent); font-weight: 600; }
@@ -647,6 +658,21 @@
     background: var(--warn-bg); 
   }
   .spell-suggest .cog { border-color: var(--warn-line-hi); color: var(--gold); }
+  /* 自动纠错横幅（2026-10-25）：原词查不到 → 自动改查建议词，这里说明改了什么、可一键撤回。
+     配色沿用上面的拼写提示（warn 系），但排成单行 flex，别再把卡片顶高一截。 */
+  .spell-autocorrect {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    margin: 0 0 12px; padding: 9px 13px; border-radius: 11px;
+    font-size: 13px; color: var(--text);
+    border: 1px solid var(--warn-line); background: var(--warn-bg);
+  }
+  .spell-autocorrect .ac-from { color: var(--sub); text-decoration: line-through; }
+  .spell-autocorrect .ac-to { color: var(--gold); font-weight: 600; }
+  .spell-autocorrect .ac-undo {
+    margin-left: auto; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer;
+    color: var(--sub); background: transparent; border: 1px solid var(--warn-line); border-radius: 7px;
+  }
+  .spell-autocorrect .ac-undo:hover { color: var(--text); border-color: var(--gold); }
   /* 发音工具条 */
   /* 顶栏（2026-10-05 重排，2026-10-07 收拢）：控件按「发音 / 阅读 / 界面」分三组，组间一条细竖线，
      所有控件统一成同一高度同一圆角，排在一起才齐。
@@ -729,6 +755,8 @@
   .rev-btn.bad:hover { color: var(--gold); border-color: var(--gold); filter: brightness(1.06); }
   .rev-btn.ok { color: var(--ok); border-color: var(--ok); background: rgba(126,226,168,0.12); }
   .rev-btn.ok:hover { color: var(--ok); border-color: var(--ok); filter: brightness(1.06); }
+  .rev-btn.great { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .rev-btn.great:hover { color: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
   .rev-nav { margin-top: 8px; }
   /* 历史分页 */
   .h-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; font-size: 12.5px; color: var(--sub); }
@@ -18745,7 +18773,21 @@ const ROOT_BLOCK = {
   /* 低匹配误拆（2026-10-03）：这三条补根救不回（没有正确候选），拦回原读法 */
   'improvident': ['improve'], 'unsettling': ['set'], 'basically': ['call'],
   /* pedo 同形异源（2026-10-03）：pedodontics 现读 ped 脚，拦掉让它走 pedo 读法，再由显示层标成「儿童」义 */
-  'pedodontics': ['ped'], 'pedodontiat': ['ped']
+  'pedodontics': ['ped'], 'pedodontiat': ['ped'],
+
+  /* cat 误伤·tric/prec 家族（audit_report.md 2026-10-05 低匹配词）：
+     deprecate 应 de+prec+ate（拉丁 precari 祈求）、extricate/intricate 应 ex/in+tric+ate（拉丁 tricae 障碍）、
+     imprecation 应 im+prec+ation，均被引擎误拆出"cat（猫/捉）"——拦掉 cat 让正确词根竞争胜出。
+     sensitivity 应 sens+itive+ity，被拆成 sen,siti,vit,y——同时拦 siti/vit 两个假词根。
+     intricacy 应 in+tric+acy，被拆成 in,cac,y——拦掉 cac。 */
+  'deprecate': ['cat'], 'deprecates': ['cat'], 'deprecated': ['cat'], 'deprecating': ['cat'],
+  'deprecation': ['cat'], 'deprecations': ['cat'], 'deprecatory': ['cat'], 'deprecatingly': ['cat'],
+  'extricate': ['cat'], 'extricates': ['cat'], 'extricated': ['cat'], 'extricating': ['cat'],
+  'extrication': ['cat'], 'inextricable': ['cat'], 'inextricably': ['cat'],
+  'intricate': ['cat'], 'intricacy': ['cat', 'cac'], 'intricacies': ['cat', 'cac'],
+  'intricately': ['cat'],
+  'imprecate': ['cat'], 'imprecation': ['cat'], 'imprecations': ['cat'], 'imprecatory': ['cat'],
+  'sensitivity': ['siti', 'vit'], 'sensitivities': ['siti', 'vit']
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -20123,7 +20165,8 @@ const UI_EN = {
 '查词记录':'History','复习':'Review','导出':'Export','清空':'Clear','待复习':'Due',
 '已自动存本地 ✓':'Saved locally ✓','清空收藏':'Clear favourites','暂无记录可导出':'Nothing to export',
 '退出':'Exit','上一个':'Prev','下一个':'Next','重洗':'Shuffle','显示释义':'Show meaning',
-'显示答案':'Show answer','忘了':'Forgot','记住了':'Remembered','查看完整卡片':'Open full card',
+'显示答案':'Show answer','忘了':'Forgot','还行':'Got it','轻松':'Easy','记住了':'Remembered','查看完整卡片':'Open full card',
+'自动纠正':'Auto-corrected','保留原词':'Keep what I typed','撤销自动纠正，按原词查询':'Undo the auto-correction and look up exactly what I typed',
 '查这个词的卡片':'Open this word','再复习一轮（全部）':'Another round (all)','完成 ✓':'Done ✓',
 '全部':'All','返回':'Back','← 返回':'← Back','本轮完成':'Round complete',
 '先回忆这个词的意思，再点下方显示释义':'Recall the meaning, then reveal it below',
@@ -20884,6 +20927,16 @@ function mdIcon(title) {
   if (/总结|summary/i.test(t)) return '✅';
   return '';
 }
+/* 来源角标辅助：根据标题关键词判断是真实词典素材还是 AI 归纳内容，返回对应徽标 HTML
+   在 mdToHTML 的小节标题渲染中调用，给深度讲解各节打来源标记 */
+function mdSrcBadge(title) {
+  const t = String(title || '');
+  if (/例句|example|搭配|colloc|释义|词源|拆解/i.test(t))
+    return '<span class="src-badge dict">真实词典</span>';
+  if (/结论|takeaway|语域|register|直觉|辨析|归纳|总结|summary|核心|core|场景/i.test(t))
+    return '<span class="src-badge ai">AI 归纳</span>';
+  return '';
+}
 function mdToHTML(text) {
   const lines = escapeHtml(String(text == null ? '' : text)).split(/\r?\n/);
   const out = [];
@@ -20908,12 +20961,12 @@ function mdToHTML(text) {
     let m;
     if ((m = line.match(/^#{1,4}\s+(.*)$/))) {
       const ic = mdIcon(m[1]);
-      out.push('<div class="md-h">' + (ic ? ic + ' ' : '') + mdInline(m[1]) + '</div>');
+      out.push('<div class="md-h">' + (ic ? ic + ' ' : '') + mdInline(m[1]) + mdSrcBadge(m[1]) + '</div>');
       continue;
     }
     if ((m = line.match(/^【([^】]{1,20})】\s*(.*)$/))) {
       const ic = mdIcon(m[1]);
-      out.push('<div class="md-h">' + (ic ? ic + ' ' : '') + mdInline(m[1]) + '</div>');
+      out.push('<div class="md-h">' + (ic ? ic + ' ' : '') + mdInline(m[1]) + mdSrcBadge(m[1]) + '</div>');
       if (m[2]) out.push('<div class="md-p">' + mdInline(m[2].replace(/^[:：]\s*/, '')) + '</div>');
       continue;
     }
@@ -21288,8 +21341,8 @@ function clearSideRel() {
   if (side) side.innerHTML = '';
 }
 
-function render(r) {
-  result.innerHTML = cardHTML(r);
+function render(r, bannerHTML) {
+  result.innerHTML = (bannerHTML || '') + cardHTML(r);
   decorateBnc(result, r);
   result.classList.add('show');
   if (worthRecording(r)) saveHistory(r);
@@ -21348,6 +21401,9 @@ function hideSuggest() {
   sgIndex = -1;
 }
 
+/* 「保留原词」的一次性豁免：置为原词后，同一个词不再被自动纠正（见 search 里的纠错分支）。 */
+let autoCorrectSkip = '';
+
 function search() {
   const v = input.value.trim();
   if (!v) return;
@@ -21372,6 +21428,25 @@ function search() {
   }
   const r = analyze(v);
   if (!r.found && !DATA_READY) { renderLoadingCard(v); return; }   // 装完之前不轻言"没这个词"
+  // 单候选自动纠正：词没查到、拼写建议唯一确定 → 自动改查建议词，并在卡片顶部说明改了什么。
+  // autoCorrectSkip 是「保留原词」的豁免：没有它的话，点「保留原词」会走回这里、被同一个建议
+  // 再纠回去 —— 那个按钮永远不可能生效（2026-10-25 修）。
+  if (!r.found && r.suggestion && r.suggestion !== v && autoCorrectSkip !== v) {
+    const corrected = r.suggestion;
+    input.value = corrected;
+    const rCorrected = analyze(corrected);
+    // 撤销按钮走事件委托（data-ac-undo），不用内联 onclick：词里带引号时手写转义极易写坏，
+    // 也跟全文件「委托 + data-*」的风格一致。横幅文案进 T()，英文界面跟着切。
+    const bannerHTML = '<div class="spell-autocorrect"><span>' + T('自动纠正') + '</span>'
+      + '<span class="ac-from">' + escapeHtml(v) + '</span><span>→</span>'
+      + '<span class="ac-to">' + escapeHtml(corrected) + '</span>'
+      + '<button class="ac-undo" data-ac-undo="' + escapeHtml(v) + '" title="' + T('撤销自动纠正，按原词查询') + '">'
+      + T('保留原词') + '</button></div>';
+    render(rCorrected, bannerHTML);
+    return;
+  }
+  // 豁免只用一次：下次再查同一个词，仍然按拼写建议自动纠错
+  if (autoCorrectSkip === v) autoCorrectSkip = '';
   render(r);
 }
 
@@ -22491,24 +22566,30 @@ function startFreqTest(level, n) {
 
 /* 评分。这是唯一的推进方式——SRS 里「评分」就是「翻页」。
    队列用 total 冻结分母，补看的卡会让 list 变长，用 list.length 当分母会越复习越多。 */
-function gradeCurrent(ok) {
+/* gradeCurrent：三档自评（grade: 'bad'=忘了/归零, 'ok'=还行/+1, 'great'=轻松记住/+2）
+   向下兼容旧布尔值 ok=true/false，等价于 'ok'/'bad'。 */
+function gradeCurrent(grade) {
   const s = reviewState;
   if (!s || s.finished) return;
   const cur = s.list[s.i];
   const h = loadHistory();
   const now = Date.now();
+  // 兼容旧布尔值：true→'ok'，false→'bad'
+  if (grade === true) grade = 'ok'; else if (grade === false) grade = 'bad';
   let it = h.find(x => (x.k || x.w) === (cur.k || cur.w));
   if (!it) { it = normHistItem({ k: cur.k, w: cur.w, s: cur.s || '', kind: cur.kind, en: cur.en, zh: cur.zh, t: now }); h.unshift(it); }
-  if (ok) {
-    it.b = Math.min((it.b || 0) + 1, SRS_DAYS.length - 1);
-    it.d = now + SRS_DAYS[it.b] * DAY_MS;
-    s.ok++;
-  } else {
+  if (grade === 'bad') {
     it.b = 0;
     it.d = now + DAY_MS;
     s.bad++;
     s.list.push(Object.assign({}, cur, { requeued: true }));   // 塞回队尾，本轮还会再见到（句子卡也保留 kind）
     s.requeued++;
+  } else {
+    // ok: +1档；great: +2档（跳一格，下次间隔更长）
+    const inc = (grade === 'great') ? 2 : 1;
+    it.b = Math.min((it.b || 0) + inc, SRS_DAYS.length - 1);
+    it.d = now + SRS_DAYS[it.b] * DAY_MS;
+    s.ok++;
   }
   s.done++;
   s.shown = false;
@@ -22526,7 +22607,7 @@ function finishReview() {
   el.innerHTML = '<div class="rev-head">本轮完成<button class="h-btn" data-rev="quit">返回</button></div>' +
     '<div class="review"><div class="rev-word">🎉</div>' +
     '<div class="rev-sum">复习 ' + s.done + ' 张' + (s.requeued ? '（其中补看 ' + s.requeued + ' 张）' : '') + '<br>' +
-    '记住 ' + s.ok + ' · 忘了 ' + s.bad + '</div>' +
+    '记住/轻松 ' + s.ok + ' · 忘了 ' + s.bad + '</div>' +
     '<div class="rev-date">下次到期：' + nextTxt + '</div>' +
     '<div style="margin-top:18px"><button class="rev-btn" data-rev="all">🔀 再复习一轮（全部）</button></div></div>';
   el.classList.add('show');
@@ -22593,7 +22674,8 @@ function renderReview() {
   const grades =
     '<div class="rev-nav">' +
     '<button class="rev-btn bad" data-rev="bad" title="档位归零，明天再来；本轮稍后还会再考一次（快捷键 1）">😰 忘了</button>' +
-    '<button class="rev-btn ok" data-rev="ok" title="档位 +1，按间隔表排期（快捷键 2）">😎 记住了</button>' +
+    '<button class="rev-btn ok" data-rev="ok" title="档位 +1，按间隔表排期（快捷键 2）">😊 还行</button>' +
+    '<button class="rev-btn great" data-rev="great" title="档位 +2，直接跳一格间隔更长（快捷键 3）">😎 轻松</button>' +
     '</div>';
   let h = head + '<div class="review">';
 
@@ -22710,8 +22792,9 @@ document.getElementById('history').addEventListener('click', (e) => {
     if (a === 'all') { startReview(true); return; }
     if (!reviewState || reviewState.finished) return;
     if (a === 'show') { reviewState.shown = true; renderReview(); }
-    else if (a === 'ok') gradeCurrent(true);
-    else if (a === 'bad') gradeCurrent(false);
+    else if (a === 'ok') gradeCurrent('ok');
+    else if (a === 'bad') gradeCurrent('bad');
+    else if (a === 'great') gradeCurrent('great');
     else if (a === 'full') { const w = reviewState.list[reviewState.i].w; switchTab('query'); input.value = w; search(); }
     return;
   }
@@ -22948,6 +23031,9 @@ document.addEventListener('click', (e) => {
 });
 
 result.addEventListener('click', (e) => {
+    // 自动纠错横幅 → 「保留原词」：记下豁免再按原词重查，这次不再被同一个建议纠回去
+    const ac = e.target.closest('[data-ac-undo]');
+    if (ac) { autoCorrectSkip = ac.dataset.acUndo; input.value = autoCorrectSkip; search(); return; }
     const t = e.target.closest('.cog');
     if (t) { input.value = t.dataset.w; search(); return; }
     // 段落翻译按钮 → 本地 LLM 翻译整段
@@ -23261,8 +23347,9 @@ toTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: scr
 /* 拖拽搜索：从外部把词拖进输入框 → 直接替换内容（默认行为是插入，需拦截） */
 input.addEventListener('dragover', (e) => { e.preventDefault(); input.classList.add('drag-over'); });
 input.addEventListener('dragleave', () => input.classList.remove('drag-over'));
-/* 全局键盘快捷键：Esc 关面板/清联想、/ 聚焦搜索、空格 朗读（Shift 慢速）、
-   [ / ] 上一个·下一个词、复习中 空格/Enter 显示答案 + 1 忘了 / 2 记住了、Alt+← 退回上一个词。
+/* 全局键盘快捷键：直接敲字母 = 开始查新词、/ 聚焦搜索、Esc 关面板/清联想、
+   空格 朗读（Shift 慢速）、[ / ] 上一个·下一个词、复习中 空格/Enter 显示答案 +
+   1 忘了 / 2 还行 / 3 轻松、Alt+← 退回上一个词。
    输入框自己的 keydown（Enter/↑↓/Esc）先跑，这里重复调用 hideSuggest() 幂等无副作用。 */
 function isTyping(el) {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' ||
@@ -23307,10 +23394,12 @@ document.addEventListener('keydown', (e) => {
     renderReview();
     return;
   }
-  // 1 / 2：复习自评（1=忘了，2=记住了），只在复习会话里生效
-  if ((e.key === '1' || e.key === '2') && !isTyping(e.target) && reviewState && !reviewState.finished) {
+  // 1 / 2 / 3：复习自评（1=忘了，2=还行，3=轻松记住），只在复习会话里生效
+  if ((e.key === '1' || e.key === '2' || e.key === '3') && !isTyping(e.target) && reviewState && !reviewState.finished) {
     e.preventDefault();
-    gradeCurrent(e.key === '2');
+    if (e.key === '1') gradeCurrent('bad');
+    else if (e.key === '2') gradeCurrent('ok');
+    else gradeCurrent('great');
     return;
   }
   // [ / ]：上一个 / 下一个查过的词（Alt+[ 是同一个回退动作的老写法，保留兼容）。
@@ -23318,6 +23407,22 @@ document.addEventListener('keydown', (e) => {
   if (e.key === '[' || e.key === ']') {
     e.preventDefault();
     if (e.key === '[') navBack(); else navForward();
+    return;
+  }
+  /* 直接打字即查（2026-10-25）：焦点不在任何输入控件上时，敲字母直接把搜索框换成这个字母并聚焦，
+     于是「看完卡片想查下一个词」不需要先按 / 或点输入框 —— search() 会 blur 交还快捷键，
+     以前这就意味着下一次打字全丢。只认字母：数字留给复习的 1/2/3，空格留给朗读，
+     方括号留给上/下一个词；e.isComposing 让拼音输入法的首个按键照常走输入法。 */
+  if (/^[a-zA-Z]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey
+      && !e.isComposing && e.keyCode !== 229
+      && !isTyping(e.target) && !(reviewState && !reviewState.finished)) {
+    e.preventDefault();
+    // 抽屉开着时先收起：否则卡片换了、右边还挂着上一个词的讲解
+    if (document.getElementById('panel').classList.contains('open')) closePanel();
+    switchTab('query');
+    input.value = e.key;
+    input.focus();
+    input.setSelectionRange(1, 1);   // 光标停在字母后面，继续敲就是接着拼
     return;
   }
   if (e.key === '/' && !isTyping(e.target)) {
