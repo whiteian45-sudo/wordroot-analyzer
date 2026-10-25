@@ -24,6 +24,7 @@ import soundfile as sf
 # 注意：kokoro（连带 torch）故意不在这里 import —— 见 _ensure_pipe()
 
 PORT = 8757
+MAX_BODY = 8 * 1024 * 1024   # 请求体上限 8MB，防止超大 body 吊死线程
 
 # 与 kokoro_cli.py 一致的声线列表
 VOICES = {
@@ -118,8 +119,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json({'error': 'not found'}, 404)
             return
         try:
-            length = int(self.headers.get('Content-Length', 0))
-            req = json.loads(self.rfile.read(length).decode('utf-8'))
+            length = int(self.headers.get('Content-Length', 0) or 0)
+            if length > MAX_BODY:
+                self.close_connection = True
+                self._json({'error': '请求体过大（上限 8MB）'}, 413)
+                return
+            req = json.loads((self.rfile.read(length) if length > 0 else b'{}').decode('utf-8'))
             wav = synth(req.get('text', ''), req.get('voice', 'af_heart'), req.get('speed', 1.0))
         except Exception as e:  # 合成失败返回 JSON 错误
             self._json({'error': str(e)}, 500)
