@@ -20444,6 +20444,7 @@ const UI_EN = {
 '列表':'List','星图':'Star map','中心词根':'Centre root','重置视图':'Reset view',
 '保存图片':'Save image','随机词根':'Random root','没有匹配的词根':'No matching root',
 '点击看词卡':'Click for the word card','点击切换中心':'Click to re-centre',
+'到期上限':'Due limit',
 };
 function T(s) { return EN_MODE() ? (UI_EN[s] !== undefined ? UI_EN[s] : s) : s; }
 
@@ -20520,6 +20521,8 @@ const UI_RULES = [
   [/^今日 新词 (\d+) · 复习 (\d+) · 正确率 (.+)$/,
     (m) => 'Today · new ' + m[1] + ' · reviewed ' + m[2] + ' · accuracy ' + m[3]],
   [/^已导入 (\d+) 条记录$/, (m) => 'Imported ' + m[1] + ' items'],
+  [/^到期词（最多 (.+)）[+] 今日新词（(\d+) 个）$/,
+    (m) => 'Due (max ' + m[1] + ') + new words (' + m[2] + ')'],
 ];
 function trText(t) {
   if (!EN_MODE() || !t) return t;
@@ -23414,6 +23417,7 @@ function recordStudy(isNew, correct, auto) {
     else { d.wrong += 1; o.life.wrong += 1; }
   }
   saveStudy(o);
+  queueStudySync(o);
 }
 function studyToday() {
   const o = loadStudy();
@@ -23440,6 +23444,32 @@ function mergeStudy(a, b) {
     });
   }
   return out;
+}
+
+/* 学习统计的服务端副本：项目目录 study.json。
+   本地 localStorage 继续做即时兜底；启动时两边按天/按字段取较大值合并，
+   提交后不等回包（服务端也是取 max，重复提交不会翻倍）。 */
+let studySyncTimer = null;
+function pushStudy(o) {
+  fetch('/study', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(o)
+  }).catch(() => {});
+}
+function queueStudySync(o) {
+  clearTimeout(studySyncTimer);
+  studySyncTimer = setTimeout(() => pushStudy(o), 800);
+}
+async function initStudy() {
+  try {
+    const r = await fetch('/study');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const remote = await r.json();
+    const merged = mergeStudy(remote, loadStudy());
+    saveStudy(merged);
+    if (JSON.stringify(merged) !== JSON.stringify(remote)) pushStudy(merged);
+  } catch (e) { /* 旧服务 / 离线：localStorage 照用 */ }
 }
 
 // 归一化：给老记录补 d/b/f。两条读路径（服务文件 / localStorage 兜底）都要过一遍。
@@ -23611,6 +23641,7 @@ function importHistory() {
       });
       const merged = [...map.values()].sort((a, b) => (b.t || 0) - (a.t || 0));
       saveStudy(mergeStudy(loadStudy(), (doc && doc.study) || emptyStudy()));
+      pushStudy(loadStudy());
       persistHistory(merged);
       renderHistory();
       alert(T('已导入') + ' ' + added + ' ' + T('条记录'));
@@ -23668,7 +23699,7 @@ function pickQuestionType(cur) {
 }
 const TODAY_CFG_KEY = 'wr_today_cfg';
 function todayCfg() {
-  const def = { cefr: 'B1', topic: '', perDay: 10 };
+  const def = { cefr: 'B1', topic: '', perDay: 10, dueCap: DAILY_DUE_CAP };
   try {
     const o = JSON.parse(localStorage.getItem(TODAY_CFG_KEY));
     if (o && typeof o === 'object') {
@@ -23676,6 +23707,8 @@ function todayCfg() {
       if (typeof o.topic === 'string') def.topic = o.topic;
       const n = parseInt(o.perDay, 10);
       if (n >= 5 && n <= 30) def.perDay = n;
+      const d = parseInt(o.dueCap, 10);
+      if (d >= 5 && d <= 9999) def.dueCap = d;
     }
   } catch (e) {}
   return def;
@@ -23699,6 +23732,10 @@ function openTodayCfg() {
       topics.map(t => '<option value="' + t + '"' + (t === c.topic ? ' selected' : '') + '>' +
         (t ? atlasTopicLabel(t) : T('全部')) + '</option>').join('') + '</select></label>' +
     '<label>' + T('每日新词') + ' <select id="tc-perday">' + opts([5, 10, 15, 20, 30], c.perDay) + '</select></label>' +
+    '<label>' + T('到期上限') + ' <select id="tc-due">' +
+      [[20, '20'], [40, '40'], [60, '60'], [100, '100'], [9999, T('全部')]].map(x =>
+        '<option value="' + x[0] + '"' + (c.dueCap === x[0] ? ' selected' : '') + '>' + x[1] + '</option>').join('') +
+      '</select></label>' +
     '<div class="atlas-modal-acts"><button class="h-btn" data-tc-cancel>' + T('取消') + '</button>' +
     '<button class="rev-btn primary" data-tc-save>' + T('保存') + '</button></div></div>';
   document.body.appendChild(el);
@@ -23709,7 +23746,8 @@ function openTodayCfg() {
     saveTodayCfg({
       cefr: document.getElementById('tc-cefr').value,
       topic: document.getElementById('tc-topic').value,
-      perDay: parseInt(document.getElementById('tc-perday').value, 10) || 10
+      perDay: parseInt(document.getElementById('tc-perday').value, 10) || 10,
+      dueCap: parseInt(document.getElementById('tc-due').value, 10) || DAILY_DUE_CAP
     });
     el.remove();
     if (reviewState && !reviewState.finished) renderReview(); else renderHistory();
@@ -23774,9 +23812,9 @@ function newReviewState(list, extra) {
 /* 今日学习：到期词 + 今日还没学满的新词（默认 10 个）。 */
 async function startDaily() {
   const h = loadHistory();
-  const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0)).slice(0, DAILY_DUE_CAP);
-  const td = studyToday();
   const cfg = todayCfg();
+  const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0)).slice(0, cfg.dueCap);
+  const td = studyToday();
   const fresh = pickNewWords(Math.max(0, cfg.perDay - td.new));
   if (!due.length && !fresh.length) { alert(T('今天没有到期的词，也没有新词可学。')); return; }
   await ensureDict(fresh.concat(due.map(x => x.w)));
@@ -24220,9 +24258,12 @@ function renderReview() {
 function renderHistory() {
   const el = document.getElementById('history');
   let h = loadHistory();
+  const hc = todayCfg();
+  const todayTitle = '到期词（最多 ' + (hc.dueCap >= 9999 ? '全部' : hc.dueCap + ' 张') +
+    '）+ 今日新词（' + hc.perDay + ' 个）';
   if (!h.length) {
     el.innerHTML = '<div class="h-head">查词记录<span class="h-n">0</span>' +
-      '<button class="h-btn" id="h-daily" title="到期词（最多 40 张）+ 今日新词（默认 10 个）">📅 今日</button>' +
+      '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
       '<button class="h-btn" id="h-today-cfg" title="起点 CEFR / 话题 / 每日新词">⚙</button>' +
       '<button class="h-btn" id="h-import">导入</button>' +
       '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span></div>' +
@@ -24262,7 +24303,7 @@ function renderHistory() {
     '<span class="h-n">' + h.length + '</span>' +
     (dueN ? '<span class="h-n due" title="按间隔重复排到的词">待复习 ' + dueN + '</span>' : '') +
     '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">🎲 复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
-    '<button class="h-btn" id="h-daily" title="到期词（最多 40 张）+ 今日新词（默认 10 个）">📅 今日</button>' +
+    '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
     '<button class="h-btn" id="h-today-cfg" title="起点 CEFR / 话题 / 每日新词">⚙</button>' +
     '<button class="h-btn" id="h-export">导出</button>' +
     '<button class="h-btn" id="h-import">导入</button>' +
@@ -24547,6 +24588,7 @@ probeKokoro();
 
 initHistory();   // 从本地服务加载历史（项目目录 history.json），随后渲染
 initFavs();      // 从本地服务加载收藏（项目目录 favs.json），随后渲染
+initStudy();     // 学习统计：localStorage ↔ 项目目录 study.json 合并
 
 // 词光：插画灯箱 / 本地音频
 document.addEventListener('click', (e) => {

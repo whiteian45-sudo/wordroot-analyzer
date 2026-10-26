@@ -19,7 +19,10 @@ import urllib.error
 from urllib.parse import urlsplit, urlparse, parse_qs
 
 DIR = os.path.dirname(os.path.abspath(__file__))
-PORT = 8756
+try:
+    PORT = int(os.environ.get('WR_PORT', '8756'))   # 测试/多实例时可用环境变量换端口
+except ValueError:
+    PORT = 8756
 TTS_PORT = 8757   # Kokoro TTS 服务端口，与 tts_server.py / tts_start.bat / 前端保持一致
 
 # MIME 类型（保证 json 正常加载）
@@ -35,6 +38,8 @@ MIME = {
 # 历史记录 / 收藏：直接存在项目目录，浏览器前端通过 /history、/favs 端点读写（静默、免弹窗选位置）
 HISTORY_FILE = os.path.join(DIR, 'history.json')
 FAVS_FILE = os.path.join(DIR, 'favs.json')
+STUDY_FILE = os.path.join(DIR, 'study.json')   # 学习统计（按天累计，首次作答口径）
+_STUDY_LOCK = threading.Lock()
 
 # 本地翻译（Ollama）：默认模型可用环境变量 OLLAMA_MODEL 覆盖
 OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434')
@@ -132,6 +137,60 @@ def _write_items(path, items, cleared_at=0):
     if cleared_at:
         doc['clearedAt'] = cleared_at
     _write_doc(path, doc)
+
+
+def _nonneg_int(v):
+    try:
+        return max(0, int(v))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _empty_study():
+    return {'version': 1, 'days': {}, 'life': {'new': 0, 'review': 0, 'correct': 0, 'wrong': 0}}
+
+
+def _norm_study(doc):
+    """只保留按天计数与总计，字段一律归一到非负整数。"""
+    out = _empty_study()
+    if not isinstance(doc, dict):
+        return out
+    days = doc.get('days')
+    if isinstance(days, dict):
+        for k, v in days.items():
+            if not isinstance(k, str) or not isinstance(v, dict):
+                continue
+            row = {f: _nonneg_int(v.get(f)) for f in ('new', 'review', 'correct', 'wrong')}
+            if any(row.values()):
+                out['days'][k] = row
+    life = doc.get('life')
+    if isinstance(life, dict):
+        out['life'] = {f: _nonneg_int(life.get(f)) for f in ('new', 'review', 'correct', 'wrong')}
+    return out
+
+
+def _merge_study(old, new):
+    """两边按天、按字段取较大值：重复提交同一份不会翻倍，多标签页也不会互相抹掉。"""
+    a, b = _norm_study(old), _norm_study(new)
+    out = _empty_study()
+    for k in set(a['days']) | set(b['days']):
+        x, y = a['days'].get(k, {}), b['days'].get(k, {})
+        out['days'][k] = {f: max(x.get(f, 0), y.get(f, 0)) for f in ('new', 'review', 'correct', 'wrong')}
+    out['life'] = {f: max(a['life'].get(f, 0), b['life'].get(f, 0)) for f in ('new', 'review', 'correct', 'wrong')}
+    return out
+
+
+def _read_study():
+    try:
+        with _IO_LOCK:
+            with open(STUDY_FILE, encoding='utf-8') as f:
+                data = json.load(f)
+    except FileNotFoundError:
+        return _empty_study()
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        _quarantine(STUDY_FILE, e)
+        return _empty_study()
+    return _norm_study(data)
 
 
 def _merge_items(path, new_items, cleared_at=0):
@@ -476,6 +535,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             # 连 clearedAt 一起给前端：多标签页要靠这个水位知道「别人清空过没有」
             self._send_json({'version': 1, 'clearedAt': doc['clearedAt'], 'items': doc['items']})
             return
+        # /study：学习统计直接读项目目录 study.json（前端 localStorage 只作兜底）
+        if p == '/study':
+            self._send_json(_read_study())
+            return
         # /lookup?word=xxx：按词从 dict.db（SQLite）取 ecdict/oxford/thes 三个源（2026-10-25 加）
         # 目的：前端不必再把 100MB+ 的大 JSON 整包拉进浏览器内存；按需取一个词即可。
         if p == '/lookup':
@@ -628,6 +691,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({'ok': True, 'sources': _lookup_rows(dbp, norm)})
             except Exception as e:
                 self._send_json({'ok': False, 'err': 'dict.db 查询失败：' + str(e)}, 500)
+            return
+        # /study：与磁盘旧统计按天取较大值后写入（幂等，可重复提交）
+        if path == '/study':
+            ok, body = self._read_body()
+            if not ok:
+                return
+            try:
+                with _STUDY_LOCK:
+                    merged = _merge_study(_read_study(), body)
+                    _write_doc(STUDY_FILE, merged)
+                self._send_json({'ok': True, 'days': merged['days'], 'life': merged['life']})
+            except Exception as e:
+                self._send_json({'ok': False, 'err': str(e)}, 500)
             return
         # /history、/favs：与磁盘旧数据合并后写入（不是整表覆盖，见 _merge_items 的说明）
         if path in ('/history', '/favs'):
@@ -784,7 +860,8 @@ def main():
             print('直接访问: ' + url)
             print('如需重启，请先关闭之前的黑色窗口。')
             print('=' * 50)
-            webbrowser.open(url)
+            if os.environ.get('WR_NO_BROWSER') != '1':
+                webbrowser.open(url)
             return
         raise
     with httpd:
@@ -794,8 +871,9 @@ def main():
         print('  局域网访问: http://' + ip + f':{PORT}/index.html')
         print('  关闭窗口即退出服务')
         print('=' * 50)
-        # 延迟打开浏览器，等服务就绪
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+        # 延迟打开浏览器，等服务就绪（测试/后台跑时用 WR_NO_BROWSER=1 关掉）
+        if os.environ.get('WR_NO_BROWSER') != '1':
+            threading.Timer(0.8, lambda: webbrowser.open(url)).start()
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
