@@ -137,6 +137,8 @@ python build_dict_db.py
 
 `atlas.json`（6.5MB）随仓库提供，卡片底部的分级/搭配/词族/雅思例句块开箱即用。插画和录音体积大，不进仓库，需要时本地下载：
 
+Windows 直接双击 **`下载词光素材.bat`** 即可（默认走 10808 代理）。也可以手动跑：
+
 ```bash
 # 全量约 500MB，16 线程，断点续跑；需要代理先设 HTTPS_PROXY
 python -I wr_atlas_media.py --workers 16
