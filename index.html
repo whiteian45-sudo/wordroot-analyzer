@@ -807,6 +807,18 @@
   .badge.atlas-cefr.lv-C2 { color: #ff8f9c; border-color: rgba(255,143,156,.38); background: rgba(255,143,156,.12); }
   .badge.atlas-topic { color: var(--sub); border-color: var(--glass-border); background: var(--srf-2); font-weight: 400; }
   .rd-select { padding: 5px 8px; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--text); font-size: 12px; }
+  /* 词根星图 */
+  #rd-graph { position: relative; width: 100%; }
+  #rd-canvas { display: block; width: 100%; border-radius: 22px; border: 1px solid var(--glass-border); background: var(--glass-card); cursor: grab; touch-action: none; }
+  #rd-canvas:active { cursor: grabbing; }
+  .rd-graph-tip {
+    position: absolute; left: 12px; top: 12px; max-width: 240px; display: none;
+    padding: 8px 10px; border-radius: 12px; background: var(--glass-bg);
+    border: 1px solid var(--glass-border); color: var(--text); font-size: 12px;
+    line-height: 1.5; pointer-events: none; box-shadow: var(--shadow); z-index: 3;
+  }
+  .rd-graph-tip b { font-size: 13px; }
+  .rd-graph-hint { color: var(--sub); font-size: 11px; margin-top: 3px; }
   .atlas-block { border-top: 1px dashed var(--glass-border); }
   .atlas-top { display: flex; gap: 14px; align-items: flex-start; margin-top: 6px; }
   .atlas-pic-btn { flex: 0 0 auto; width: 120px; border: 0; padding: 0; background: none; cursor: zoom-in; border-radius: 14px; overflow: hidden; }
@@ -1164,6 +1176,10 @@
   </div>
   <div class="rd-chips" id="rd-chips"></div>
   <div id="rd-list"></div>
+  <div id="rd-graph" style="display:none">
+    <canvas id="rd-canvas"></canvas>
+    <div class="rd-graph-tip" id="rd-graph-tip"></div>
+  </div>
 </div>
 <div id="exsearch" style="display:none">
   <div class="search">
@@ -20425,6 +20441,9 @@ const UI_EN = {
 '词光词库加载中…':'Loading Word Atlas…','词光词库未装载':'Word Atlas data is not available.',
 '暂无词光数据':'No Word Atlas data.',
 '起点 CEFR / 话题 / 每日新词':'Start CEFR / topic / new words per day',
+'列表':'List','星图':'Star map','中心词根':'Centre root','重置视图':'Reset view',
+'保存图片':'Save image','随机词根':'Random root','没有匹配的词根':'No matching root',
+'点击看词卡':'Click for the word card','点击切换中心':'Click to re-centre',
 };
 function T(s) { return EN_MODE() ? (UI_EN[s] !== undefined ? UI_EN[s] : s) : s; }
 
@@ -22294,7 +22313,10 @@ function switchTab(name) {
 const ROOT_ENTRIES = [];
 let rootsBuilt = false;
 let rootsKind = 'all';       // all | prefix | root | suffix
+let rootsMode = 'list';      // list | graph
 let rootsLimit = 200;        // 默认只画前 200 条，避免一次生成上千个节点
+let ROOT_GRAPH = null;       // 当前星图状态
+let ROOT_SRC_INDEX = null;   // 同源词根索引（按 语言+源词 分组）
 const ROOTS_OPEN = new Set();   // 展开了哪些词素（切走再回来不丢）
 
 const RD_KIND = { prefix: '前缀', root: '词根', suffix: '后缀' };
@@ -22378,19 +22400,409 @@ function rootDetailHTML(e) {
   return h;
 }
 
+/* ============================================================
+   词根星图：以词根为中心，画它的来源、同源词根和派生词。
+   纯 Canvas 2D，无依赖；布局在打开时一次算完，拖拽/缩放只重画。
+   ============================================================ */
+function buildRootSrcIndex() {
+  if (ROOT_SRC_INDEX) return ROOT_SRC_INDEX;
+  ROOT_SRC_INDEX = new Map();
+  for (const [m, v] of Object.entries(ROOTS)) {
+    if (!Array.isArray(v)) continue;
+    const src = baseSrc(m);
+    if (!src || !src.lang || !src.word) continue;
+    if (!/[a-zA-Z]/.test(src.word)) continue;
+    const key = src.lang + '\u0001' + src.word;
+    if (!ROOT_SRC_INDEX.has(key)) ROOT_SRC_INDEX.set(key, []);
+    ROOT_SRC_INDEX.get(key).push(m);
+  }
+  return ROOT_SRC_INDEX;
+}
+function rootSourceMates(m, src) {
+  if (!src || !src.lang || !src.word) return [];
+  const idx = buildRootSrcIndex();
+  return (idx.get(src.lang + '\u0001' + src.word) || []).filter(x => x !== m);
+}
+function buildRootGraph(entry) {
+  const m = entry.m;
+  const set = MORPH_INDEX.get(m);
+  let words = set ? [...set] : [];
+  (entry.examples || []).forEach(w => { if (w && words.indexOf(w) < 0) words.push(w); });
+  words = words.filter(w => w && w !== m);
+  words.sort((a, b) => {
+    const la = BNC_LEVEL.get(a) || '9';
+    const lb = BNC_LEVEL.get(b) || '9';
+    if (la !== lb) return la < lb ? -1 : 1;
+    return a.localeCompare(b);
+  });
+  const total = words.length;
+  words = words.slice(0, 40);
+  const src = baseSrc(m) || entry.src || null;
+  const nodes = [];
+  const links = [];
+  const center = {
+    id: 'm:' + m, label: m, kind: entry.kind, sub: gl(m, entry.meaning || ''),
+    x: 0, y: 0, r: 28, fixed: true
+  };
+  nodes.push(center);
+  if (src && src.lang && src.word) {
+    const sn = {
+      id: 'src:' + src.lang + ':' + src.word, label: src.word, kind: 'source',
+      sub: langEn(src.lang), x: -190, y: -150, r: 22, fixed: true
+    };
+    nodes.push(sn);
+    links.push({ a: center, b: sn, kind: 'src' });
+    rootSourceMates(m, src).filter(x => ROOTS[x]).slice(0, 5).forEach((rm, i) => {
+      const meaning = (ROOTS[rm] && ROOTS[rm][0]) || '';
+      const rn = {
+        id: 'm:' + rm, label: rm, kind: 'cognate', sub: gl(rm, meaning),
+        x: -300, y: -220 + i * 72, r: 17, fixed: true
+      };
+      nodes.push(rn);
+      links.push({ a: sn, b: rn, kind: 'cognate' });
+    });
+  }
+  words.forEach((w, i) => {
+    const ang = -Math.PI / 2 + i * 2 * Math.PI / Math.max(1, words.length);
+    const rad = 205 + (i % 3) * 24;
+    const wn = {
+      id: 'w:' + w, label: w, kind: 'word', sub: summaryFor(w) || '',
+      x: Math.cos(ang) * rad, y: Math.sin(ang) * rad, r: 12, word: w
+    };
+    nodes.push(wn);
+    links.push({ a: center, b: wn, kind: 'word' });
+  });
+  return { entry: entry, center: center, nodes: nodes, links: links, src: src, total: total };
+}
+function layoutRootGraph(g) {
+  const nodes = g.nodes;
+  for (let step = 0; step < 180; step++) {
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      if (a.fixed) continue;
+      let fx = 0, fy = 0;
+      for (let j = 0; j < nodes.length; j++) {
+        if (i === j) continue;
+        const b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
+        const d = Math.sqrt(d2);
+        const min = a.r + b.r + 12;
+        if (d < min) {
+          const f = (min - d) * 0.4;
+          fx += dx / d * f;
+          fy += dy / d * f;
+        }
+        const rep = 2200 / Math.max(260, d2);
+        fx += dx / d * rep;
+        fy += dy / d * rep;
+      }
+      const d0 = Math.sqrt(a.x * a.x + a.y * a.y) || 1;
+      const target = 215 + (a.r > 20 ? 15 : 0);
+      fx += (a.x / d0) * (target - d0) * 0.01;
+      fy += (a.y / d0) * (target - d0) * 0.01;
+      a.x += Math.max(-6, Math.min(6, fx));
+      a.y += Math.max(-6, Math.min(6, fy));
+    }
+  }
+}
+function fitRootGraph(g) {
+  if (!g.nodes.length) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  g.nodes.forEach(n => {
+    minX = Math.min(minX, n.x - n.r);
+    minY = Math.min(minY, n.y - n.r);
+    maxX = Math.max(maxX, n.x + n.r);
+    maxY = Math.max(maxY, n.y + n.r);
+  });
+  const pad = 56;
+  const bw = Math.max(1, maxX - minX);
+  const bh = Math.max(1, maxY - minY);
+  const scale = Math.min((g.w - pad * 2) / bw, (g.h - pad * 2) / bh, 1.8);
+  g.view.scale = Math.max(0.2, scale);
+  g.view.tx = g.w / 2 - (minX + maxX) / 2 * g.view.scale;
+  g.view.ty = g.h / 2 - (minY + maxY) / 2 * g.view.scale;
+}
+function graphColors() {
+  const cs = getComputedStyle(document.documentElement);
+  const get = (k, d) => (cs.getPropertyValue(k) || '').trim() || d;
+  return {
+    bg: get('--glass-bg', '#0a0d1e'),
+    text: get('--text', '#f4f6ff'),
+    sub: get('--sub', 'rgba(244,246,255,.6)'),
+    accent: get('--accent', '#6ea8ff'),
+    gold: get('--gold', '#ffd479'),
+    ok: get('--ok', '#7ee2a8'),
+    pf: get('--pf-c', '#a99bff')
+  };
+}
+function graphNodeAt(g, x, y) {
+  const t = g.view;
+  for (let i = g.nodes.length - 1; i >= 0; i--) {
+    const n = g.nodes[i];
+    const nx = n.x * t.scale + t.tx;
+    const ny = n.y * t.scale + t.ty;
+    const r = Math.max(8, n.r * t.scale + 6);
+    if ((x - nx) * (x - nx) + (y - ny) * (y - ny) <= r * r) return n;
+  }
+  return null;
+}
+function showGraphTip(g, n, x, y) {
+  const tip = document.getElementById('rd-graph-tip');
+  if (!tip) return;
+  if (!g || !n) { tip.style.display = 'none'; return; }
+  tip.innerHTML = '<b>' + escapeHtml(n.label) + '</b>' +
+    (n.sub ? '<div>' + escapeHtml(n.sub) + '</div>' : '') +
+    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡' : '点击切换中心')) + '</div>';
+  tip.style.display = 'block';
+  tip.style.left = Math.max(8, Math.min(g.w - 240, x + 14)) + 'px';
+  tip.style.top = Math.max(8, y - 10) + 'px';
+}
+function drawRootGraph(g) {
+  const ctx = g.ctx;
+  const w = g.w, h = g.h, t = g.view, c = g.colors;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = c.bg;
+  ctx.fillRect(0, 0, w, h);
+  const X = n => n.x * t.scale + t.tx;
+  const Y = n => n.y * t.scale + t.ty;
+  g.links.forEach(l => {
+    ctx.beginPath();
+    ctx.moveTo(X(l.a), Y(l.a));
+    ctx.lineTo(X(l.b), Y(l.b));
+    ctx.setLineDash(l.kind === 'word' ? [] : l.kind === 'src' ? [5, 5] : [3, 4]);
+    ctx.strokeStyle = l.kind === 'word' ? 'rgba(110,168,255,0.18)'
+      : l.kind === 'src' ? 'rgba(255,212,121,0.45)' : 'rgba(126,226,168,0.35)';
+    ctx.lineWidth = l.kind === 'src' ? 1.4 : 1;
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  g.nodes.forEach(n => {
+    const x = X(n), y = Y(n), r = Math.max(5, n.r * t.scale);
+    let fill = c.accent;
+    if (n.kind === 'root') fill = c.gold;
+    else if (n.kind === 'prefix') fill = c.pf;
+    else if (n.kind === 'suffix') fill = c.ok;
+    else if (n.kind === 'source') fill = '#b58cff';
+    else if (n.kind === 'cognate') fill = c.ok;
+    ctx.save();
+    ctx.shadowColor = fill;
+    ctx.shadowBlur = n.kind === 'word' ? 8 : 18;
+    ctx.globalAlpha = n.kind === 'word' ? 0.9 : 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.restore();
+    if (n.kind !== 'word') {
+      ctx.beginPath();
+      ctx.arc(x, y, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = fill;
+      ctx.globalAlpha = 0.35;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (n === g.center) {
+      ctx.fillStyle = '#141414';
+      ctx.font = '700 13px -apple-system, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, x, y);
+    } else {
+      const ang = Math.atan2(n.y, n.x);
+      const off = r + 8;
+      ctx.font = '11px -apple-system, "Segoe UI", sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = Math.cos(ang) >= 0 ? 'left' : 'right';
+      ctx.fillStyle = c.text;
+      ctx.globalAlpha = n.kind === 'word' ? 0.82 : 0.95;
+      const label = n.label.length > 18 ? n.label.slice(0, 17) + '…' : n.label;
+      ctx.fillText(label, x + Math.cos(ang) * off, y + Math.sin(ang) * off);
+      ctx.globalAlpha = 1;
+    }
+    if (g.hover === n) {
+      ctx.beginPath();
+      ctx.arc(x, y, r + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = c.text;
+      ctx.globalAlpha = 0.75;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  });
+}
+function paintRootGraph(entry) {
+  const box = document.getElementById('rd-graph');
+  const canvas = document.getElementById('rd-canvas');
+  if (!box || !canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(320, box.clientWidth || 680);
+  const h = Math.min(560, Math.max(400, Math.round(w * 0.78)));
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const data = buildRootGraph(entry);
+  layoutRootGraph(data);
+  const g = {
+    entry: data.entry, center: data.center, nodes: data.nodes, links: data.links,
+    src: data.src, total: data.total, canvas: canvas, ctx: ctx, w: w, h: h,
+    view: { scale: 1, tx: 0, ty: 0 }, colors: graphColors(), hover: null
+  };
+  fitRootGraph(g);
+  ROOT_GRAPH = g;
+  bindRootGraph(canvas);
+  const tip = document.getElementById('rd-graph-tip');
+  if (tip) tip.style.display = 'none';
+  drawRootGraph(g);
+}
+function bindRootGraph(canvas) {
+  if (canvas.__rdBound) return;
+  canvas.__rdBound = true;
+  let drag = null;
+  const pos = e => {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  canvas.addEventListener('pointerdown', e => {
+    const g = ROOT_GRAPH;
+    if (!g) return;
+    const p = pos(e);
+    drag = { x: p.x, y: p.y, tx: g.view.tx, ty: g.view.ty, moved: false };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    const g = ROOT_GRAPH;
+    if (!g) return;
+    const p = pos(e);
+    if (drag) {
+      const dx = p.x - drag.x, dy = p.y - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+      g.view.tx = drag.tx + dx;
+      g.view.ty = drag.ty + dy;
+      drawRootGraph(g);
+      return;
+    }
+    const n = graphNodeAt(g, p.x, p.y);
+    if (g.hover !== n) { g.hover = n; drawRootGraph(g); }
+    showGraphTip(g, n, p.x, p.y);
+  });
+  canvas.addEventListener('pointerup', e => {
+    const g = ROOT_GRAPH;
+    if (!g) return;
+    const p = pos(e);
+    if (drag && !drag.moved) {
+      const n = graphNodeAt(g, p.x, p.y);
+      if (n) {
+        if (n.kind === 'word' && n.word) {
+          openPanel(n.word);
+        } else if (n.kind === 'root' || n.kind === 'cognate' || n.kind === 'prefix' || n.kind === 'suffix') {
+          const inp = document.getElementById('rd-input');
+          if (inp) { inp.value = n.label; paintRoots(); }
+        }
+      }
+    }
+    drag = null;
+    try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointerleave', () => {
+    const g = ROOT_GRAPH;
+    if (g) { g.hover = null; drawRootGraph(g); }
+    showGraphTip(null);
+  });
+  canvas.addEventListener('wheel', e => {
+    const g = ROOT_GRAPH;
+    if (!g) return;
+    e.preventDefault();
+    const p = pos(e);
+    const old = g.view.scale;
+    const next = Math.max(0.2, Math.min(3, old * (e.deltaY < 0 ? 1.12 : 0.89)));
+    g.view.tx = p.x - (p.x - g.view.tx) * (next / old);
+    g.view.ty = p.y - (p.y - g.view.ty) * (next / old);
+    g.view.scale = next;
+    drawRootGraph(g);
+  }, { passive: false });
+  canvas.addEventListener('dblclick', e => {
+    const g = ROOT_GRAPH;
+    if (!g) return;
+    const p = pos(e);
+    const n = graphNodeAt(g, p.x, p.y);
+    if (n && n.kind === 'word' && n.word) {
+      switchTab('query');
+      input.value = n.word;
+      search();
+    }
+  });
+}
+function saveRootGraph() {
+  const g = ROOT_GRAPH;
+  if (!g) return;
+  const a = document.createElement('a');
+  a.download = '词根星图-' + g.entry.m + '.png';
+  a.href = g.canvas.toDataURL('image/png');
+  a.click();
+}
+let rdGraphResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (rootsMode !== 'graph') return;
+  clearTimeout(rdGraphResizeTimer);
+  rdGraphResizeTimer = setTimeout(paintRoots, 200);
+});
+
 function paintRoots() {
   buildRoots();
   const chips = document.getElementById('rd-chips');
   const list = document.getElementById('rd-list');
+  const graph = document.getElementById('rd-graph');
   if (!chips || !list) return;
   const hits = rootsMatched();
 
   // chip 上直接标数量——"今天专刷否定前缀"这类用法得先知道各有多少条
   const cnt = { all: ROOT_ENTRIES.length, prefix: 0, root: 0, suffix: 0 };
   for (const e of ROOT_ENTRIES) cnt[e.kind] = (cnt[e.kind] || 0) + 1;
-  chips.innerHTML = ['all', 'prefix', 'root', 'suffix'].map(k =>
+  const modeRow =
+    '<button class="rd-chip' + (rootsMode === 'list' ? ' on' : '') + '" data-rdmode="list">' + T('列表') + '</button>' +
+    '<button class="rd-chip' + (rootsMode === 'graph' ? ' on' : '') + '" data-rdmode="graph">' + T('星图') + '</button>';
+  const kindChips = ['all', 'prefix', 'root', 'suffix'].map(k =>
     '<button class="rd-chip' + (rootsKind === k ? ' on' : '') + '" data-rdkind="' + k + '">' +
-    (k === 'all' ? '全部' : RD_KIND[k]) + ' ' + cnt[k] + '</button>').join('') +
+    (k === 'all' ? T('全部') : T(RD_KIND[k])) + ' ' + cnt[k] + '</button>').join('');
+
+  if (rootsMode === 'graph') {
+    list.style.display = 'none';
+    if (graph) graph.style.display = 'block';
+    const q = (document.getElementById('rd-input').value || '').trim().toLowerCase();
+    let center = null;
+    if (!q) {
+      center = hits.find(e => e.m === 'port' && e.kind === 'root') ||
+        hits.find(e => e.kind === 'root' && ((MORPH_INDEX.get(e.m) || { size: 0 }).size || (e.examples || []).length)) ||
+        hits[0];
+    } else {
+      center = hits.find(e => e.kind === 'root' && ((MORPH_INDEX.get(e.m) || { size: 0 }).size || (e.examples || []).length)) || hits[0];
+    }
+    chips.innerHTML = modeRow + kindChips +
+      (center ? '<span class="rd-n" style="margin-left:auto">' + T('中心词根') + '：' + escapeHtml(center.m) + '</span>' : '') +
+      '<button class="h-btn" id="rd-graph-reset">' + T('重置视图') + '</button>' +
+      '<button class="h-btn" id="rd-graph-save">' + T('保存图片') + '</button>' +
+      '<button class="h-btn" id="rd-graph-random">' + T('随机词根') + '</button>';
+    translateDOM(chips);
+    if (!center) {
+      ROOT_GRAPH = null;
+      const cv = document.getElementById('rd-canvas');
+      if (cv) { const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height); }
+      const tip = document.getElementById('rd-graph-tip');
+      if (tip) { tip.style.display = 'block'; tip.textContent = T('没有匹配的词根'); }
+      return;
+    }
+    paintRootGraph(center);
+    return;
+  }
+
+  list.style.display = '';
+  if (graph) graph.style.display = 'none';
+  chips.innerHTML = modeRow + kindChips +
     '<span class="rd-n" style="margin-left:auto">共 ' + hits.length + ' 个</span>';
 
   if (!hits.length) {
@@ -22578,6 +22990,22 @@ document.getElementById('rd-input').addEventListener('input', () => {
   rdTimer = setTimeout(paintRoots, 150);
 });
 document.getElementById('rootsview').addEventListener('click', (e) => {
+  const mode = e.target.closest('[data-rdmode]');
+  if (mode) { rootsMode = mode.dataset.rdmode; paintRoots(); return; }
+  if (e.target.id === 'rd-graph-reset') {
+    if (ROOT_GRAPH) { fitRootGraph(ROOT_GRAPH); drawRootGraph(ROOT_GRAPH); }
+    return;
+  }
+  if (e.target.id === 'rd-graph-save') { saveRootGraph(); return; }
+  if (e.target.id === 'rd-graph-random') {
+    const pool = ROOT_ENTRIES.filter(x => x.kind === 'root' && (x.examples || []).length);
+    if (pool.length) {
+      rootsKind = 'all';
+      document.getElementById('rd-input').value = pool[Math.floor(Math.random() * pool.length)].m;
+      paintRoots();
+    }
+    return;
+  }
   const chip = e.target.closest('[data-rdkind]');
   if (chip) { rootsKind = chip.dataset.rdkind; rootsLimit = 200; paintRoots(); return; }
   if (e.target.id === 'rd-more') { rootsLimit += 400; paintRoots(); return; }
