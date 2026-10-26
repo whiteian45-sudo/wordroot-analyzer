@@ -334,6 +334,11 @@ def _lookup_rows(dbp, words):
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    # Windows 的 mimetypes 注册表不一定认识 webp/mp3，默认会发 application/octet-stream。
+    # 浏览器通常能猜对，但显式声明更稳（词光的插画/发音走静态文件）。
+    extensions_map = http.server.SimpleHTTPRequestHandler.extensions_map.copy()
+    extensions_map.update({'.webp': 'image/webp', '.mp3': 'audio/mpeg'})
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIR, **kwargs)
 
