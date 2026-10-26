@@ -758,6 +758,45 @@
   .rev-btn.great { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
   .rev-btn.great:hover { color: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
   .rev-nav { margin-top: 8px; }
+  /* FSRS / 四题型复习 */
+  .rev-head { flex-wrap: wrap; gap: 8px; }
+  .q-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .q-mode { font-size: 12px; color: var(--sub); display: inline-flex; align-items: center; gap: 4px; }
+  .q-mode select {
+    padding: 5px 8px; border-radius: 10px; border: 1px solid var(--glass-border);
+    background: var(--glass-card); color: var(--text); font-size: 12px; outline: none;
+  }
+  .q-mode select:focus { border-color: var(--accent); }
+  .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .q-opt {
+    display: flex; align-items: flex-start; gap: 8px; text-align: left;
+    padding: 12px 14px; border-radius: 14px; border: 1px solid var(--glass-border);
+    background: var(--glass-card); color: var(--text); font-size: 13.5px; line-height: 1.5;
+    cursor: pointer; transition: transform var(--dur-press), border-color var(--dur-fast), background var(--dur-fast);
+  }
+  .q-opt:hover { border-color: var(--accent); }
+  .q-opt[disabled] { cursor: default; }
+  .q-opt.correct { border-color: var(--ok); background: rgba(126, 226, 168, 0.16); }
+  .q-opt.wrong { border-color: var(--gold); background: var(--gold-soft); }
+  .q-key {
+    flex: 0 0 auto; width: 20px; height: 20px; border-radius: 7px; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 11px; color: var(--sub);
+    background: rgba(255, 255, 255, 0.06); border: 1px solid var(--glass-border);
+  }
+  .q-feedback { margin-top: 16px; font-size: 14px; font-weight: 600; }
+  .q-feedback.ok { color: var(--ok); }
+  .q-feedback.bad { color: var(--gold); }
+  .q-prompt { margin-top: 14px; font-size: 16px; color: var(--text); line-height: 1.6; }
+  .q-audio { margin-top: 14px; }
+  .q-spell { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+  .q-spell input {
+    flex: 1; max-width: 320px; padding: 10px 14px; border-radius: 14px;
+    border: 1px solid var(--glass-border); background: var(--glass-card);
+    color: var(--text); font-size: 16px; outline: none;
+  }
+  .q-spell input:focus { border-color: var(--accent); }
+  .q-hint { margin-top: 10px; font-size: 15px; letter-spacing: 2px; color: var(--accent); font-family: ui-monospace, monospace; }
+  @media (max-width: 560px) { .q-options { grid-template-columns: 1fr; } }
   /* 历史分页 */
   .h-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; font-size: 12.5px; color: var(--sub); }
   .pager-btn { padding: 6px 14px; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 999px; color: var(--text); cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); }
@@ -901,7 +940,7 @@
   #history { width: 100%; max-width: 560px; margin-top: 22px; display: none; position: relative; z-index: 1; }
   #history.show { display: block; }
   #favlist { width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
-  .h-head { display: flex; align-items: center; gap: 8px; color: var(--sub); font-size: 13px; margin-bottom: 8px; }
+  .h-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--sub); font-size: 13px; margin-bottom: 8px; }
   .h-n { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 0 8px; font-size: 12px; }
   .h-n.due { background: var(--gold-soft); color: var(--gold); }
   .h-btn { border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub); border-radius: 10px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast); }
@@ -20318,6 +20357,19 @@ const UI_EN = {
 '这批例句里没有可用于挖空的句子（句中找不到目标词形）。':
   'None of these examples can be made into a cloze (the target form is not in the sentence).',
 '确定清空全部查词记录吗？':'Clear all lookup history?',
+/* 2026-10-26：FSRS + 四题型 + 今日学习 */
+'题型':'Question','混合':'Mixed','选义':'Meaning','听音':'Listening','拼写':'Spelling','闪卡':'Flashcard',
+'选择练习题型':'Choose question type','选一个意思':'Pick the meaning',
+'听发音，选出这个词':'Listen and pick the word','播放发音':'Play audio','拼写这个词':'Spell this word',
+'检查':'Check','显示提示':'Hint','下一张':'Next','答对了':'Correct','答错了':'Wrong',
+'正确答案':'Answer','你的答案':'Your answer','今日':'Today','今日学习':'Today',
+'新词':'New','正确率':'Accuracy','导入':'Import','已导入':'Imported','条记录':'items',
+'这个文件里没有可导入的记录。':'No importable items in this file.',
+'导入失败：文件不是有效的 JSON 备份。':'Import failed: not a valid JSON backup.',
+'今天没有到期的词，也没有新词可学。':'Nothing due and no new words available today.',
+'忘了：明天重来，本轮稍后再考一次（快捷键 1）':'Forgot: due again tomorrow, and one more try later this round (shortcut 1)',
+'还行：按 FSRS 排期（快捷键 2）':'Got it: scheduled by FSRS (shortcut 2)',
+'轻松：间隔拉长（快捷键 3）':'Easy: longer interval (shortcut 3)',
 };
 function T(s) { return EN_MODE() ? (UI_EN[s] !== undefined ? UI_EN[s] : s) : s; }
 
@@ -20390,6 +20442,10 @@ const UI_RULES = [
   [/^「(.+)」暂时查不到，不代表它不存在；装载完成后会自动重查。$/,
     (m) => '“' + m[1] + '” is not available yet — it will be looked up again once loading finishes.'],
   [/^「(.+)」暂时查不到，不代表它不存在。$/, (m) => '“' + m[1] + '” may still exist — unavailable for now.'],
+  // 2026-10-26：FSRS 学习统计 / 导入
+  [/^今日 新词 (\d+) · 复习 (\d+) · 正确率 (.+)$/,
+    (m) => 'Today · new ' + m[1] + ' · reviewed ' + m[2] + ' · accuracy ' + m[3]],
+  [/^已导入 (\d+) 条记录$/, (m) => 'Imported ' + m[1] + ' items'],
 ];
 function trText(t) {
   if (!EN_MODE() || !t) return t;
@@ -22486,22 +22542,196 @@ let HISTORY = null;   // 历史权威：内存副本，源自本地服务读出�
 let HIST_CLEARED = 0;
 
 /* ============================================================
-   间隔重复（SRS）：历史条目除 {w,s,t} 外带两个可选字段——
-   d = 到期时间戳，b = 记忆档位（对应 1/3/7/15/30/60 天）。
-   忘了 → 档位归零、明天再见，并把该词塞回本轮队尾当次再看一遍；
-   记住了 → 档位 +1，按间隔表排期。
-   老记录没有 d/b，按「查词时间 +1 天」视为到期，所以不会算出 NaN。
+   间隔重复：FSRS-6 + 学习统计
+   历史条目除 {w,s,t} 外：
+     d = 到期时间戳，b = 间隔档位（只为显示兼容保留）
+     f = FSRS 记忆状态 {s 稳定度, d 难度, reps, lapses, state, last}
+   老记录只有 b/d，启动时按档位表折算成 f，不会丢进度。
+   评分走 1..4（忘了 / 勉强 / 正常 / 轻松），页面上的三档自评映射见 gradeCurrent。
    ============================================================ */
 const SRS_DAYS = [1, 3, 7, 15, 30, 60];
 const DAY_MS = 86400000;
-// 归一化：给老记录补 d/b。两条读路径（服务文件 / localStorage 兜底）都要过一遍。
+const NEW_PER_DAY = 10;
+const DAILY_DUE_CAP = 40;   // 「今日」最多排 40 张到期卡，避免一次 900 张；「复习」按钮仍可全量
+
+/* ts-fsrs 5.4.x 的 FSRS-6 默认参数（w0..w20，最后一位是 decay）。
+   这里只落地「按天排期」需要的那部分：初值、难度更新、成功/遗忘后的稳定度、
+   可提取率 R 和间隔。学习步骤（1 分钟 / 10 分钟）不搬——本地工具没有分钟级复习的
+   必要，新词第一次评完统一排到明天。 */
+const FSRS_W = Object.freeze([
+  0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 1e-3,
+  1.8722, 0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014,
+  1.8729, 0.5425, 0.0912, 0.0658, 0.1542
+]);
+const FSRS_STATE = Object.freeze({ NEW: 0, LEARNING: 1, REVIEW: 2, RELEARNING: 3 });
+const FSRS_CURVE = (() => {
+  const decay = -FSRS_W[20];
+  const factor = Math.exp(Math.pow(decay, -1) * Math.log(0.9)) - 1;
+  const modifier = (Math.pow(0.9, 1 / decay) - 1) / factor;
+  return { decay: decay, factor: factor, modifier: modifier };
+})();
+function clampNum(x, lo, hi) { return Math.min(Math.max(x, lo), hi); }
+function fsrsR(t, s) {
+  if (!(s > 0)) return 0;
+  return Math.pow(1 + FSRS_CURVE.factor * Math.max(0, t) / s, FSRS_CURVE.decay);
+}
+function fsrsInitS(g) { return Math.max(FSRS_W[g - 1], 0.1); }
+function fsrsInitDRaw(g) { return FSRS_W[4] - Math.exp((g - 1) * FSRS_W[5]) + 1; }
+function fsrsInitD(g) { return clampNum(fsrsInitDRaw(g), 1, 10); }
+function fsrsNextD(d, g) {
+  const delta = -FSRS_W[6] * (g - 3);
+  const next = d + delta * (10 - d) / 9;
+  return clampNum(FSRS_W[7] * fsrsInitDRaw(4) + (1 - FSRS_W[7]) * next, 1, 10);
+}
+function fsrsNextMemory(f, g, elapsed) {
+  if (!(f.s > 0) || f.state === FSRS_STATE.NEW) {
+    return { s: fsrsInitS(g), d: fsrsInitD(g) };
+  }
+  const r = fsrsR(elapsed, f.s);
+  let s;
+  if (elapsed < 0.5) {
+    const sinc = Math.pow(f.s, -FSRS_W[19]) * Math.exp(FSRS_W[17] * (g - 3 + FSRS_W[18]));
+    const masked = g >= 2 ? Math.max(sinc, 1) : sinc;
+    s = f.s * masked;
+  } else if (g === 1) {
+    const sFail = FSRS_W[11] * Math.pow(f.d, -FSRS_W[12]) *
+      (Math.pow(f.s + 1, FSRS_W[13]) - 1) * Math.exp((1 - r) * FSRS_W[14]);
+    const sFloor = f.s / Math.exp(FSRS_W[17] * FSRS_W[18]);
+    s = Math.min(sFloor, sFail);
+  } else {
+    const hard = g === 2 ? FSRS_W[15] : 1;
+    const easy = g === 4 ? FSRS_W[16] : 1;
+    s = f.s * (1 + Math.exp(FSRS_W[8]) * (11 - f.d) * Math.pow(f.s, -FSRS_W[9]) *
+      (Math.exp((1 - r) * FSRS_W[10]) - 1) * hard * easy);
+  }
+  return { s: clampNum(s, 0.001, 36500), d: fsrsNextD(f.d, g) };
+}
+function fsrsInterval(s) {
+  return clampNum(Math.round(s * FSRS_CURVE.modifier), 1, 36500);
+}
+function bucketOf(ivl) {
+  let i = 0;
+  for (let k = 0; k < SRS_DAYS.length; k++) if (ivl >= SRS_DAYS[k]) i = k;
+  return i;
+}
+/* 老记录（只有 b/d 档位表）→ FSRS 记忆状态。b=0 视为「还没复习过」，
+   这样历史里查过但没复习的词能平滑接上新算法，不会一上来全堆到明天。 */
+function legacyFsrs(x) {
+  const b = (typeof x.b === 'number') ? clampNum(x.b, 0, SRS_DAYS.length - 1) : 0;
+  const reviewed = b > 0;
+  const last = (typeof x.d === 'number')
+    ? x.d - (reviewed ? SRS_DAYS[b] * DAY_MS : DAY_MS)
+    : (typeof x.t === 'number' ? x.t : Date.now());
+  return {
+    s: reviewed ? SRS_DAYS[b] : 0,
+    d: reviewed ? 5 : 0,
+    reps: reviewed ? b : 0,
+    lapses: 0,
+    state: reviewed ? FSRS_STATE.REVIEW : FSRS_STATE.NEW,
+    last: last
+  };
+}
+function fsrsOf(it) {
+  if (!it.f || typeof it.f !== 'object') it.f = legacyFsrs(it);
+  const f = it.f;
+  if (!(f.s >= 0)) f.s = 0;
+  if (!(f.d >= 1) || f.d > 10) f.d = f.s > 0 ? 5 : 0;
+  if (typeof f.reps !== 'number') f.reps = 0;
+  if (typeof f.lapses !== 'number') f.lapses = 0;
+  if (typeof f.state !== 'number' || f.state < 0 || f.state > 3) {
+    f.state = f.s > 0 ? FSRS_STATE.REVIEW : FSRS_STATE.NEW;
+  }
+  if (typeof f.last !== 'number') f.last = typeof it.t === 'number' ? it.t : Date.now();
+  return f;
+}
+function fsrsSchedule(it, rating, now) {
+  const f = fsrsOf(it);
+  const isNew = f.state === FSRS_STATE.NEW || !(f.s > 0);
+  const elapsed = isNew ? 0 : Math.max(0, (now - f.last) / DAY_MS);
+  const mem = fsrsNextMemory(f, rating, elapsed);
+  let ivl;
+  if (isNew) ivl = rating === 4 ? 2 : 1;      // 新词第一次统一明天见；Easy 给两天
+  else if (rating === 1) ivl = 1;              // 忘了就明天重来，别让 FSRS 推出 2~3 天
+  else ivl = fsrsInterval(mem.s);
+  f.s = mem.s;
+  f.d = mem.d;
+  f.reps += 1;
+  if (rating === 1) f.lapses += 1;
+  f.state = isNew ? FSRS_STATE.LEARNING : (rating === 1 ? FSRS_STATE.RELEARNING : FSRS_STATE.REVIEW);
+  f.last = now;
+  it.f = f;
+  it.b = bucketOf(ivl);
+  it.d = now + ivl * DAY_MS;
+  return ivl;
+}
+
+/* 学习统计：只记「第一次作答」。答错后换题型补看的那次不重复计分，
+   所以正确率不会被反复重做刷高。存在 localStorage，随导出/导入一起走。 */
+const STUDY_KEY = 'wr_study_v1';
+function studyDayKey(d) {
+  const x = d || new Date();
+  return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' +
+    String(x.getDate()).padStart(2, '0');
+}
+function emptyStudy() {
+  return { days: {}, life: { new: 0, review: 0, correct: 0, wrong: 0 } };
+}
+function loadStudy() {
+  try {
+    const o = JSON.parse(localStorage.getItem(STUDY_KEY));
+    if (o && o.days && o.life) return o;
+  } catch (e) {}
+  return emptyStudy();
+}
+function saveStudy(o) {
+  try { localStorage.setItem(STUDY_KEY, JSON.stringify(o)); } catch (e) {}
+}
+function recordStudy(isNew, correct, auto) {
+  const o = loadStudy();
+  const k = studyDayKey();
+  const d = o.days[k] || (o.days[k] = { new: 0, review: 0, correct: 0, wrong: 0 });
+  if (isNew) { d.new += 1; o.life.new += 1; }
+  else { d.review += 1; o.life.review += 1; }
+  if (auto) {
+    if (correct) { d.correct += 1; o.life.correct += 1; }
+    else { d.wrong += 1; o.life.wrong += 1; }
+  }
+  saveStudy(o);
+}
+function studyToday() {
+  const o = loadStudy();
+  return o.days[studyDayKey()] || { new: 0, review: 0, correct: 0, wrong: 0 };
+}
+function studyAccuracy(d) {
+  const n = d.correct + d.wrong;
+  return n ? Math.round(d.correct * 100 / n) + '%' : '—';
+}
+function studyText(d) {
+  return '今日 新词 ' + d.new + ' · 复习 ' + d.review + ' · 正确率 ' + studyAccuracy(d);
+}
+function mergeStudy(a, b) {
+  const out = emptyStudy();
+  for (const src2 of [a, b]) {
+    if (!src2 || !src2.days) continue;
+    for (const k of Object.keys(src2.days)) {
+      const x = src2.days[k];
+      const y = out.days[k] || (out.days[k] = { new: 0, review: 0, correct: 0, wrong: 0 });
+      ['new', 'review', 'correct', 'wrong'].forEach(f => { y[f] = Math.max(y[f] || 0, x[f] || 0); });
+    }
+    ['new', 'review', 'correct', 'wrong'].forEach(f => {
+      out.life[f] = Math.max(out.life[f] || 0, (src2.life || {})[f] || 0);
+    });
+  }
+  return out;
+}
+
+// 归一化：给老记录补 d/b/f。两条读路径（服务文件 / localStorage 兜底）都要过一遍。
 function normHistItem(x) {
   if (!x || typeof x !== 'object' || !x.w) return null;
-  // k 是去重键：单词条目就是 w，句子练习条目是 'ex:词|句子'。
-  // 老记录没有 k，补成 w（等价于原来的"按词去重"）。
   if (typeof x.k !== 'string' || !x.k) x.k = x.w;
   if (typeof x.d !== 'number') x.d = (typeof x.t === 'number' ? x.t : Date.now()) + DAY_MS;
   if (typeof x.b !== 'number' || x.b < 0 || x.b > SRS_DAYS.length - 1) x.b = 0;
+  fsrsOf(x);
   return x;
 }
 // 到期条目（含从没复习过的老记录）
@@ -22619,7 +22849,7 @@ async function exportHistory() {
   const h = loadHistory();
   if (!h.length) { alert(T('暂无记录可导出')); return; }
   const stamp = new Date().toISOString().slice(0, 10);
-  const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), items: h }, null, 2)],
+  const blob = new Blob([JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), items: h, study: loadStudy() }, null, 2)],
     { type: 'application/json' });
   if (window.showSaveFilePicker) {
     try {
@@ -22640,17 +22870,145 @@ async function exportHistory() {
   setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
-let reviewState = null;   // 复习状态：{list, i, shown, total, done, ok, bad, requeued, finished}
+/* 导入备份：合并而不是覆盖——同 k 取 t 更新的那条，学习统计按天取较大值，
+   这样重复导入同一份文件不会把进度翻倍。 */
+function importHistory() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = async () => {
+    const file = inp.files && inp.files[0];
+    if (!file) return;
+    try {
+      const doc = JSON.parse(await file.text());
+      const items = Array.isArray(doc) ? doc : (doc && Array.isArray(doc.items) ? doc.items : []);
+      const clean = items.map(normHistItem).filter(Boolean);
+      if (!clean.length) { alert(T('这个文件里没有可导入的记录。')); return; }
+      const map = new Map();
+      loadHistory().forEach(x => map.set(x.k || x.w, x));
+      let added = 0;
+      clean.forEach(x => {
+        const k = x.k || x.w;
+        const old = map.get(k);
+        if (!old || (x.t || 0) >= (old.t || 0)) { map.set(k, x); added++; }
+      });
+      const merged = [...map.values()].sort((a, b) => (b.t || 0) - (a.t || 0));
+      saveStudy(mergeStudy(loadStudy(), (doc && doc.study) || emptyStudy()));
+      persistHistory(merged);
+      renderHistory();
+      alert(T('已导入') + ' ' + added + ' ' + T('条记录'));
+    } catch (e) {
+      alert(T('导入失败：文件不是有效的 JSON 备份。'));
+    }
+  };
+  inp.style.display = 'none';
+  document.body.appendChild(inp);   // 有些浏览器要求 file input 在 DOM 里才能弹选择框
+  inp.click();
+  setTimeout(() => { if (inp.parentNode) inp.parentNode.removeChild(inp); }, 60000);
+}
+
+let reviewState = null;   // 复习状态：{list, i, q, answered, ...}
 let histPage = 1;         // 历史列表当前页（每页 60 条）
+const QMODE_KEY = 'wr_qmode';
+const QMODES = ['mix', 'choice', 'listen', 'spell', 'flash'];
+function qModePref() {
+  try {
+    const m = localStorage.getItem(QMODE_KEY);
+    if (QMODES.indexOf(m) >= 0) return m;
+  } catch (e) {}
+  return 'mix';
+}
+function setQModePref(m) {
+  try { localStorage.setItem(QMODE_KEY, m); } catch (e) {}
+}
 
 function shuffled(a) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
+function pickWeighted(pairs) {
+  let total = 0;
+  pairs.forEach(p => { total += p[1]; });
+  let x = Math.random() * total;
+  for (const p of pairs) { x -= p[1]; if (x <= 0) return p[0]; }
+  return pairs[pairs.length - 1][0];
+}
+/* 题型选择：新词/低稳定度先「认」，稳定度高了再「写」。
+   混合模式里拼写只在稳定度 ≥ 7 天时多出现；用户也可以在复习头部手动锁题型。 */
+function pickQuestionType(cur) {
+  if (cur.kind === 'ex' || /\s/.test(cur.w)) return 'flash';
+  const pref = qModePref();
+  if (pref !== 'mix') return pref;      // 用户锁了题型就一直用它，补看也不例外
+  if (cur.retry) return cur.lastType === 'listen' ? 'choice' : 'listen';
+  const f = fsrsOf(cur);
+  if (!(f.s > 0) || f.state === FSRS_STATE.NEW) {
+    return Math.random() < 0.7 ? 'choice' : 'listen';
+  }
+  if (f.s >= 7) {
+    return pickWeighted([['spell', 4], ['choice', 3], ['listen', 3]]);
+  }
+  return pickWeighted([['choice', 4], ['listen', 4], ['spell', 2]]);
+}
+/* 每日新词：从 BNC 3k–9k 里挑还没查过的增强词。只用有释义的词，
+   免得「今日学习」推来一批查不到释义的。 */
+function pickNewWords(n) {
+  if (n <= 0) return [];
+  const seen = new Set(loadHistory().map(x => x.w));
+  const out = [];
+  const push = (w) => {
+    if (out.length >= n || seen.has(w)) return;
+    if (!w || !/^[a-z]{3,}$/.test(w)) return;
+    if (!ENHANCED[w]) return;
+    if (!summaryFor(w)) return;
+    seen.add(w);
+    out.push(w);
+  };
+  if (BNC_FAMILIES) {
+    const levels = Object.keys(BNC_FAMILIES).sort((a, b) => +a - +b);
+    let start = levels.findIndex(l => +l >= 3);
+    if (start < 0) start = 0;
+    for (const lv of levels.slice(start)) {
+      const fams = shuffled(Object.keys(BNC_FAMILIES[lv]));
+      for (const w of fams) push(w);
+      if (out.length >= n) return out;
+    }
+  }
+  const keys = Object.keys(ENHANCED);
+  for (let i = 0; i < 4000 && out.length < n; i++) {
+    push(keys[Math.floor(Math.random() * keys.length)]);
+  }
+  return out;
+}
+
+function newReviewState(list, extra) {
+  return Object.assign({
+    list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0,
+    requeued: 0, finished: false, q: null, qKey: '', answered: false, result: null,
+    rating: 0, chosen: -1, spellVal: '', qStarted: 0, qPlayed: false
+  }, extra || {});
+}
+
+/* 今日学习：到期词 + 今日还没学满的新词（默认 10 个）。 */
+async function startDaily() {
+  const h = loadHistory();
+  const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0)).slice(0, DAILY_DUE_CAP);
+  const td = studyToday();
+  const fresh = pickNewWords(Math.max(0, NEW_PER_DAY - td.new));
+  if (!due.length && !fresh.length) { alert(T('今天没有到期的词，也没有新词可学。')); return; }
+  await ensureDict(fresh.concat(due.map(x => x.w)));
+  const list = due.concat(fresh.map(w => normHistItem({
+    k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word', fresh: true
+  })));
+  reviewState = newReviewState(list, { fromTab: 'query', daily: true });
+  input.blur();
+  switchTab('query');
+  renderReview();
+}
+
 /* 复习入口。all=true 洗牌全部；默认只复习到期的词、按到期先后排。
    没有到期的词就回落到洗牌全部，保证按钮永不空转。 */
 async function startReview(all) {
-  const h = loadHistory().slice();          // 拷贝再动，别打乱权威顺序
+  const h = loadHistory().slice();
   if (!h.length) { renderHistory(); return; }
   let list;
   if (all) list = shuffled(h);
@@ -22658,61 +23016,202 @@ async function startReview(all) {
     const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0));
     list = due.length ? due : shuffled(h);
   }
-  reviewState = { list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0, requeued: 0, finished: false };
-  input.blur();   // 同上：焦点留在搜索框会让空格/评分键失灵
-  // 按需词典：揭晓时会 analyze 当前词（拆解提示 + 助记素材），先把这一轮的词一次取回来
+  reviewState = newReviewState(list);
+  input.blur();
   await ensureDict(list.map(x => x.w));
   renderReview();
 }
 
-/* 按词频级别抽一批测一测：复用复习闪卡的交互（空格揭晓、1/2 自评），不另做一套。
-   评分走同一个 gradeCurrent，所以结果会写进历史并进 SRS 排程——
-   测出来的生词明天自动出现在「复习」里，"测 → 排程 → 巩固"的闭环不用额外写。 */
+/* 按词频级别抽一批测一测：复用同一套题型与 FSRS 评分。 */
 async function startFreqTest(level, n) {
   if (!BNC_FAMILIES || !BNC_FAMILIES[level]) return;
   const pick = shuffled(Object.keys(BNC_FAMILIES[level]).slice()).slice(0, n || 20);
-  // 按需词典：卡片上的释义走 summaryFor(w)，先把这一批词取回来，否则整屏都是"(暂无释义)"
   await ensureDict(pick);
   const list = pick.map(w => normHistItem({ k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word' }));
-  reviewState = { list: list, i: 0, shown: false, total: list.length, done: 0, ok: 0, bad: 0, requeued: 0, finished: false,
-    fromTab: 'freq' };   // 记下来源：退出复习时回到词频目录（见 #history 的 quit 分支）
-  input.blur();         // 焦点吸在搜索框上会吞掉空格/1/2（页面 autofocus，用户常直接切过来点测试）
-  switchTab('query');   // 闪卡渲染在 #history，只有查询 tab 显示它
+  reviewState = newReviewState(list, { fromTab: 'freq' });
+  input.blur();
+  switchTab('query');
   renderReview();
 }
 
-/* 评分。这是唯一的推进方式——SRS 里「评分」就是「翻页」。
-   队列用 total 冻结分母，补看的卡会让 list 变长，用 list.length 当分母会越复习越多。 */
-/* gradeCurrent：三档自评（grade: 'bad'=忘了/归零, 'ok'=还行/+1, 'great'=轻松记住/+2）
-   向下兼容旧布尔值 ok=true/false，等价于 'ok'/'bad'。 */
+/* 每张卡第一次渲染时定题型和选项，之后重画（揭晓/提示/答错反馈）都复用。 */
+function ensureQuestion(cur) {
+  const s = reviewState;
+  const key = (cur.k || cur.w) + '|' + (cur.retry ? 'r' : '') + '|' + qModePref();
+  if (s.q && s.qKey === key) return s.q;
+  s.qKey = key;
+  s.q = buildQuestion(cur);
+  s.answered = false;
+  s.result = null;
+  s.rating = 0;
+  s.chosen = -1;
+  s.spellVal = '';
+  s.qStarted = Date.now();
+  s.qPlayed = false;
+  return s.q;
+}
+
+function distractorPool(exclude, n) {
+  const pool = [];
+  const seen = new Set([exclude]);
+  const h = loadHistory();
+  for (const x of h) {
+    if (!x || x.kind === 'ex' || seen.has(x.w)) continue;
+    const s2 = summaryFor(x.w) || x.s || '';
+    if (!s2) continue;
+    pool.push({ w: x.w, s: s2 });
+    seen.add(x.w);
+    if (pool.length >= n + 6) break;
+  }
+  const keys = Object.keys(ENHANCED || {});
+  let guard = 0;
+  while (pool.length < n + 6 && guard < 400 && keys.length) {
+    guard++;
+    const w = keys[Math.floor(Math.random() * keys.length)];
+    if (!w || seen.has(w) || !/^[a-z]{3,}$/.test(w)) continue;
+    const s2 = summaryFor(w);
+    if (!s2) continue;
+    pool.push({ w: w, s: s2 });
+    seen.add(w);
+  }
+  return shuffled(pool).slice(0, n + 3);
+}
+
+function buildQuestion(cur) {
+  if (cur.kind === 'ex') return { type: 'flash', key: 'ex' };
+  let type = pickQuestionType(cur);
+  const correct = summaryFor(cur.w) || cur.s || '';
+  if (type === 'choice') {
+    // 去重释义：不同词完全可能给出一模一样的中文，重复选项等于送分/送死
+    const used = new Set([correct]);
+    const ds = [];
+    for (const d of distractorPool(cur.w, 3)) {
+      if (!d.s || used.has(d.s)) continue;
+      used.add(d.s);
+      ds.push(d);
+      if (ds.length >= 3) break;
+    }
+    if (correct && ds.length >= 3) {
+      const opts = [{ w: cur.w, text: correct, correct: true }].concat(
+        ds.map(d => ({ w: d.w, text: d.s, correct: false }))
+      );
+      return { type: 'choice', key: 'c', opts: shuffled(opts) };
+    }
+    type = 'flash';
+  } else if (type === 'listen') {
+    const ds = distractorPool(cur.w, 3).slice(0, 3);
+    if (ds.length >= 3) {
+      const opts = [{ w: cur.w, correct: true }].concat(ds.map(d => ({ w: d.w, correct: false })));
+      return { type: 'listen', key: 'l', opts: shuffled(opts) };
+    }
+    type = 'flash';
+  } else if (type === 'spell') {
+    return { type: 'spell', key: 's', answer: cur.w, hint: 0 };
+  }
+  return { type: 'flash', key: 'f' };
+}
+
+/* 三档自评 → FSRS 评分；评完立刻翻到下一张。 */
 function gradeCurrent(grade) {
+  if (!reviewState || reviewState.finished) return;
+  if (grade === true) grade = 'ok'; else if (grade === false) grade = 'bad';
+  const rating = grade === 'bad' ? 1 : grade === 'great' ? 4 : 3;
+  applyRating(rating, { advance: true });
+}
+
+/* 唯一的落分入口：更新 FSRS、写历史、记统计、答错补看。 */
+function applyRating(rating, opts) {
   const s = reviewState;
   if (!s || s.finished) return;
   const cur = s.list[s.i];
+  if (!cur) return;
+  const retry = !!cur.retry;
   const h = loadHistory();
-  const now = Date.now();
-  // 兼容旧布尔值：true→'ok'，false→'bad'
-  if (grade === true) grade = 'ok'; else if (grade === false) grade = 'bad';
   let it = h.find(x => (x.k || x.w) === (cur.k || cur.w));
-  if (!it) { it = normHistItem({ k: cur.k, w: cur.w, s: cur.s || '', kind: cur.kind, en: cur.en, zh: cur.zh, t: now }); h.unshift(it); }
-  if (grade === 'bad') {
-    it.b = 0;
-    it.d = now + DAY_MS;
-    s.bad++;
-    s.list.push(Object.assign({}, cur, { requeued: true }));   // 塞回队尾，本轮还会再见到（句子卡也保留 kind）
-    s.requeued++;
-  } else {
-    // ok: +1档；great: +2档（跳一格，下次间隔更长）
-    const inc = (grade === 'great') ? 2 : 1;
-    it.b = Math.min((it.b || 0) + inc, SRS_DAYS.length - 1);
-    it.d = now + SRS_DAYS[it.b] * DAY_MS;
-    s.ok++;
+  const wasNew = !it || !it.f || it.f.state === FSRS_STATE.NEW || !(it.f.s > 0);
+  if (!it) {
+    it = normHistItem({
+      k: cur.k || cur.w, w: cur.w, s: cur.s || summaryFor(cur.w) || '',
+      kind: cur.kind || 'word', en: cur.en, zh: cur.zh, t: Date.now(), fresh: true
+    });
+    h.unshift(it);
   }
-  s.done++;
-  s.shown = false;
+  const ivl = fsrsSchedule(it, rating, Date.now());
+  const auto = !!(s.q && ['choice', 'listen', 'spell'].indexOf(s.q.type) >= 0);
+  if (!retry) recordStudy(wasNew && cur.kind !== 'ex', rating > 1, auto);
+  s.done += 1;
+  if (rating === 1) s.bad += 1; else s.ok += 1;
+  if (rating === 1 && !retry) {
+    s.list.push(Object.assign({}, cur, { retry: true, lastType: s.q ? s.q.type : 'flash' }));
+    s.requeued += 1;
+  }
+  s.answered = true;
+  s.result = rating === 1 ? 'wrong' : 'correct';
+  s.rating = rating;
+  s.interval = ivl;
+  s.shown = true;
   persistHistory(h);
-  if (s.i < s.list.length - 1) { s.i++; renderReview(); }
-  else finishReview();
+  if (opts && opts.advance) { nextCard(); return; }
+  renderReview();
+}
+
+/* 选义 / 听音：点选项即判分。第一次作答才计分，补看那次不重复记。 */
+function answerQuestion(idx) {
+  const s = reviewState;
+  if (!s || s.finished || s.answered || !s.q || !s.q.opts) return;
+  const opt = s.q.opts[idx];
+  if (!opt) return;
+  s.chosen = idx;
+  const sec = Math.max(0, (Date.now() - (s.qStarted || Date.now())) / 1000);
+  let rating;
+  if (!opt.correct) rating = 1;
+  else if (s.q.type === 'listen') rating = sec < 3 ? 4 : sec < 8 ? 3 : 2;
+  else rating = sec < 6 ? 3 : 2;
+  applyRating(rating);
+}
+
+function checkSpelling() {
+  const s = reviewState;
+  if (!s || s.finished || s.answered || !s.q || s.q.type !== 'spell') return;
+  const el = document.getElementById('spell-in');
+  const val = el ? el.value.trim() : '';
+  if (!val) { if (el) el.focus(); return; }
+  s.spellVal = val;
+  const sec = Math.max(0, (Date.now() - (s.qStarted || Date.now())) / 1000);
+  const ok = val.toLowerCase() === s.q.answer.toLowerCase();
+  let rating = 1;
+  if (ok) rating = s.q.hint > 0 ? 2 : (sec < 12 ? 4 : 3);
+  applyRating(rating);
+}
+
+function useSpellHint() {
+  const s = reviewState;
+  if (!s || s.finished || s.answered || !s.q || s.q.type !== 'spell') return;
+  const box = document.getElementById('spell-in');
+  if (box) s.spellVal = box.value;      // 重画会换掉输入框，先把已打的半截存下来
+  s.q.hint = Math.min(2, (s.q.hint || 0) + 1);
+  renderReview();
+}
+
+function nextCard() {
+  const s = reviewState;
+  if (!s || s.finished) return;
+  if (s.i < s.list.length - 1) {
+    s.i += 1;
+    s.shown = false;
+    s.answered = false;
+    s.result = null;
+    s.rating = 0;
+    s.chosen = -1;
+    s.spellVal = '';
+    s.q = null;
+    s.qKey = '';
+    s.qStarted = 0;
+    s.qPlayed = false;
+    renderReview();
+  } else {
+    finishReview();
+  }
 }
 
 // 一轮结束给个小结，而不是莫名其妙重新洗一遍从头开始
@@ -22725,11 +23224,12 @@ function finishReview() {
     '<div class="review"><div class="rev-word">🎉</div>' +
     '<div class="rev-sum">复习 ' + s.done + ' 张' + (s.requeued ? '（其中补看 ' + s.requeued + ' 张）' : '') + '<br>' +
     '记住/轻松 ' + s.ok + ' · 忘了 ' + s.bad + '</div>' +
+    '<div class="rev-date">' + escapeHtml(studyText(studyToday())) + '</div>' +
     '<div class="rev-date">下次到期：' + nextTxt + '</div>' +
     '<div style="margin-top:18px"><button class="rev-btn" data-rev="all">🔀 再复习一轮（全部）</button></div></div>';
   el.classList.add('show');
-  translateDOM(el);    // 小结也是 innerHTML 直接塞的，过一遍翻译层（否则英文模式下仍是中文）
-  s.finished = true;   // 保留对象，让「再复习一轮/返回」按钮还能被复习分支接住
+  translateDOM(el);
+  s.finished = true;
 }
 
 /* ---------- 例句挖空自测 ----------
@@ -22776,23 +23276,61 @@ function startExamplePractice(only) {
   renderReview();
 }
 
-// 主动回忆闪卡：先只看词，点「显示释义」才露出释义；露出后自评记住/忘了
+// 主动回忆：闪卡 / 选义 / 听音 / 拼写四种题型共用同一套 FSRS 评分。
+function meaningFor(cur) {
+  // 优先取词典释义：historySummary 里可能带「词根(含义) ·」，拿来出题会泄露答案
+  return decodeEntities(summaryFor(cur.w) || cur.s || '');
+}
+
+function qOptionsHTML(q, s) {
+  return '<div class="q-options">' + q.opts.map((o, i) => {
+    let cls = 'q-opt';
+    if (s.answered) {
+      if (o.correct) cls += ' correct';
+      else if (i === s.chosen) cls += ' wrong';
+    }
+    const label = q.type === 'choice' ? o.text : o.w;
+    return '<button class="' + cls + '" data-q="' + i + '"' + (s.answered ? ' disabled' : '') + '>' +
+      '<span class="q-key">' + (i + 1) + '</span>' +
+      escapeHtml(decodeEntities(label)) + '</button>';
+  }).join('') + '</div>';
+}
+
+function qFeedbackHTML(cur, s, extra) {
+  const r = analyze(cur.w);
+  let h = '<div class="q-feedback ' + (s.result === 'correct' ? 'ok' : 'bad') + '">' +
+    (s.result === 'correct' ? '✓ ' + T('答对了') : '✗ ' + T('答错了') + (extra ? ' · ' + extra : '')) +
+    '</div>';
+  h += '<div class="rev-sum">' + escapeHtml(meaningFor(cur)) + '</div>';
+  h += reviewMorphHTML(r);
+  h += memoBlockHTML(r);
+  h += '<button class="rev-btn primary" data-rev="next">' + T('下一张') + ' →</button>';
+  return h;
+}
+
 function renderReview() {
   const el = document.getElementById('history');
   const s = reviewState;
   if (!s || s.finished || !s.list.length) { renderHistory(); return; }
   const cur = s.list[s.i];
-  const d = new Date(cur.t);
+  const q = ensureQuestion(cur);
+  const d = new Date(cur.t || Date.now());
   const ts = (d.getMonth() + 1) + '-' + d.getDate();
+  const modeNames = { mix: '混合', choice: '选义', listen: '听音', spell: '拼写', flash: '闪卡' };
+  const modeSel = '<label class="q-mode" title="' + escapeHtml(T('选择练习题型')) + '">' + T('题型') +
+    ' <select id="qmode">' + QMODES.map(m => '<option value="' + m + '"' +
+      (qModePref() === m ? ' selected' : '') + '>' + T(modeNames[m]) + '</option>').join('') +
+    '</select></label>';
   const head = '<div class="rev-head">已评 ' + s.done + ' / 共 ' + s.total +
     (s.requeued ? '　补看 ' + s.requeued : '') +
-    '<span><button class="h-btn" data-rev="all" title="不看排程，洗牌复习全部">🔀 全部</button>' +
-    '<button class="h-btn" data-rev="quit">退出</button></span></div>';
+    '<span class="q-tools">' + modeSel +
+    '<button class="h-btn" data-rev="all" title="' + escapeHtml(T('不看排程，洗牌复习全部')) + '">🔀 ' + T('全部') + '</button>' +
+    '<button class="h-btn" data-rev="quit">' + T('退出') + '</button></span></div>';
   const grades =
     '<div class="rev-nav">' +
-    '<button class="rev-btn bad" data-rev="bad" title="档位归零，明天再来；本轮稍后还会再考一次（快捷键 1）">😰 忘了</button>' +
-    '<button class="rev-btn ok" data-rev="ok" title="档位 +1，按间隔表排期（快捷键 2）">😊 还行</button>' +
-    '<button class="rev-btn great" data-rev="great" title="档位 +2，直接跳一格间隔更长（快捷键 3）">😎 轻松</button>' +
+    '<button class="rev-btn bad" data-rev="bad" title="' + escapeHtml(T('忘了：明天重来，本轮稍后再考一次（快捷键 1）')) + '">😰 ' + T('忘了') + '</button>' +
+    '<button class="rev-btn ok" data-rev="ok" title="' + escapeHtml(T('还行：按 FSRS 排期（快捷键 2）')) + '">😊 ' + T('还行') + '</button>' +
+    '<button class="rev-btn great" data-rev="great" title="' + escapeHtml(T('轻松：间隔拉长（快捷键 3）')) + '">😎 ' + T('轻松') + '</button>' +
     '</div>';
   let h = head + '<div class="review">';
 
@@ -22813,43 +23351,101 @@ function renderReview() {
       h += '<div class="rev-sum"><b>' + escapeHtml(decodeEntities(cur.w)) + '</b>　' +
         escapeHtml(decodeEntities(EN_MODE() ? (summaryFor(cur.w) || cur.zh || '') : (cur.zh || '(暂无中文)'))) + '</div>';
       h += grades;
-      h += '<button class="rev-btn" data-rev="full">查这个词的卡片</button>';
+      h += '<button class="rev-btn" data-rev="full">' + T('查这个词的卡片') + '</button>';
     } else {
-      h += '<div class="rev-hint">句中缺的是哪个词？想好了再点下方揭晓</div>';
-      h += '<button class="rev-btn primary" data-rev="show" title="快捷键：空格">👁 显示答案</button>';
+      h += '<div class="rev-hint">' + T('句中缺的是哪个词？想好了再点下方揭晓') + '</div>';
+      h += '<button class="rev-btn primary" data-rev="show" title="' + escapeHtml(T('快捷键：空格')) + '">👁 ' + T('显示答案') + '</button>';
     }
     h += '</div>';
     el.innerHTML = h;
     el.classList.add('show');
-    translateDOM(el);   // 句子挖空分支也得过翻译层，否则英文模式下这几张卡还是中文
+    translateDOM(el);
     return;
   }
 
-  h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
-    '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="发音">🔊</button></div>';
-  h += '<div class="rev-date">' + ts + (cur.b ? ' · 第 ' + (cur.b + 1) + ' 档' : '') + '</div>';
-  if (s.shown) {
-    h += '<div class="rev-sum">' + escapeHtml(decodeEntities((EN_MODE() ? summaryFor(cur.w) : '') || cur.s || (EN_MODE() ? '(no definition)' : '(暂无释义)'))) + '</div>';
-    // 卡壳揭晓的那一瞬间给钩子：三色拆解 + 口诀（有缓存才显示，没有就给「现场编一句」的入口）
-    const rv = analyze(cur.w);
-    h += reviewMorphHTML(rv);
-    h += memoBlockHTML(rv);
-    h += grades;
-    h += '<button class="rev-btn" data-rev="full">查看完整卡片</button>';
+  if (q.type === 'choice') {
+    h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
+      '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
+    h += '<div class="rev-date">' + ts + ' · ' + T('选义') + '</div>';
+    if (!s.answered) h += '<div class="rev-hint">' + T('选一个意思') + '</div>';
+    h += qOptionsHTML(q, s);
+    if (s.answered) h += qFeedbackHTML(cur, s, s.result === 'wrong' ? T('正确答案') + ': ' + cur.w : '');
+    h += '</div>';
+  } else if (q.type === 'listen') {
+    if (s.answered) {
+      h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
+        '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
+    } else {
+      h += '<div class="q-audio"><button class="rev-btn primary" data-rev="replay">🔊 ' + T('播放发音') + '</button></div>';
+      h += '<div class="rev-hint">' + T('听发音，选出这个词') + '</div>';
+    }
+    h += '<div class="rev-date">' + ts + ' · ' + T('听音') + '</div>';
+    h += qOptionsHTML(q, s);
+    if (s.answered) h += qFeedbackHTML(cur, s, s.result === 'wrong' ? T('正确答案') + ': ' + cur.w : '');
+    h += '</div>';
+  } else if (q.type === 'spell') {
+    h += '<div class="q-prompt">' + escapeHtml(meaningFor(cur)) + '</div>';
+    h += '<div class="q-audio"><button class="rev-btn" data-rev="replay">🔊 ' + T('播放发音') + '</button></div>';
+    h += '<div class="rev-date">' + ts + ' · ' + T('拼写') + '</div>';
+    if (s.answered) {
+      h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span></div>';
+      const extra = s.result === 'wrong'
+        ? T('你的答案') + ': ' + escapeHtml(s.spellVal || '—') + ' · ' + T('正确答案') + ': ' + cur.w
+        : '';
+      h += qFeedbackHTML(cur, s, extra);
+    } else {
+      if (q.hint) {
+        const masked = q.answer.slice(0, q.hint) + '·'.repeat(Math.max(0, q.answer.length - q.hint));
+        h += '<div class="q-hint">' + escapeHtml(masked) + '　(' + q.answer.length + ')</div>';
+      }
+      h += '<div class="q-spell"><input id="spell-in" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + escapeHtml(s.spellVal || '') + '" placeholder="' + escapeHtml(T('拼写这个词')) + '">' +
+        '<button class="rev-btn primary" data-rev="check">' + T('检查') + '</button></div>';
+      h += '<button class="rev-btn" data-rev="hint">' + T('显示提示') + '</button>';
+    }
+    h += '</div>';
   } else {
-    h += '<div class="rev-hint">先回忆这个词的意思，再点下方显示释义</div>';
-    h += '<button class="rev-btn primary" data-rev="show" title="快捷键：空格">👁 显示释义</button>';
+    // 闪卡：保持原来的「先看词 → 揭晓 → 三档自评」
+    h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
+      '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
+    h += '<div class="rev-date">' + ts + (cur.b ? ' · 第 ' + (cur.b + 1) + ' 档' : '') + '</div>';
+    if (s.shown) {
+      h += '<div class="rev-sum">' + escapeHtml(meaningFor(cur) || (EN_MODE() ? '(no definition)' : '(暂无释义)')) + '</div>';
+      const rv = analyze(cur.w);
+      h += reviewMorphHTML(rv);
+      h += memoBlockHTML(rv);
+      h += grades;
+      h += '<button class="rev-btn" data-rev="full">' + T('查看完整卡片') + '</button>';
+    } else {
+      h += '<div class="rev-hint">' + T('先回忆这个词的意思，再点下方显示释义') + '</div>';
+      h += '<button class="rev-btn primary" data-rev="show" title="' + escapeHtml(T('快捷键：空格')) + '">👁 ' + T('显示释义') + '</button>';
+    }
+    h += '</div>';
   }
-  h += '</div>';
   el.innerHTML = h;
   el.classList.add('show');
   translateDOM(el);
+  if (q.type === 'spell' && !s.answered) {
+    setTimeout(() => { const box = document.getElementById('spell-in'); if (box) box.focus(); }, 0);
+  }
+  if (q.type === 'listen' && !s.answered && !s.qPlayed) {
+    s.qPlayed = true;
+    setTimeout(() => speakText(cur.w), 60);
+  }
 }
 
 function renderHistory() {
   const el = document.getElementById('history');
   let h = loadHistory();
-  if (!h.length) { el.classList.remove('show'); el.innerHTML = ''; return; }
+  if (!h.length) {
+    el.innerHTML = '<div class="h-head">查词记录<span class="h-n">0</span>' +
+      '<button class="h-btn" id="h-daily" title="到期词（最多 40 张）+ 今日新词（默认 10 个）">📅 今日</button>' +
+      '<button class="h-btn" id="h-import">导入</button>' +
+      '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span></div>' +
+      '<div class="miss" style="opacity:.55;font-size:12.5px;padding:4px 2px">查询过的词会累积到这里</div>';
+    el.classList.add('show');
+    translateDOM(el);
+    return;
+  }
 
   // 分页：每页 60 条，无限存储后页面不至于过长
   const PER = 60;
@@ -22881,8 +23477,10 @@ function renderHistory() {
     '<span class="h-n">' + h.length + '</span>' +
     (dueN ? '<span class="h-n due" title="按间隔重复排到的词">待复习 ' + dueN + '</span>' : '') +
     '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">🎲 复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
+    '<button class="h-btn" id="h-daily" title="到期词（最多 40 张）+ 今日新词（默认 10 个）">📅 今日</button>' +
     '<button class="h-btn" id="h-export">导出</button>' +
-    '<span class="h-btn" style="opacity:.55;cursor:default" title="历史自动存入项目目录 history.json">已自动存本地 ✓</span>' +
+    '<button class="h-btn" id="h-import">导入</button>' +
+    '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span>' +
     '<button class="h-btn" id="h-clear">清空</button></div>' + items + pager;
   el.innerHTML = _hist;
   el.classList.add('show');
@@ -22893,6 +23491,9 @@ function renderHistory() {
 // 注意：点条目查词不在这里处理——#history 是 document 的后代，两处都绑会让 search() 跑两遍。
 // 条目点击统一交给下方 document 级委托（它顺带做了 switchTab('query')）。
 document.getElementById('history').addEventListener('click', (e) => {
+  // 选择题/听音题的选项按钮
+  const qopt = e.target.closest('[data-q]');
+  if (qopt) { answerQuestion(+qopt.dataset.q); return; }
   // 复习模式（闪卡）：先于普通历史条目处理
   const rev = e.target.closest('[data-rev]');
   if (rev) {
@@ -22907,6 +23508,14 @@ document.getElementById('history').addEventListener('click', (e) => {
       return;
     }
     if (a === 'all') { startReview(true); return; }
+    if (a === 'next') { nextCard(); return; }
+    if (a === 'replay') {
+      const c = reviewState && reviewState.list[reviewState.i];
+      if (c) speakText(c.w);
+      return;
+    }
+    if (a === 'hint') { useSpellHint(); return; }
+    if (a === 'check') { checkSpelling(); return; }
     if (!reviewState || reviewState.finished) return;
     if (a === 'show') { reviewState.shown = true; renderReview(); }
     else if (a === 'ok') gradeCurrent('ok');
@@ -22924,7 +23533,9 @@ document.getElementById('history').addEventListener('click', (e) => {
     return;
   }
   if (e.target.id === 'h-shuffle') { startReview(); return; }
+  if (e.target.id === 'h-daily') { startDaily(); return; }
   if (e.target.id === 'h-export') { exportHistory(); return; }
+  if (e.target.id === 'h-import') { importHistory(); return; }
   if (e.target.id === 'h-clear' && confirm(T('确定清空全部查词记录吗？'))) {
     HISTORY = [];
     HIST_CLEARED = Date.now();   // 打一个水位：此后除了本页签新查的词，早于此刻的条目一律作废
@@ -22932,6 +23543,28 @@ document.getElementById('history').addEventListener('click', (e) => {
     fetch('/history', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ version: 1, items: [], clearedAt: HIST_CLEARED }) }).catch(() => {});
     renderHistory();
+  }
+});
+
+// 题型选择：答完之前换题型会重出一张；已答完只影响下一张
+document.getElementById('history').addEventListener('change', (e) => {
+  if (e.target.id !== 'qmode') return;
+  setQModePref(e.target.value);
+  if (!reviewState || reviewState.finished) return;
+  if (reviewState.answered) return;
+  reviewState.q = null;
+  reviewState.qKey = '';
+  reviewState.answered = false;
+  reviewState.result = null;
+  reviewState.chosen = -1;
+  reviewState.spellVal = '';
+  renderReview();
+});
+// 拼写题：回车提交（输入框自己的 keydown 不会被全局快捷键接管）
+document.getElementById('history').addEventListener('keydown', (e) => {
+  if (e.target && e.target.id === 'spell-in' && e.key === 'Enter') {
+    e.preventDefault();
+    checkSpelling();
   }
 });
 
@@ -23493,31 +24126,43 @@ document.addEventListener('keydown', (e) => {
     navBack();
     return;
   }
-  /* 空格：复习中=显示答案（揭晓后交给 1/2 评分，空格不再动作防误评）；
-     平时=朗读当前卡片上的词，Shift+空格慢速。拦掉默认滚动，否则长卡片会跟着跳。 */
+  /* 空格：复习中=闪卡揭晓 / 选择题重播 / 答完翻页；平时=朗读当前卡片上的词。
+     拦掉默认滚动，否则长卡片会跟着跳。 */
   if (e.code === 'Space' && !isTyping(e.target)) {
     e.preventDefault();
     if (reviewState && !reviewState.finished) {
-      if (!reviewState.shown) { reviewState.shown = true; renderReview(); }
+      if (reviewState.answered) { nextCard(); return; }
+      const t = reviewState.q && reviewState.q.type;
+      if (t === 'flash') { reviewState.shown = true; renderReview(); return; }
+      if (t === 'listen' || t === 'choice') { speakText(reviewState.list[reviewState.i].w); return; }
       return;
     }
     speakCurrentWord(e.shiftKey);
     return;
   }
-  // Enter：复习中未揭晓时显示答案（揭晓后无动作，避免与搜索框回车混淆）
-  if (e.key === 'Enter' && !isTyping(e.target) && reviewState && !reviewState.finished && !reviewState.shown) {
+  // Enter：闪卡揭晓 / 答完翻页（拼写框的回车由输入框自己的监听处理）
+  if (e.key === 'Enter' && !isTyping(e.target) && reviewState && !reviewState.finished) {
     e.preventDefault();
-    reviewState.shown = true;
-    renderReview();
+    if (reviewState.answered) { nextCard(); return; }
+    if (reviewState.q && reviewState.q.type === 'flash') {
+      reviewState.shown = true;
+      renderReview();
+    }
     return;
   }
-  // 1 / 2 / 3：复习自评（1=忘了，2=还行，3=轻松记住），只在复习会话里生效
-  if ((e.key === '1' || e.key === '2' || e.key === '3') && !isTyping(e.target) && reviewState && !reviewState.finished) {
-    e.preventDefault();
-    if (e.key === '1') gradeCurrent('bad');
-    else if (e.key === '2') gradeCurrent('ok');
-    else gradeCurrent('great');
-    return;
+  // 1–4：选择题/听音题选选项；闪卡 1/2/3 自评
+  if (/^[1-4]$/.test(e.key) && !isTyping(e.target) && reviewState && !reviewState.finished) {
+    const t = reviewState.q && reviewState.q.type;
+    if ((t === 'choice' || t === 'listen') && !reviewState.answered) {
+      e.preventDefault();
+      answerQuestion(+e.key - 1);
+      return;
+    }
+    if (t === 'flash' && e.key !== '4') {
+      e.preventDefault();
+      gradeCurrent(e.key === '1' ? 'bad' : e.key === '2' ? 'ok' : 'great');
+      return;
+    }
   }
   // [ / ]：上一个 / 下一个查过的词（Alt+[ 是同一个回退动作的老写法，保留兼容）。
   // 刻意不判 isTyping：查词框里不会输入方括号，而判了就等于 autofocus 期间永不触发。
