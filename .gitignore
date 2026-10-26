@@ -7,6 +7,9 @@ b2.js
 # 数据源中间文件（如有）
 data/
 
+# 词光（Word Atlas）媒体：CC BY 4.0，约 570MB，按需本地下载，不进仓库
+atlas_media/
+
 # Windows 系统文件
 Thumbs.db
 Desktop.ini

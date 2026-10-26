@@ -797,6 +797,52 @@
   .q-spell input:focus { border-color: var(--accent); }
   .q-hint { margin-top: 10px; font-size: 15px; letter-spacing: 2px; color: var(--accent); font-family: ui-monospace, monospace; }
   @media (max-width: 560px) { .q-options { grid-template-columns: 1fr; } }
+  /* 词光：分级徽章 / 义项 / 搭配 / 词族 / 例句 / 插画 */
+  .badge.atlas-cefr { font-weight: 700; letter-spacing: .4px; }
+  .badge.atlas-cefr.lv-A1 { color: #7ee2a8; border-color: rgba(126,226,168,.35); background: rgba(126,226,168,.12); }
+  .badge.atlas-cefr.lv-A2 { color: #6fd6c8; border-color: rgba(111,214,200,.35); background: rgba(111,214,200,.12); }
+  .badge.atlas-cefr.lv-B1 { color: #6ea8ff; border-color: rgba(110,168,255,.38); background: rgba(110,168,255,.12); }
+  .badge.atlas-cefr.lv-B2 { color: #9d8cff; border-color: rgba(157,140,255,.38); background: rgba(157,140,255,.12); }
+  .badge.atlas-cefr.lv-C1 { color: var(--gold); border-color: rgba(255,212,121,.38); background: var(--gold-soft); }
+  .badge.atlas-cefr.lv-C2 { color: #ff8f9c; border-color: rgba(255,143,156,.38); background: rgba(255,143,156,.12); }
+  .badge.atlas-topic { color: var(--sub); border-color: var(--glass-border); background: var(--srf-2); font-weight: 400; }
+  .rd-select { padding: 5px 8px; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--text); font-size: 12px; }
+  .atlas-block { border-top: 1px dashed var(--glass-border); }
+  .atlas-top { display: flex; gap: 14px; align-items: flex-start; margin-top: 6px; }
+  .atlas-pic-btn { flex: 0 0 auto; width: 120px; border: 0; padding: 0; background: none; cursor: zoom-in; border-radius: 14px; overflow: hidden; }
+  .atlas-pic-btn img { width: 120px; height: 80px; object-fit: cover; display: block; transition: transform .2s; }
+  .atlas-pic-btn:hover img { transform: scale(1.04); }
+  .atlas-senses { flex: 1; min-width: 0; }
+  .atlas-sense { display: flex; gap: 8px; margin-bottom: 6px; }
+  .atlas-pos { color: var(--accent); font-weight: 600; min-width: 30px; }
+  .atlas-zh { font-size: 14px; color: var(--text); }
+  .atlas-en { font-size: 12.5px; color: var(--sub); line-height: 1.55; margin-top: 2px; }
+  .atlas-audio-row { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .atlas-audio { font-size: 11px; padding: 2px 8px; }
+  .atlas-sub { margin-top: 12px; font-size: 12px; color: var(--sub); font-weight: 600; }
+  .atlas-cols, .atlas-fams { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .atlas-col { display: inline-flex; gap: 4px; align-items: baseline; padding: 4px 9px; border-radius: 9px; background: var(--srf-2); border: 1px solid var(--glass-border); font-size: 12.5px; }
+  .atlas-col b { color: var(--text); font-weight: 600; }
+  .atlas-col span { color: var(--sub); font-size: 11.5px; }
+  .atlas-fam { font-size: 12.5px; }
+  .atlas-ex { margin-top: 8px; padding: 8px 10px; background: var(--srf-2); border-radius: 12px; border: 1px solid var(--glass-border); }
+  .atlas-ex-en { font-size: 13.5px; line-height: 1.55; color: var(--text); }
+  .atlas-ex-en .h-btn { margin-left: 6px; padding: 2px 8px; font-size: 11px; }
+  .atlas-ex-zh { font-size: 12px; color: var(--sub); margin-top: 3px; }
+  .atlas-tip { margin-top: 12px; padding: 8px 10px; border-radius: 12px; background: var(--gold-soft); border: 1px solid rgba(255,212,121,.25); font-size: 12.5px; color: var(--text); line-height: 1.55; }
+  .atlas-src { margin-top: 10px; font-size: 10.5px; color: var(--sub); opacity: .55; }
+  .atlas-pic-lb { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.72); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+  .atlas-pic-lb img { max-width: 92vw; max-height: 86vh; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .atlas-modal { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .atlas-modal-card { width: min(420px, 92vw); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 22px; padding: 22px; box-shadow: var(--shadow); }
+  .atlas-modal-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .atlas-modal-card label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; font-size: 13px; color: var(--sub); }
+  .atlas-modal-card select { min-width: 150px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--text); font-size: 13px; }
+  .atlas-modal-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  @media (max-width: 560px) {
+    .atlas-top { flex-direction: column; }
+    .atlas-pic-btn, .atlas-pic-btn img { width: 100%; height: auto; }
+  }
   /* 历史分页 */
   .h-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; font-size: 12.5px; color: var(--sub); }
   .pager-btn { padding: 6px 14px; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 999px; color: var(--text); cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); }
@@ -5962,6 +6008,8 @@ const EX = {};              // 补充例句(朗文英英/柯林斯中英)，运�
 const DATA_TABLES = [ENHANCED, ECDICT, OXFORD, ETYM, STRESS, THES, EX];
 for (const t of DATA_TABLES) Object.setPrototypeOf(t, null);
 let DATA_READY = false;     // 数据是否加载完成;
+let ATLAS = null;           // 词光词库（atlas.json，后台装载）
+let ATLAS_STATE = 0;        // 0=未开始 1=装载中 2=就绪 -1=失败
 
 /* ============================================================
    算法：贪心切分
@@ -20370,6 +20418,13 @@ const UI_EN = {
 '忘了：明天重来，本轮稍后再考一次（快捷键 1）':'Forgot: due again tomorrow, and one more try later this round (shortcut 1)',
 '还行：按 FSRS 排期（快捷键 2）':'Got it: scheduled by FSRS (shortcut 2)',
 '轻松：间隔拉长（快捷键 3）':'Easy: longer interval (shortcut 3)',
+'词光 · 分级搭配':'Word Atlas · levels & collocations','查看插画':'View illustration',
+'常用搭配':'Collocations','词族':'Word family','雅思例句':'IELTS examples',
+'今日设置':'Today settings','起点':'Start level','话题':'Topic','每日新词':'New words / day',
+'保存':'Save','取消':'Cancel','词光分级':'Word Atlas levels','BNC 词频':'BNC frequency',
+'词光词库加载中…':'Loading Word Atlas…','词光词库未装载':'Word Atlas data is not available.',
+'暂无词光数据':'No Word Atlas data.',
+'起点 CEFR / 话题 / 每日新词':'Start CEFR / topic / new words per day',
 };
 function T(s) { return EN_MODE() ? (UI_EN[s] !== undefined ? UI_EN[s] : s) : s; }
 
@@ -20704,7 +20759,7 @@ async function loadData() {
     // 装载期间被搁置的查询（当时只能提示"还在装"）现在自动重跑
     flushPendingWords();
     // 两个派生索引只服务例句 tab 和联想下拉，等主线程空了再建，别挡着撤遮罩
-    idle(() => { buildExamples(); EXAMPLES_READY = true; buildSuggest(); SUGGEST_READY = true; pruneJunkHistory(); });
+    idle(() => { buildExamples(); EXAMPLES_READY = true; buildSuggest(); SUGGEST_READY = true; pruneJunkHistory(); loadAtlas(); });
   } catch (e) {
     console.error('数据加载失败', e);
     textEl.textContent = T('数据加载失败，请确认已用 start.bat 启动（不能用旧 wordroot.html）');
@@ -21236,6 +21291,7 @@ const LABEL_ICON = [
   ['词根词缀分解', '🧩'], ['词源演变链', '🧬'], ['词源(Etymonline)', '🏛'], ['词源', '🏛'],
   ['例句', '✍️'], ['同源 / 同根词', '🌿'], ['同根词', '🌿'], ['近义词 / 反义词', '🔁'],
   ['参见', '↪'], ['构成逻辑', '🧠'], ['后缀溯源', '🧾'], ['动词句型', '🧱'], ['诺曼双轨', '⚔'],
+  ['词光', '📖'],
 ];
 function decorateCard(html, r) {
   let out = String(html == null ? '' : html);
@@ -21247,13 +21303,24 @@ function decorateCard(html, r) {
     const wlClose = out.indexOf('</div>', wlStart);
     if (wlClose > wlStart) {
       let wl = out.slice(wlStart, wlClose);
+      // 词光 CEFR / 话题徽章：插在发音按钮前，位置稳定
+      const ae = atlasFor(r && (r.headword || r.word));
+      if (ae) {
+        let meta = '';
+        if (ae.cefr) meta += '<span class="badge atlas-cefr lv-' + escapeHtml(ae.cefr) + '">' + escapeHtml(ae.cefr) + '</span>';
+        if (ae.topic) meta += '<span class="badge atlas-topic">' + escapeHtml(atlasTopicLabel(ae.topic)) + '</span>';
+        if (meta) {
+          if (wl.indexOf('<button class="tts-btn') >= 0) wl = wl.replace('<button class="tts-btn', meta + '<button class="tts-btn');
+          else wl += meta;
+        }
+      }
       const acts = [];
       if (r && !r.reason) { const eb = explainButtonHTML(r); if (eb) acts.push(eb); }
       const fm = wl.match(/<button class="fav-btn[\s\S]*?<\/button>/);
       if (fm) { acts.push(fm[0]); wl = wl.replace(fm[0], ''); }
-      if (acts.length) {
-        out = out.slice(0, wlStart) + wl + '</div><div class="word-actions">' + acts.join('') + '</div>' + out.slice(wlClose + 6);
-      }
+      wl += '</div>';
+      if (acts.length) wl += '<div class="word-actions">' + acts.join('') + '</div>';
+      out = out.slice(0, wlStart) + wl + out.slice(wlClose + 6);
     }
   }
   return out.replace(/(<div class="label"[^>]*>)([^<]{1,30})/g, (m, open, txt) => {
@@ -21263,7 +21330,129 @@ function decorateCard(html, r) {
     return m;
   });
 }
-function cardHTML(r) { return decorateCard(cardHTMLRaw(r), r); }
+/* ============================================================
+   词光（Word Atlas）：分级 / 话题 / 搭配 / 词族 / 雅思例句 / 插画
+   数据 CC BY 4.0，来源见 README「数据来源」。
+   atlas.json 由 wr_atlas_build.py 裁剪生成；atlas_media/ 是本地媒体缓存。
+   ============================================================ */
+const CEFR_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const ATLAS_TOPICS = {
+  education: ['教育', 'Education'], work: ['职场', 'Work'], technology: ['科技', 'Technology'],
+  science: ['科学', 'Science'], environment: ['环境', 'Environment'], health: ['健康', 'Health'],
+  society: ['社会', 'Society'], government: ['政法', 'Government'], economy: ['经济', 'Economy'],
+  media: ['媒体', 'Media'], arts: ['艺术', 'Arts'], travel: ['旅行', 'Travel'],
+  city: ['城市', 'City'], nature: ['自然', 'Nature'], daily: ['生活', 'Daily life'],
+  emotion: ['情感', 'Emotion'], thinking: ['思维', 'Thinking'], sport: ['运动', 'Sport'],
+  history: ['历史', 'History']
+};
+function atlasTopicLabel(t) {
+  const x = ATLAS_TOPICS[t];
+  return x ? (EN_MODE() ? x[1] : x[0]) : t;
+}
+function atlasFor(w) {
+  if (!ATLAS || !ATLAS.words) return null;
+  const k = String(w || '').toLowerCase().trim();
+  return ATLAS.words[k] || ATLAS.words[k.replace(/\u2019/g, "'")] || null;
+}
+function atlasSummary(a) {
+  const x = a && a.senses && a.senses[0];
+  return x ? ((x.pos || '') + ' ' + (x.zh || '')).trim() : '';
+}
+async function loadAtlas() {
+  if (ATLAS_STATE === 1 || ATLAS_STATE === 2) return;
+  ATLAS_STATE = 1;
+  try {
+    const r = await fetch('atlas.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    ATLAS = await r.json();
+    ATLAS_STATE = 2;
+    console.info('词光词库已装载：' + ATLAS.count + ' 词');
+    rerenderAll();   // 词频页/当前卡片可能都在等这份数据
+  } catch (e) {
+    ATLAS_STATE = -1;
+    console.warn('词光词库未装载，分级/搭配/例句块暂不显示', e);
+  }
+}
+function openAtlasPic(src) {
+  const d = document.createElement('div');
+  d.className = 'atlas-pic-lb';
+  d.innerHTML = '<img src="' + String(src).replace(/"/g, '&quot;') + '" alt="">';
+  d.addEventListener('click', () => d.remove());
+  document.body.appendChild(d);
+}
+function playAtlasAudio(id, kind, text) {
+  const path = '/atlas_media/audio/' + kind + '/' + encodeURIComponent(id) + '.mp3';
+  stopSpeaking();
+  const a = new Audio(path);
+  curAudio = a;
+  a.onended = () => { if (curAudio === a) curAudio = null; };
+  a.onerror = () => { if (curAudio === a) curAudio = null; speakText(text || id); };
+  a.play().catch(() => { if (curAudio === a) curAudio = null; speakText(text || id); });
+}
+function atlasPicHTML(a) {
+  if (!a || !(a.m & 1)) return '';
+  const id = a.id || a.w;
+  const src = '/atlas_media/' + ((a.m & 16) ? 'thumb' : 'img') + '/' + encodeURIComponent(id) + '.webp';
+  const full = '/atlas_media/img/' + encodeURIComponent(id) + '.webp';
+  return '<button class="atlas-pic-btn" data-atlas-pic="' + escapeHtml(full) + '" title="' + escapeHtml(T('查看插画')) + '">' +
+    '<img loading="lazy" src="' + src + '" alt="' + escapeHtml(a.w) + '" onerror="this.parentNode.style.display=\'none\'"></button>';
+}
+function atlasAudioBtn(a, kind, label, text) {
+  const bit = kind === 'uk' ? 2 : kind === 'us' ? 4 : 8;
+  if (!a || !(a.m & bit)) return '';
+  const id = a.id || a.w;
+  return '<button class="h-btn atlas-audio" data-atlas-audio="' + kind + '" data-atlas-id="' + escapeHtml(id) +
+    '" data-text="' + escapeHtml(text || '') + '">🔊 ' + label + '</button>';
+}
+function atlasBlockHTML(a, word) {
+  if (!a) return '';
+  let h = '<div class="meaning atlas-block">';
+  h += '<div class="label">词光 · 分级搭配</div>';
+  let senses = '';
+  (a.senses || []).forEach(x => {
+    senses += '<div class="atlas-sense"><span class="atlas-pos">' + escapeHtml(x.pos || '') + '</span>' +
+      '<div class="atlas-sense-body"><div class="atlas-zh">' + escapeHtml(x.zh || '') + '</div>' +
+      (x.en ? '<div class="atlas-en">' + escapeHtml(x.en) + '</div>' : '') + '</div></div>';
+  });
+  const audio = atlasAudioBtn(a, 'uk', T('英音'), a.w) + atlasAudioBtn(a, 'us', T('美音'), a.w);
+  h += '<div class="atlas-top">' + atlasPicHTML(a) + '<div class="atlas-senses">' + senses +
+    (audio ? '<div class="atlas-audio-row">' + audio + '</div>' : '') + '</div></div>';
+  if (a.col && a.col.length) {
+    h += '<div class="atlas-sub">' + T('常用搭配') + '</div><div class="atlas-cols">' +
+      a.col.map(c => {
+        const p = String(c).split('｜');
+        return '<span class="atlas-col"><b>' + escapeHtml(p[0] || '') + '</b>' +
+          (p[1] ? '<span>' + escapeHtml(p[1]) + '</span>' : '') + '</span>';
+      }).join('') + '</div>';
+  }
+  if (a.fam && a.fam.length) {
+    h += '<div class="atlas-sub">' + T('词族') + '</div><div class="atlas-fams">' +
+      a.fam.map(f => {
+        const w = String(f).replace(/\s*\(.*$/, '').trim();
+        return '<span class="cog atlas-fam" data-w="' + escapeHtml(w) + '">' + escapeHtml(f) + '</span>';
+      }).join('') + '</div>';
+  }
+  if (a.ex && a.ex.length) {
+    h += '<div class="atlas-sub">' + T('雅思例句') + '</div>' +
+      a.ex.slice(0, 2).map((x, i) => '<div class="atlas-ex"><div class="atlas-ex-en">' +
+        escapeHtml(x.en || '') + (i === 0 ? atlasAudioBtn(a, 'ex', T('朗读'), x.en || '') : '') +
+        '</div>' + (x.zh ? '<div class="atlas-ex-zh">' + escapeHtml(x.zh) + '</div>' : '') + '</div>').join('');
+  }
+  if (a.tip || a.note) h += '<div class="atlas-tip">💡 ' + escapeHtml(a.tip || a.note) + '</div>';
+  h += '<div class="atlas-src">词光 · Word Atlas contributors · CC BY 4.0</div></div>';
+  return h;
+}
+function atlasAppendToCard(html, r) {
+  if (!html || !r) return html;
+  const a = atlasFor(r.headword || r.word);
+  if (!a) return html;
+  const tail = '</div>';
+  if (!html.endsWith(tail)) return html;
+  return html.slice(0, -tail.length) + atlasBlockHTML(a, r.headword || r.word) + tail;
+}
+function cardHTML(r) {
+  return decorateCard(atlasAppendToCard(cardHTMLRaw(r), r), r);
+}
 
 function cardHTMLRaw(r) {
   let html = '';
@@ -22237,15 +22426,70 @@ function paintRoots() {
    数据是词族结构（首词 + 变形），所以 take/took/taken 只占一行。 */
 let fqLevel = '1';
 let fqLimit = 200;
+let fqMode = 'bnc';
+let fqCefr = 'B1';
+let fqTopic = '';
+try {
+  fqMode = localStorage.getItem('wr_fq_mode') || 'bnc';
+  fqCefr = localStorage.getItem('wr_fq_cefr') || 'B1';
+  fqTopic = localStorage.getItem('wr_fq_topic') || '';
+} catch (e) {}
+
 function paintFreq() {
   const chips = document.getElementById('fq-chips');
   const list = document.getElementById('fq-list');
   if (!chips || !list) return;
-  if (!BNC_FAMILIES) {
-    list.innerHTML = '<div class="card"><div class="miss">词频数据（bnc.json）没加载上。</div></div>';
+  const modeRow =
+    '<button class="rd-chip' + (fqMode === 'bnc' ? ' on' : '') + '" data-fqmode="bnc">' + T('BNC 词频') + '</button>' +
+    '<button class="rd-chip' + (fqMode === 'atlas' ? ' on' : '') + '" data-fqmode="atlas">' + T('词光分级') + '</button>';
+
+  if (fqMode === 'atlas') {
+    if (!ATLAS) {
+      chips.innerHTML = modeRow;
+      const msg = ATLAS_STATE === -1 ? T('词光词库未装载') : T('词光词库加载中…');
+      list.innerHTML = '<div class="card"><div class="miss">' + msg + '</div></div>';
+      if (ATLAS_STATE === 0) loadAtlas();
+      translateDOM(chips); translateDOM(list);
+      return;
+    }
+    const levels = [''].concat(CEFR_ORDER);
+    const all = ATLAS.order.map(k => ATLAS.words[k])
+      .filter(a => a && (!fqCefr || a.cefr === fqCefr) && (!fqTopic || a.topic === fqTopic));
+    chips.innerHTML = modeRow +
+      levels.map(lv => '<button class="rd-chip' + (fqCefr === lv ? ' on' : '') + '" data-fqcefr="' + lv + '">' +
+        (lv || T('全部')) + '</button>').join('') +
+      '<select id="fq-topic" class="rd-select" title="' + escapeHtml(T('话题')) + '">' +
+        [''].concat(Object.keys(ATLAS_TOPICS)).map(t =>
+          '<option value="' + t + '"' + (t === fqTopic ? ' selected' : '') + '>' +
+          (t ? atlasTopicLabel(t) : T('全部')) + '</option>').join('') +
+      '</select>' +
+      '<span class="rd-n" style="margin-left:auto">共 ' + all.length + ' 个</span>' +
+      '<button class="h-btn" id="fq-test" style="margin-left:12px" title="从当前分级/话题里随机抽 20 个词自测">🎯 测这一级</button>';
+    const shown = all.slice(0, fqLimit);
+    let h = '';
+    for (const a of shown) {
+      h += '<div class="rd-item"><div class="rd-head" data-fq="' + escapeHtml(a.w) + '">' +
+        '<span class="rd-m rt" style="min-width:110px">' + (isFav(a.w) ? '★ ' : '') + escapeHtml(a.w) + '</span>' +
+        '<span class="rd-mean">' + escapeHtml(atlasSummary(a)) + '</span>' +
+        '<span class="rd-n"><span class="badge atlas-cefr lv-' + a.cefr + '">' + a.cefr + '</span> ' +
+        escapeHtml(atlasTopicLabel(a.topic)) + '</span></div></div>';
+    }
+    if (all.length > shown.length) {
+      h += '<div class="rd-more"><button class="h-btn" id="fq-more">继续加载（还有 ' + (all.length - shown.length) + ' 个）</button></div>';
+    }
+    list.innerHTML = h || '<div class="card"><div class="miss">' + T('暂无词光数据') + '</div></div>';
+    translateDOM(chips);
+    translateDOM(list);
     return;
   }
-  chips.innerHTML = Object.keys(BNC_FAMILIES).map(lv =>
+
+  if (!BNC_FAMILIES) {
+    chips.innerHTML = modeRow;
+    list.innerHTML = '<div class="card"><div class="miss">词频数据（bnc.json）没加载上。</div></div>';
+    translateDOM(chips); translateDOM(list);
+    return;
+  }
+  chips.innerHTML = modeRow + Object.keys(BNC_FAMILIES).map(lv =>
     '<button class="rd-chip' + (fqLevel === lv ? ' on' : '') + '" data-fqlv="' + lv + '">' + lv + 'k</button>').join('') +
     '<span class="rd-n" style="margin-left:auto">第 ' + fqLevel + ' 个千词族 · 共 ' +
     Object.keys(BNC_FAMILIES[fqLevel]).length + ' 个</span>' +
@@ -22254,8 +22498,6 @@ function paintFreq() {
   const shown = fams.slice(0, fqLimit);
   let h = '';
   for (const hw of shown) {
-    // 变量名叫 cnt 不叫 nl：nl() 是本文件里的换行归一化函数，这里遮蔽它，
-    // 以后在这个循环里添一句 nl(x) 就会炸成 "nl is not a function"
     const cnt = BNC_FAMILIES[fqLevel][hw].length;
     h += '<div class="rd-item"><div class="rd-head" data-fq="' + escapeHtml(hw) + '">' +
       '<span class="rd-m rt" style="min-width:110px">' + (isFav(hw) ? '★ ' : '') + escapeHtml(hw) + '</span>' +
@@ -22270,16 +22512,63 @@ function paintFreq() {
   translateDOM(chips);
   translateDOM(list);
 }
+
+/* 词光分级的「测这一级」：和 BNC 自测共用复习界面。 */
+async function startFreqTestAtlas(n) {
+  if (!ATLAS) return;
+  const pool = ATLAS.order.map(k => ATLAS.words[k])
+    .filter(a => a && (!fqCefr || a.cefr === fqCefr) && (!fqTopic || a.topic === fqTopic));
+  const pick = shuffled(pool.slice()).slice(0, n || 20).map(a => a.w);
+  if (!pick.length) return;
+  await ensureDict(pick);
+  const list = pick.map(w => normHistItem({
+    k: w, w: w, s: summaryFor(w) || atlasSummary(atlasFor(w)), t: Date.now(), kind: 'word'
+  }));
+  reviewState = newReviewState(list, { fromTab: 'freq' });
+  input.blur();
+  switchTab('query');
+  renderReview();
+}
+
 document.getElementById('freqview').addEventListener('click', (e) => {
   // 点完必须 blur：焦点留在按钮上时，按空格会当成"再点一次按钮"（重新抽题），
   // 而不是闪卡的"揭晓答案"
-  if (e.target.id === 'fq-test') { e.target.blur(); startFreqTest(fqLevel, 20); return; }
+  if (e.target.id === 'fq-test') {
+    e.target.blur();
+    if (fqMode === 'atlas') startFreqTestAtlas(20);
+    else startFreqTest(fqLevel, 20);
+    return;
+  }
+  const mode = e.target.closest('[data-fqmode]');
+  if (mode) {
+    fqMode = mode.dataset.fqmode;
+    fqLimit = 200;
+    try { localStorage.setItem('wr_fq_mode', fqMode); } catch (e2) {}
+    paintFreq();
+    return;
+  }
+  const cefr = e.target.closest('[data-fqcefr]');
+  if (cefr) {
+    fqCefr = cefr.dataset.fqcefr;
+    fqLimit = 200;
+    try { localStorage.setItem('wr_fq_cefr', fqCefr); } catch (e2) {}
+    paintFreq();
+    return;
+  }
   const chip = e.target.closest('[data-fqlv]');
   if (chip) { fqLevel = chip.dataset.fqlv; fqLimit = 200; paintFreq(); return; }
   if (e.target.id === 'fq-more') { fqLimit += 400; paintFreq(); return; }
   const head = e.target.closest('[data-fq]');
   // 走右侧面板：目录不被打断，关掉面板接着往下看（与段落模式点词一致）
   if (head) { openPanel(head.dataset.fq); return; }
+});
+
+document.getElementById('freqview').addEventListener('change', (e) => {
+  if (e.target.id !== 'fq-topic') return;
+  fqTopic = e.target.value;
+  fqLimit = 200;
+  try { localStorage.setItem('wr_fq_topic', fqTopic); } catch (e2) {}
+  paintFreq();
 });
 
 let rdTimer = null;
@@ -22949,33 +23238,99 @@ function pickQuestionType(cur) {
   }
   return pickWeighted([['choice', 4], ['listen', 4], ['spell', 2]]);
 }
-/* 每日新词：从 BNC 3k–9k 里挑还没查过的增强词。只用有释义的词，
-   免得「今日学习」推来一批查不到释义的。 */
+const TODAY_CFG_KEY = 'wr_today_cfg';
+function todayCfg() {
+  const def = { cefr: 'B1', topic: '', perDay: 10 };
+  try {
+    const o = JSON.parse(localStorage.getItem(TODAY_CFG_KEY));
+    if (o && typeof o === 'object') {
+      if (CEFR_ORDER.indexOf(o.cefr) >= 0) def.cefr = o.cefr;
+      if (typeof o.topic === 'string') def.topic = o.topic;
+      const n = parseInt(o.perDay, 10);
+      if (n >= 5 && n <= 30) def.perDay = n;
+    }
+  } catch (e) {}
+  return def;
+}
+function saveTodayCfg(c) {
+  try { localStorage.setItem(TODAY_CFG_KEY, JSON.stringify(c)); } catch (e) {}
+}
+function openTodayCfg() {
+  const old = document.querySelector('.atlas-modal');
+  if (old) old.remove();
+  const c = todayCfg();
+  const el = document.createElement('div');
+  el.className = 'atlas-modal';
+  const opts = (arr, cur) => arr.map(v =>
+    '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + v + '</option>').join('');
+  const topics = [''].concat(Object.keys(ATLAS_TOPICS));
+  el.innerHTML = '<div class="atlas-modal-card">' +
+    '<div class="atlas-modal-title">' + T('今日设置') + '</div>' +
+    '<label>' + T('起点') + ' <select id="tc-cefr">' + opts(CEFR_ORDER, c.cefr) + '</select></label>' +
+    '<label>' + T('话题') + ' <select id="tc-topic">' +
+      topics.map(t => '<option value="' + t + '"' + (t === c.topic ? ' selected' : '') + '>' +
+        (t ? atlasTopicLabel(t) : T('全部')) + '</option>').join('') + '</select></label>' +
+    '<label>' + T('每日新词') + ' <select id="tc-perday">' + opts([5, 10, 15, 20, 30], c.perDay) + '</select></label>' +
+    '<div class="atlas-modal-acts"><button class="h-btn" data-tc-cancel>' + T('取消') + '</button>' +
+    '<button class="rev-btn primary" data-tc-save>' + T('保存') + '</button></div></div>';
+  document.body.appendChild(el);
+  translateDOM(el);
+  el.addEventListener('click', (e) => {
+    if (e.target === el || e.target.closest('[data-tc-cancel]')) { el.remove(); return; }
+    if (!e.target.closest('[data-tc-save]')) return;
+    saveTodayCfg({
+      cefr: document.getElementById('tc-cefr').value,
+      topic: document.getElementById('tc-topic').value,
+      perDay: parseInt(document.getElementById('tc-perday').value, 10) || 10
+    });
+    el.remove();
+    if (reviewState && !reviewState.finished) renderReview(); else renderHistory();
+  });
+}
+/* 每日新词：优先从「词光」里按起点 CEFR / 话题选，不够再退 BNC 3k–9k。 */
 function pickNewWords(n) {
   if (n <= 0) return [];
   const seen = new Set(loadHistory().map(x => x.w));
   const out = [];
-  const push = (w) => {
-    if (out.length >= n || seen.has(w)) return;
-    if (!w || !/^[a-z]{3,}$/.test(w)) return;
-    if (!ENHANCED[w]) return;
-    if (!summaryFor(w)) return;
-    seen.add(w);
-    out.push(w);
-  };
-  if (BNC_FAMILIES) {
+  const cfg = todayCfg();
+  if (ATLAS && ATLAS.words && ATLAS.order) {
+    const start = Math.max(0, CEFR_ORDER.indexOf(cfg.cefr));
+    for (let li = start; li < CEFR_ORDER.length && out.length < n; li++) {
+      const lv = CEFR_ORDER[li];
+      for (const key of ATLAS.order) {
+        if (out.length >= n) break;
+        const a = ATLAS.words[key];
+        if (!a || a.cefr !== lv) continue;
+        if (cfg.topic && a.topic !== cfg.topic) continue;
+        if (seen.has(key)) continue;
+        if (!atlasSummary(a)) continue;
+        seen.add(key);
+        out.push(key);
+      }
+    }
+  }
+  // 话题是用户明确选的，就别用无关词硬凑；没选话题才走 BNC 兜底
+  if (out.length < n && !cfg.topic && BNC_FAMILIES) {
+    const push = (w) => {
+      if (out.length >= n || seen.has(w)) return;
+      if (!w || !/^[a-z]{3,}$/.test(w)) return;
+      if (!ENHANCED[w]) return;
+      if (!summaryFor(w)) return;
+      seen.add(w);
+      out.push(w);
+    };
     const levels = Object.keys(BNC_FAMILIES).sort((a, b) => +a - +b);
     let start = levels.findIndex(l => +l >= 3);
     if (start < 0) start = 0;
     for (const lv of levels.slice(start)) {
       const fams = shuffled(Object.keys(BNC_FAMILIES[lv]));
       for (const w of fams) push(w);
-      if (out.length >= n) return out;
+      if (out.length >= n) break;
     }
-  }
-  const keys = Object.keys(ENHANCED);
-  for (let i = 0; i < 4000 && out.length < n; i++) {
-    push(keys[Math.floor(Math.random() * keys.length)]);
+    if (out.length < n) {
+      const keys = Object.keys(ENHANCED);
+      for (let i = 0; i < 4000 && out.length < n; i++) push(keys[Math.floor(Math.random() * keys.length)]);
+    }
   }
   return out;
 }
@@ -22993,7 +23348,8 @@ async function startDaily() {
   const h = loadHistory();
   const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0)).slice(0, DAILY_DUE_CAP);
   const td = studyToday();
-  const fresh = pickNewWords(Math.max(0, NEW_PER_DAY - td.new));
+  const cfg = todayCfg();
+  const fresh = pickNewWords(Math.max(0, cfg.perDay - td.new));
   if (!due.length && !fresh.length) { alert(T('今天没有到期的词，也没有新词可学。')); return; }
   await ensureDict(fresh.concat(due.map(x => x.w)));
   const list = due.concat(fresh.map(w => normHistItem({
@@ -23439,6 +23795,7 @@ function renderHistory() {
   if (!h.length) {
     el.innerHTML = '<div class="h-head">查词记录<span class="h-n">0</span>' +
       '<button class="h-btn" id="h-daily" title="到期词（最多 40 张）+ 今日新词（默认 10 个）">📅 今日</button>' +
+      '<button class="h-btn" id="h-today-cfg" title="起点 CEFR / 话题 / 每日新词">⚙</button>' +
       '<button class="h-btn" id="h-import">导入</button>' +
       '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span></div>' +
       '<div class="miss" style="opacity:.55;font-size:12.5px;padding:4px 2px">查询过的词会累积到这里</div>';
@@ -23478,6 +23835,7 @@ function renderHistory() {
     (dueN ? '<span class="h-n due" title="按间隔重复排到的词">待复习 ' + dueN + '</span>' : '') +
     '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">🎲 复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
     '<button class="h-btn" id="h-daily" title="到期词（最多 40 张）+ 今日新词（默认 10 个）">📅 今日</button>' +
+    '<button class="h-btn" id="h-today-cfg" title="起点 CEFR / 话题 / 每日新词">⚙</button>' +
     '<button class="h-btn" id="h-export">导出</button>' +
     '<button class="h-btn" id="h-import">导入</button>' +
     '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span>' +
@@ -23534,6 +23892,7 @@ document.getElementById('history').addEventListener('click', (e) => {
   }
   if (e.target.id === 'h-shuffle') { startReview(); return; }
   if (e.target.id === 'h-daily') { startDaily(); return; }
+  if (e.target.id === 'h-today-cfg') { openTodayCfg(); return; }
   if (e.target.id === 'h-export') { exportHistory(); return; }
   if (e.target.id === 'h-import') { importHistory(); return; }
   if (e.target.id === 'h-clear' && confirm(T('确定清空全部查词记录吗？'))) {
@@ -23761,6 +24120,14 @@ probeKokoro();
 initHistory();   // 从本地服务加载历史（项目目录 history.json），随后渲染
 initFavs();      // 从本地服务加载收藏（项目目录 favs.json），随后渲染
 
+// 词光：插画灯箱 / 本地音频
+document.addEventListener('click', (e) => {
+  const pic = e.target.closest('[data-atlas-pic]');
+  if (pic) { openAtlasPic(pic.dataset.atlasPic); return; }
+  const au = e.target.closest('[data-atlas-audio]');
+  if (au) { playAtlasAudio(au.dataset.atlasId, au.dataset.atlasAudio, au.dataset.text); return; }
+});
+
 // 格林法则⚡角标：点它去查那个日耳曼「表亲」。
 // 挂在 document 上而不是 result 上——闪卡、词根目录在别的容器里，一处委托全都覆盖。
 document.addEventListener('click', (e) => {
@@ -23872,6 +24239,7 @@ function rerenderAll() {
   // 复习进行中就别用查词记录列表把它顶掉（会把闪卡顶没、进度看不见）
   if (reviewState && !reviewState.finished) renderReview(); else renderHistory();
   if (document.getElementById('rootsview').style.display === 'block') paintRoots();
+  if (document.getElementById('freqview').style.display === 'block') paintFreq();
   // 例句列表不用重搜（数据没变，重搜会连筛选和翻页一起复位）；计数行「词根 port：共 12 条」
   // 是拼出来的整串，translateDOM 只认整串命中，靠 UI_RULES 里那条前缀规则翻译。
   translateDOM(document.body);
@@ -24107,6 +24475,8 @@ function isTyping(el) {
 }
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    const overlay = document.querySelector('.atlas-pic-lb, .atlas-modal');
+    if (overlay) { overlay.remove(); e.preventDefault(); return; }
     // 面板优先于联想；复习模式不劫持（用户可能想用 Esc 取消选中）
     if (document.getElementById('panel').classList.contains('open')) {
       if (panelGoBack()) { e.preventDefault(); return; }   // 从深度讲解退回词条详情

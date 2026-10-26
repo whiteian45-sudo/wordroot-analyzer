@@ -40,13 +40,14 @@ python server.py
 - 拼写纠错：查不到的词会提示相近候选（比如 recieve → receive）
 - 段落模式：贴一段话，点词看拆解，结果在右侧抽屉里展开
 - 短语卡：输入 `give up` 这类短语，给中文释义并反查库里含它的例句
+- 词光数据块：词卡底部补 CEFR 分级、话题、义项（中英）、常用搭配、词族、雅思语境例句、用法提示，以及插画和英美音（媒体需本地下载）
 
 **学习**
 
 - 词根目录：浏览内置词素表，看每个词根 / 前缀 / 后缀带哪些词
-- 词频目录：按 BNC-COCA 1k–9k 千词族分级浏览；也能从某一级随机抽 20 个词族自测
+- 词频目录：按 BNC-COCA 1k–9k 千词族分级浏览；切到「词光分级」还能按 CEFR（A1–C2）+ 19 个话题浏览，并从当前筛选里随机抽 20 个词自测
 - 例句搜索：在库里的全部例句中检索
-- 今日学习：到期词（最多 40 张）+ 每日 10 个新词（从 BNC 3k–9k 里挑还没查过的），一键组队
+- 今日学习：到期词（最多 40 张）+ 每日新词；新词优先按「今日设置」里的起点 CEFR / 话题从词光词库选，不够再退 BNC 3k–9k
 - 四种题型：选义 / 听音辨词 / 拼写 / 闪卡；可以锁定单一题型，混合模式按记忆稳定度自动换题
 - FSRS-6 间隔重复：和 ts-fsrs 同一套默认参数，按「快要忘了」排期；新词第一次评完统一第二天再见
 - 学习统计：只算第一次作答，答错后换题型补看的那次不重复计分，所以正确率不会被重做刷高
@@ -104,6 +105,8 @@ Ollama 默认监听 `127.0.0.1:11434`。server.py 默认用上面这个模型，
 |---|---|---|---|
 | `enhanced.json` | 约 1.4 万词 | 考试常见词：音标、中英释义、词根分解、词源、例句 | ✅ 14MB |
 | `bnc.json` | 约 4.3 万词形 | BNC-COCA 词频分级（1k–9k 千词族），卡片右上角的 `BNC 3k` 徽章 | ✅ 500KB |
+| `atlas.json` | 7298 词 | 词光：CEFR / 话题 / 义项（中英）/ 搭配 / 词族 / 雅思例句 / 提示 / 媒体位 | ✅ 6.5MB |
+| `atlas_media/` | 约 500MB（全量） | 词光的插画、缩略图、英美音、例句朗读；`wr_atlas_media.py` 下载 | ❌ |
 | `stress.json` | 约 7 万词 | 主重音位置（音标重音提示） | ✅ 900KB |
 | `oxford.json` | 约 14.7 万条 | 牛津高阶9：词性、中英释义、例句 | ❌ |
 | `etym.json` | 约 5 万词 | Etymonline 词源 | ❌ |
@@ -130,6 +133,26 @@ python build_dict_db.py
 
 `dict.db` 是本地派生物（166MB），已在 `.gitignore` 里，换机重建即可；删掉它会自动退回整包模式。
 
+### 词光数据（可选）
+
+`atlas.json`（6.5MB）随仓库提供，卡片底部的分级/搭配/词族/雅思例句块开箱即用。插画和录音体积大，不进仓库，需要时本地下载：
+
+```bash
+# 全量约 500MB，16 线程，断点续跑；需要代理先设 HTTPS_PROXY
+python -I wr_atlas_media.py --workers 16
+
+# 只下插画和单词发音，不下例句朗读
+python -I wr_atlas_media.py --kinds img,uk,us
+```
+
+没下载媒体也能用：插画自动隐藏，英美音和例句朗读回退到浏览器语音 / Kokoro。
+
+从上游词库重建 `atlas.json`（需要先拿到上游的 `data/word-atlas.json` 和 `public/atlas/index.json`）：
+
+```bash
+python -I wr_atlas_build.py <上游>/data/word-atlas.json atlas.json --index <上游>/public/atlas/index.json
+```
+
 ### 拆解是哪儿来的（口径说明）
 
 卡片上的拆解有三个来源，可靠程度不一样，别混成一个数字看：
@@ -151,6 +174,7 @@ python build_dict_db.py
 - `enhanced.json` 在 ECDICT 基础上整理扩充，词源演变链是自己整理的
 - `bnc.json` 来自 [The BNC-COCA Lists](https://github.com/wen-zhi/the-bnc-coca-lists) —— Paul Nation 编制的学术词频表（按词族分级），公开发布，可随仓库分发
 - `stress.json` 由 CMU 发音词典（CMUdict，BSD 许可）派生，标注主重音位置，可随仓库分发
+- `atlas.json` / `atlas_media/` 来自 [designfuchen/word-atlas](https://github.com/designfuchen/word-atlas)，内容以 **CC BY 4.0** 提供，署名 “Word Atlas contributors”；本项目做了字段裁剪、键名归一和合并，未逐条人工审校。插画与录音不随仓库分发，由 `wr_atlas_media.py` 按需下载
 - **标 ❌ 的几个文件没有放进仓库**：`oxford.json` / `etym.json` / `thes.json` / `ex.json` 都是从商业版权词典（牛津高阶、Etymonline、朗文、柯林斯）派生的，公开分发不合适；`us_ipa.json` 的数据源本身是公开仓库，只是配套脚本没打包。
 
 缺了它们**不影响启动和核心功能** —— 拆解（引擎 + 词根表）、释义与音标（靠 `enhanced` + `ecdict`）、同根词、拼写纠错、段落模式、发音都正常。前端对每个数据文件是单独容错的，缺了只是对应区块不显示：
@@ -162,7 +186,9 @@ python build_dict_db.py
 | `thes.json` | 「近义词 / 反义词」 |
 | `ex.json` | 朗文 / 柯林斯补充例句 |
 | `us_ipa.json` | 美音音标（只保留英音） |
-| `bnc.json` | 词频目录、词频自测 |
+| `bnc.json` | 词频目录、BNC 词频自测 |
+| `atlas.json` | 词光数据块（分级 / 搭配 / 词族 / 雅思例句）、词光分级目录 |
+| `atlas_media/` | 卡片里的插画不显示；英美音、例句朗读回退到 TTS |
 | `stress.json` | 重音位置提示 |
 
 想用上全部功能，可以自备这些数据，或者换成开放许可的数据源（[Wiktionary](https://kaikki.org/dictionary/English/)、WordNet 等）自己重建。
@@ -193,6 +219,9 @@ node test_health.js                    # 一体化体检：表完整性、原型
 | `test_health.js` | 一体化体检，退出码非 0 表示有致命问题 |
 | `test_ui.js` | 真机 UI 验证（需主服务在跑 + Chrome） |
 | `test_lazy.js` | 按需词典 / 自动纠错 / 直接输入 的端到端验证（需主服务在跑 + Chrome） |
+| `test_atlas.js` | 词光词库结构、媒体覆盖、与 enhanced 重合度体检 |
+| `wr_atlas_build.py` | 从上游 `word-atlas.json` 生成 `atlas.json`（含媒体位标记） |
+| `wr_atlas_media.py` | 下载插画 / 英美音 / 例句朗读到 `atlas_media/`，支持断点续跑 |
 | `tune_scoring.js` | 拆解评分调参实验（结论：调参解不了误拆，靠拦截表） |
 | `guard_words.json` | 守护清单数据（转正 665 / partial 16 / 防误伤 46 / 其它 11） |
 | `audit_report.md` | `--audit` 的输出存档 |
@@ -207,4 +236,4 @@ node test_health.js                    # 一体化体检：表完整性、原型
 
 本项目自己的代码以 MIT 许可发布，全文见 [LICENSE](LICENSE)。
 
-随仓库分发的数据文件（`ecdict.json` / `bnc.json` / `stress.json` 等）各有自己的来源与许可，见上面「数据来源」一节。
+随仓库分发的数据文件（`ecdict.json` / `bnc.json` / `stress.json` / `atlas.json` 等）各有自己的来源与许可，见上面「数据来源」一节。`atlas.json` 与本地下载的 `atlas_media/` 内容来自 Word Atlas，采用 CC BY 4.0，署名 “Word Atlas contributors”。
