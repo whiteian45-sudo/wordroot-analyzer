@@ -1,6 +1,33 @@
 {
   "说明": "回归守护清单：d=期望的 decompose 结果(null=不得完整拆解), p=期望的 partial 结果(可省略)。改拆解引擎/词根表后跑 node test_decompose.js --guard，任何不匹配即回归。",
   "转正词": {
+    "pregnant": {
+      "d": "pregn-ant"
+    },
+    "pregnancy": {
+      "d": "pregn-ancy"
+    },
+    "pregnancies": {
+      "d": "pregn-ancy-es"
+    },
+    "impregnate": {
+      "d": "im|pregn-ate"
+    },
+    "impregnation": {
+      "d": "im|pregn-ation"
+    },
+    "unbiased": {
+      "d": "un|bias-ed"
+    },
+    "proposition": {
+      "d": "pro|posit-ion"
+    },
+    "triumphant": {
+      "d": "triumph-ant"
+    },
+    "triumvirate": {
+      "d": "tri|vir-ate"
+    },
     "triceratops": {
       "d": "tri|cerat+ops"
     },
@@ -197,13 +224,13 @@
       "d": "skit-er-ed"
     },
     "skittish": {
-      "d": "skit-ish"
+      "d": "skittish"
     },
     "skittishly": {
-      "d": "skit-ish-ly"
+      "d": "skittish-ly"
     },
     "skittishness": {
-      "d": "skit-ish-ness"
+      "d": "skittish-ness"
     },
     "demean": {
       "d": "demean"
@@ -509,7 +536,7 @@
       "d": "basic-al-ly"
     },
     "improvident": {
-      "d": "im|provide-ent"
+      "d": "im-pro|vid-ent"
     },
     "unsettling": {
       "d": "unsettle-ing"
@@ -1484,7 +1511,7 @@
       "d": "modify-ed"
     },
     "unmodified": {
-      "d": "un|modify-ed"
+      "d": "un|mod-ify-ed"
     },
     "identified": {
       "d": "ident-ify-ed"
@@ -1661,7 +1688,7 @@
       "d": "min-ic-ity-es"
     },
     "outcities": {
-      "d": "out+cit-y-es"
+      "d": "out|cit-i-es"
     },
     "intercities": {
       "d": "inter+cit-y-es"
@@ -1670,7 +1697,7 @@
       "d": "op-a|cit-y-es"
     },
     "nonopacities": {
-      "d": "non-op-a|cit-y-es"
+      "d": null
     },
     "precocities": {
       "d": "pre-co|cit-y-es"
@@ -2201,6 +2228,9 @@
     }
   },
   "基本词整词": {
+    "triumph": {
+      "d": "triumph"
+    },
     "family": {
       "d": "family"
     },

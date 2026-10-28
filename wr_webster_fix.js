@@ -3,6 +3,7 @@
    自带护栏：自测 由无到有 > 0 且 丢失 = 0，否则一个字都不写。 */
 const fs = require('fs');
 const DIR = 'D:/Program Files/词根词缀';
+const WEBSTER = DIR + '/_archive/2026-10-过程稿';
 const N = parseInt(process.env.WR_N || '400', 10);
 const raw = fs.readFileSync(DIR + '/index.html', 'utf8');
 const SHIM = "var LANG='zh';function EN_MODE(){return false;}function gl(m,zh){return zh||'';}\n";
@@ -32,8 +33,8 @@ const forms = w => [w, w + 's', w + 'es', w + 'ed', w + 'ing', w + 'ly', w + 'ne
 const guarded = w => forms(w).some(f => gset.has(f));
 
 const cands = new Set();
-try { for (const t of (fs.readFileSync(DIR + '/webster_defs.txt', 'utf8').toLowerCase().match(/[a-z]{3,}/g) || [])) cands.add(t); } catch (e) { }
-try { for (const l of fs.readFileSync(DIR + '/webster_words.txt', 'utf8').split(/\r?\n/)) { const x = l.trim().toLowerCase(); if (/^[a-z]{3,}$/.test(x)) cands.add(x); } } catch (e) { }
+try { for (const t of (fs.readFileSync(WEBSTER + '/webster_defs.txt', 'utf8').toLowerCase().match(/[a-z]{3,}/g) || [])) cands.add(t); } catch (e) { }
+try { for (const l of fs.readFileSync(WEBSTER + '/webster_words.txt', 'utf8').split(/\r?\n/)) { const x = l.trim().toLowerCase(); if (/^[a-z]{3,}$/.test(x)) cands.add(x); } } catch (e) { }
 console.log('Webster 口径候选词（去重）: ' + cands.size);
 
 const ok = w => { try { return !!A.d(w); } catch (e) { return false; } };

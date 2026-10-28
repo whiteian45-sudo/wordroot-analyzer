@@ -5649,6 +5649,7 @@ const ROOTS = {
   "poss": ["能够、有能力", ["possible", "possess", "impossible"]],
   "potent": ["有力的、强大的", ["potential", "potent", "omnipotent"]],
   "preci": ["价值", ["precious", "appreciate"]],
+  "pregn": ["怀孕、孕育", ["pregnant", "pregnancy", "impregnate"], {"lang": "拉丁语", "word": "praegnans"}],
   "prehend": ["抓住、理解", ["comprehend", "apprehend"]],
   "prehens": ["抓住(prehens)", ["comprehensive"]],
   "press": ["压", ["pressure", "depress", "express", "impress"]],
@@ -7105,6 +7106,15 @@ function homographMateOk(word, morph, mate) {
   }
   if (morph === 'eur') {
     return (String(word || '').slice(0, 3) === 'eur') === (String(mate || '').slice(0, 3) === 'eur');
+  }
+  /* vir 同形异源：triumvirate/virtue 的 vir 是「男人」（拉丁语 vir），
+     viral/virology 的 vir 是「病毒」（拉丁语 virus）。两边都认得出来时才过滤，
+     认不出的（virga 枝条、virtuoso 艺术鉴赏）保留，宁可多列不误删。 */
+  if (morph === 'vir') {
+    const sense = x => /^vir(us|al|ion|oid|olog|aem|ul)/.test(x) ? 'virus'
+      : /^(triumvir|vir(tue|tu|ile|ility|ago|gin|ginal))/.test(x) ? 'man' : '';
+    const a = sense(word), b = sense(mate);
+    return !a || !b || a === b;
   }
   return true;
 }
@@ -8703,7 +8713,7 @@ const BASEWORDS = {
   "sister": "姐妹", "sit": "坐", "sky": "天空", "slam": "猛击、砰地关上", "sleep": "睡觉",
   "size": "尺寸",
   "skin": "皮肤",
-  "skirt": "裙子", "skit": "跳跃、轻快动作",
+  "skirt": "裙子", "skit": "跳跃、轻快动作", "skittish": "易受惊的、轻浮的",
   "slight": "轻微的",
   "slow": "慢的", "small": "小的", "smart": "聪明的", "smile": "微笑",
   "smoke": "吸烟", "snow": "雪", "soft": "软的", "soil": "土壤",
@@ -8804,6 +8814,9 @@ const BASEWORDS = {
   "heal": "治愈", "student": "学生",
   "yeah": "是的",
   "yule": "圣诞节期",
+  /* 2026-10-27：triumph 整词借自拉丁语 triumphus ← 希腊语 thriambos（酒神颂、凯旋游行），
+     开头 tri- 与"三"无关；登记为基本词，避免被 tri- 前缀拆成 tri+umph。 */
+  "triumph": "n. 胜利；巨大成功；vi. 获胜；战胜",
 };
 
 /* 双字母前缀 → 以它开头的所有基本词：复合词保护用
@@ -10890,6 +10903,10 @@ for (const k in BASEWORDS_BATCH) if (!own(BASEWORDS, k)) BASEWORDS[k] = BASEWORD
 /* iso- 前缀防线：自动防线按"前2字符"分组管不到3字符前缀。
    isolate/isolation 前3字符虽为 iso，但源自拉丁语 insula(岛)，非 iso- 相等前缀 */
 BASE_PREFIXES.iso = ['isol'];
+
+/* tri- 前缀防线：triumph（triumphant/triumphal 同族）开头也是 tri，
+   但源自拉丁语 triumphus ← 希腊语 thriambos（酒神颂、凯旋游行），与"三"无关 */
+BASE_PREFIXES.tri = ['triumph'];
 
 /* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
 /* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
@@ -14948,6 +14965,7 @@ const WORD_SPLIT = {
   "preliminary": {"prefix":"pre","roots":[["limin","门槛 拉丁语 limen（门槛）"]],"suffixes":[["ary","形容词后缀"]]},
   "preliterate": {"prefix":null,"roots":[["pre","之前"],["literate","有文化的"]],"suffixes":[]},
   "prelude": {"prefix":null,"roots":[["pre","之前 拉丁语 prae"],["lude","演奏 拉丁语 ludere（意为“演奏”或“玩耍"]],"suffixes":[]},
+  "pregnancies": {"prefix":null,"roots":[["pregn","怀孕、孕育 拉丁语 praegnans"]],"suffixes":[["ancy","名词后缀"],["es","复数"]]},
   "premature": {"prefix":null,"roots":[["pre","之前 拉丁语 prae"],["mature","成熟 拉丁语 maturus"]],"suffixes":[]},
   "premeditate": {"prefix":"pre","roots":[["medit","思考 拉丁语 meditari（思考、沉思）"]],"suffixes":[["ate","动词后缀 拉丁语 -atus"]]},
   "premeditated": {"prefix":"pre","roots":[["meditat","思考、计划"]],"suffixes":[["ed","形容词后缀"]]},
@@ -16214,6 +16232,11 @@ const WORD_SPLIT = {
   "tripper": {"prefix":null,"roots":[["trip","绊倒；旅行"]],"suffixes":[["er","做…动作的人"]]},
   "trivia": {"prefix":null,"roots":[["tri","三 拉丁语 tres（三）"],["via","路 拉丁语 via（路）"]],"suffixes":[]},
   "trivial": {"prefix":"tri","roots":[["via","路 拉丁语 via（路）"]],"suffixes":[["al","形容词后缀"]]},
+  "triumvir": {"prefix":"tri","roots":[["vir","男人 拉丁语 vir（男人）"]],"suffixes":[]},
+  "triumvirs": {"prefix":"tri","roots":[["vir","男人 拉丁语 vir（男人）"]],"suffixes":[["s","复数"]]},
+  "triumviri": {"prefix":"tri","roots":[["vir","男人 拉丁语 vir（男人）"]],"suffixes":[["i","拉丁语复数"]]},
+  "triumvirate": {"prefix":"tri","roots":[["vir","男人 拉丁语 vir（男人）"]],"suffixes":[["ate","名词后缀，表状态、职位"]]},
+  "triumvirates": {"prefix":"tri","roots":[["vir","男人 拉丁语 vir（男人）"]],"suffixes":[["ate","名词后缀"],["s","复数"]]},
   "tropical": {"prefix":null,"roots":[["trop","转向"]],"suffixes":[["ic","形容词后缀"],["al","形容词后缀"]]},
   "troublesome": {"prefix":null,"roots":[["trouble","麻烦 古法语 troubler（扰乱）"]],"suffixes":[["some","具有…性质的 古英语 -sum（形容词后缀"]]},
   "troupe": {"prefix":null,"roots":[["troup","群体 法语 &quot;troupe&quot;"]],"suffixes":[["e","无实义"]]},
@@ -19003,7 +19026,7 @@ function prefMeaning(pf, rootM) {
 /* 拆解评分权重（可调参）：SUF 后缀奖励、MORPH 词素惩罚、PRE 前缀系数、
    BASE 基本词惩罚、FLEX 变形还原惩罚。调参后跑 test_decompose.js --guard + --diff 回归。 */
 const SCORE = { SUF: 9, MORPH: 14, PRE: 0.2, BASE: 6, FLEX: 6 };
-function decompose(w, depth) {
+function decompose(w, depth = 0) {
   if (w.length < 2 || depth > 4) return null;
   let candidates = [];
 

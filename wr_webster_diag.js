@@ -2,6 +2,7 @@
    把 946 个"完全拆不出"的正文词 / 46 个词表词，逐个标明被哪道筛子挡下。 */
 const fs = require('fs');
 const DIR = 'D:/Program Files/词根词缀';
+const WEBSTER = DIR + '/_archive/2026-10-过程稿';
 const raw = fs.readFileSync(DIR + '/index.html', 'utf8');
 const SHIM = "var LANG='zh';function EN_MODE(){return false;}function gl(m,zh){return zh||'';}\n";
 const L = raw.split('\n');
@@ -45,9 +46,9 @@ function diag(label, list) {
 }
 
 const cands = new Set();
-try { for (const t of (fs.readFileSync(DIR + '/webster_defs.txt', 'utf8').toLowerCase().match(/[a-z]{3,}/g) || [])) cands.add(t); } catch (e) { }
+try { for (const t of (fs.readFileSync(WEBSTER + '/webster_defs.txt', 'utf8').toLowerCase().match(/[a-z]{3,}/g) || [])) cands.add(t); } catch (e) { }
 const wl = [];
-try { for (const l of fs.readFileSync(DIR + '/webster_words.txt', 'utf8').split(/\r?\n/)) { const x = l.trim().toLowerCase(); if (/^[a-z]{3,}$/.test(x)) { cands.add(x); wl.push(x); } } } catch (e) { }
+try { for (const l of fs.readFileSync(WEBSTER + '/webster_words.txt', 'utf8').split(/\r?\n/)) { const x = l.trim().toLowerCase(); if (/^[a-z]{3,}$/.test(x)) { cands.add(x); wl.push(x); } } } catch (e) { }
 const all = [...cands].sort();
 const fail = all.filter(w => !ok(w) && !okp(w));
 diag('Webster 释义正文残留', fail);

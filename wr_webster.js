@@ -2,6 +2,7 @@
    统计 完整拆解 / 仅部分拆解 / 完全拆不出（= "释义正文可疑" 的口径）。只读，不写任何数据。 */
 const fs = require('fs');
 const DIR = 'D:/Program Files/词根词缀';
+const WEBSTER = DIR + '/_archive/2026-10-过程稿';
 const raw = fs.readFileSync(DIR + '/index.html', 'utf8');
 const SHIM = "var LANG='zh';function EN_MODE(){return false;}function gl(m,zh){return zh||'';}\n";
 const L = raw.split('\n');
@@ -19,9 +20,9 @@ eval(core + '\n' + [
 const A = globalThis.__A;
 
 let defs = '';
-try { defs = fs.readFileSync(DIR + '/webster_defs.txt', 'utf8'); } catch (e) { console.log('✗ 读不到 webster_defs.txt'); process.exit(1); }
+try { defs = fs.readFileSync(WEBSTER + '/webster_defs.txt', 'utf8'); } catch (e) { console.log('✗ 读不到 webster_defs.txt'); process.exit(1); }
 let words = [];
-try { words = fs.readFileSync(DIR + '/webster_words.txt', 'utf8').split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean); } catch (e) { }
+try { words = fs.readFileSync(WEBSTER + '/webster_words.txt', 'utf8').split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean); } catch (e) { }
 
 /* ❶ 释义正文里的所有词（去重） */
 const tokens = new Set();

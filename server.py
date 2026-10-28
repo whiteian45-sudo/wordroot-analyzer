@@ -32,6 +32,13 @@ MIME = {
     '.js': 'application/javascript; charset=utf-8',
     '.css': 'text/css; charset=utf-8',
     '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.webp': 'image/webp',
+    '.mp3': 'audio/mpeg',
+    '.woff2': 'font/woff2',
     '.ico': 'image/x-icon',
 }
 
@@ -393,11 +400,8 @@ def _lookup_rows(dbp, words):
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    # Windows 的 mimetypes 注册表不一定认识 webp/mp3，默认会发 application/octet-stream。
-    # 浏览器通常能猜对，但显式声明更稳（词光的插画/发音走静态文件）。
-    extensions_map = http.server.SimpleHTTPRequestHandler.extensions_map.copy()
-    extensions_map.update({'.webp': 'image/webp', '.mp3': 'audio/mpeg'})
-
+    # 静态文件的 Content-Type 统一由下面的 guess_type() 走模块级 MIME 表；
+    # 不要再改 SimpleHTTPRequestHandler.extensions_map —— 那个表对我们不生效。
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIR, **kwargs)
 
