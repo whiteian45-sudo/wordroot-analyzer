@@ -68,25 +68,8 @@ index_merged5.html
 /查文章报告.txt
 /待修清单.md
 
-# 一次性挖掘/校验脚本（用完即弃，工具类正式脚本另用 wr_/test_ 前缀入库）
-/mine_*.js
-/proto_unigram.js
-/test_audit.js
-/test_hfw.js
-/test_oxford.js
-/test_sem_gen.js
-/test_sem_review.py
-/test_ai_review.py
-/add_roots.py
-/add_us_pron.py
-/build_affixes.py
-/bulk_add.py
-/dedupe_offenders.py
-/etym_check.py
-/fullmerge.py
-/mergefiltered5.py
-/scan_etym_errors.py
-/split_ecdict.py
+# 一次性挖掘/校验脚本（用完即弃，统一放 tools/oneoff/，目录整体不入库）
+tools/oneoff/
 dict.db
 
 # 归档：一次性过程稿（候选词表 / 报告 / 工单）按月份收进这里，根目录只留正式文件

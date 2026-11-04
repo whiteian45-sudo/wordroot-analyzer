@@ -11,7 +11,7 @@
 | `bnc.json` | BNC-COCA 1k–9k 词族分级 | [The BNC-COCA Lists](https://github.com/wen-zhi/the-bnc-coca-lists)，Paul Nation，公开词表 | 词频目录、词频自测失效 |
 | `stress.json` | 主重音位置 | CMUdict（BSD 许可）派生 | 重音提示消失 |
 | `atlas.json` | 词光：CEFR / 话题 / 义项 / 搭配 / 词族 / 例句 | [Word Atlas](https://github.com/designfuchen/word-atlas)，CC BY 4.0，署名 “Word Atlas contributors” | 词光区块与词光目录失效 |
-| `bg.jpg`、`favicon.png`、`logo_tree.png`、`screenshot.png` | 界面背景 / 图标 / README 截图 | 项目资产 | 对应界面元素缺失 |
+| `bg.jpg`、`favicon.png`、`logo_tree.png`、`docs/screenshot.png` | 界面背景 / 图标 / README 截图 | 项目资产 | 对应界面元素缺失 |
 | `check-history.json` | 回归体检趋势（不是用户查词历史） | 项目生成 | 趋势图少一段，不影响功能 |
 
 ## 本地数据（不入库，按需自备）

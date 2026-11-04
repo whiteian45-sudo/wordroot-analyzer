@@ -7,7 +7,7 @@ transport → trans-(横穿) + port-(搬运)
           → transport ← 拉丁语 transportare（运送过去）
 ```
 
-![界面预览](screenshot.png)
+![界面预览](docs/screenshot.png)
 
 > 查词卡片（词素 / 构词层 / 词源三列表）、左侧同源词 / 近反义词、右侧「深度讲解」抽屉。
 
@@ -126,7 +126,7 @@ Ollama 默认监听 `127.0.0.1:11434`。server.py 默认用上面这个模型，
 
 1. **按需**（默认，推荐）：项目目录下有 `dict.db` 就只读它 —— 启动不加载全量词典，查词时按词向 `/lookup` 取一条（35 万条短语、40 万条长尾词都在库里）。实测首屏 2.2s、常驻堆只有几十 MB。
 2. **整包**：没有 `dict.db`（刚 clone、还没建库）就照旧把 `ecdict.json` 读进内存，功能完全一样，只是慢（实测 5.5s、常驻堆 400MB+）。
-3. 整包模式下若还有 `dict/` 分片（`split_ecdict.py` 生成）就逐片解析，避免一次性解析卡住输入；分片纯属派生物，删掉不影响任何功能。
+3. 整包模式下若还有 `dict/` 分片（`tools/oneoff/split_ecdict.py` 生成）就逐片解析，避免一次性解析卡住输入；分片纯属派生物，删掉不影响任何功能。
 
 建库只要一步（约 1 分钟，自带 20 词抽样对拍）：
 
@@ -239,13 +239,13 @@ CI 模板在 `ci/check.yml`（许可审计 → 守护 → 体检 → 审计）�
 | `wr_license_audit.js` | 提交前扫描 `git ls-files`，防止版权/本地数据入库（CI 也跑） |
 | `tune_scoring.js` | 拆解评分调参实验（结论：调参解不了误拆，靠拦截表） |
 | `guard_words.json` | 守护清单数据（转正 727 / partial 16 / 防误伤 50 / 基本词 15） |
-| `audit_report.md` | `--audit` 的输出存档 |
+| `docs/audit_report.md` | `--audit` 的输出存档 |
 | `wr_gap_batch.js` | 缺口词注入批次：自动挑「拆不出」的词、加整词词根、自带自测（由无到有>0、丢失=0 才写盘） |
 | `wr_split_table.js` | 从 enhanced 词源链生成逐词切分表 `WORD_SPLIT` |
 | `wr_verify.js` / `wr_left_diag.js` | 批次结果校验 / 剩余缺口分诊 |
 | `wr_batch.ps1` | 批处理循环驱动（一批一提交，三查不过自动回滚） |
 | `wr_webster*.js` | Webster 词表体检（常见词漏拆筛查） |
-| `进展与恢复指南.md` | 上次会话的进度快照与恢复步骤（跑批次前先看它） |
+| `docs/进展与恢复指南.md` | 上次会话的进度快照与恢复步骤（跑批次前先看它） |
 
 ## License
 
