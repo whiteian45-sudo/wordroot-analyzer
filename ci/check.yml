@@ -1,0 +1,26 @@
+name: 回归检查
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 数据许可审计
+        run: node wr_license_audit.js
+      - name: 守护清单
+        run: node test_decompose.js --guard
+      - name: 体检
+        run: node test_health.js
+      - name: 词源审计
+        run: node test_decompose.js --audit --brief

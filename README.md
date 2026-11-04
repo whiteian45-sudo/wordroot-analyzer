@@ -9,7 +9,9 @@ transport → trans-(横穿) + port-(搬运)
 
 ![界面预览](screenshot.png)
 
-> 查词卡片（三色词素 + 词源演变链）、左侧同源词 / 近反义词、右侧「深度讲解」抽屉。
+> 查词卡片（词素 / 构词层 / 词源三列表）、左侧同源词 / 近反义词、右侧「深度讲解」抽屉。
+
+维护文档：[DATA.md](DATA.md)（数据地图 / 许可 / morph.json 重建） · [维护规范.md](维护规范.md)（改动流程 / 词根新增 / 提交与编码约定）。
 
 ## 怎么跑
 
@@ -198,7 +200,7 @@ python -I wr_atlas_build.py <上游>/data/word-atlas.json atlas.json --index <�
 
 想用上全部功能，可以自备这些数据，或者换成开放许可的数据源（[Wiktionary](https://kaikki.org/dictionary/English/)、WordNet 等）自己重建。
 
-**形态数据 `morph.json`（本地）**：不入库，缺失时自动回落到规则引擎。重建链路是 `wr_extract_kaikki.py`（流式提取 kaikki）+ `wr_build_morph.py`（合并五套开放数据、表面重建校验、置信度校准、词族过滤）；原始数据与用法见脚本文件头。
+**形态数据 `morph.json`（本地）**：不入库，缺失时自动回落到规则引擎。重建链路是 `wr_morph_prepare.py`（生成 target/OEWN 中间表）→ `wr_extract_kaikki.py`（流式提取 kaikki）→ `wr_build_morph.py`（合并五套开放数据、表面重建校验、置信度校准、词族过滤）；依赖见 `requirements-morph.txt`，完整命令见 `DATA.md`。
 
 ## 开发 / 回归
 
@@ -213,6 +215,8 @@ node test_health.js                    # 一体化体检：表完整性、原型
 三条的职责：`--guard` 防回归（任何一批改动不许把已验证的词改坏）、`--audit` 看进度、
 `test_health.js` 防脏数据（重复 key、原型链 `constructor` 陷阱、行尾混用、渲染冒烟）。
 任何一批改动三查不过就回滚，这是既有惯例。
+
+CI 模板在 `ci/check.yml`（许可审计 → 守护 → 体检 → 审计）。GitHub 只允许带 `workflow` 权限的 token 推送 `.github/workflows/`，当前 token 没这个权限；需要时把它复制成 `.github/workflows/check.yml` 再推。
 
 **行尾**：`index.html` 必须全 CRLF —— 补丁脚本按 CRLF 切片，`test_health.js` 也会把孤立 LF
 当致命错误。仓库内归一化成 LF 存、检出一律还原成 CRLF（见 `.gitattributes`），
@@ -229,8 +233,10 @@ node test_health.js                    # 一体化体检：表完整性、原型
 | `test_atlas.js` | 词光词库结构、媒体覆盖、与 enhanced 重合度体检 |
 | `wr_atlas_build.py` | 从上游 `word-atlas.json` 生成 `atlas.json`（含媒体位标记） |
 | `wr_atlas_media.py` | 下载插画 / 英美音 / 例句朗读到 `atlas_media/`，支持断点续跑 |
+| `wr_morph_prepare.py` | 从 enhanced/BNC/atlas + OEWN 原始目录生成 target / OEWN 中间表 |
 | `wr_extract_kaikki.py` | 流式扫描 kaikki 英文 JSONL，按目标词提取拆解候选/词族（本地大文件） |
 | `wr_build_morph.py` | 合并 etymology-db/OEWN/MorphoLex/UniMorph/kaikki，生成 `morph.json`（本地不入库） |
+| `wr_license_audit.js` | 提交前扫描 `git ls-files`，防止版权/本地数据入库（CI 也跑） |
 | `tune_scoring.js` | 拆解评分调参实验（结论：调参解不了误拆，靠拦截表） |
 | `guard_words.json` | 守护清单数据（转正 727 / partial 16 / 防误伤 50 / 基本词 15） |
 | `audit_report.md` | `--audit` 的输出存档 |

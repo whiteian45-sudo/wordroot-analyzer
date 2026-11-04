@@ -1,0 +1,3 @@
+# morph.json 构建依赖（服务端 server.py 只用标准库，不需要装这些）
+# Python 3.10+
+openpyxl>=3.1
