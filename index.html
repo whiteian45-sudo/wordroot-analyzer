@@ -551,6 +551,67 @@
   .chain-src .note { color: var(--sub); font-size: 12px; }
   .chain-nosrc { color: var(--sub); font-size: 13px; }
   .chain-meaning { color: var(--sub); font-size: 12px; }
+  /* 构词层级：词干 → 后缀 → 前缀的构造顺序，时间线式缩进 */
+  .layer-tree { margin-top: 12px; }
+  .layer-row {
+    position: relative; display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;
+    padding: 6px 0 6px 30px; font-size: 13px;
+    animation: layerIn var(--dur-med) var(--ease-out) both;
+    animation-delay: calc(.1s + var(--i, 0) * .06s);
+  }
+  .layer-row::before {
+    content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 1.5px;
+    background: linear-gradient(to bottom, rgba(110,168,255,.30), rgba(110,168,255,.04));
+    border-radius: 2px;
+  }
+  .layer-row:first-child::before { top: 50%; }
+  .layer-row:last-child::before { bottom: 50%; }
+  .layer-row::after {
+    content: ''; position: absolute; left: 8.5px; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #a8c8ff, var(--accent));
+    box-shadow: 0 0 7px rgba(110,168,255,.45);
+  }
+  .layer-idx {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 17px; height: 17px; border-radius: 50%; flex: none;
+    font-size: 10.5px; font-weight: 700; color: var(--sub);
+    border: 1px solid var(--glass-border); background: var(--srf-2);
+  }
+  .layer-node {
+    font-weight: 600; color: var(--accent); font-size: 13.5px;
+    background: var(--accent-soft); border: 1px solid rgba(110,168,255,.22);
+    border-radius: 9px; padding: 1px 8px;
+  }
+  .layer-node.pre { color: var(--gold); background: var(--gold-soft); border-color: rgba(255,212,121,.28); }
+  .layer-node.suf { color: var(--rt-c, #f0b357); background: rgba(230,155,56,.10); border-color: rgba(240,179,87,.30); }
+  .layer-tip { color: var(--sub); font-size: 11.5px; }
+  .layer-meaning { color: var(--text); font-size: 12.5px; opacity: .85; }
+  .layer-pos {
+    color: var(--ok); font-size: 11px; font-weight: 700;
+    border: 1px solid rgba(126,226,168,.28); background: rgba(126,226,168,.08);
+    border-radius: 999px; padding: 0 6px;
+  }
+  .morph-src { margin-top: 7px; font-size: 11.5px; color: var(--sub); opacity: .85; }
+  .layer-src { color: var(--text); font-size: 12.5px; display: inline-flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+  .layer-src .lang { color: var(--ok); font-weight: 600; }
+  .layer-src .w { font-style: italic; }
+  .layer-src .note { color: var(--sub); font-size: 11.5px; }
+  .layer-head {
+    display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1.5fr) minmax(0,1.4fr);
+    gap: 8px; padding: 0 0 4px 30px; color: var(--sub); font-size: 11px;
+  }
+  .layer-row.layer-grid {
+    display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1.5fr) minmax(0,1.4fr);
+    gap: 8px; align-items: baseline;
+  }
+  .lg-morph, .lg-layer, .lg-src { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; min-width: 0; }
+  @media (max-width: 640px) {
+    .layer-head { display: none; }
+    .layer-row.layer-grid { grid-template-columns: 1fr; gap: 3px; }
+    .lg-src { padding-left: 25px; }
+  }
+  @keyframes layerIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: none; } }
   /* 同源词/同根词标签云 */
   .cog {
     display: inline-block; margin: 3px 6px 3px 0; padding: 4px 12px;
@@ -947,7 +1008,7 @@
   /* 词频/词根目录：限制内容宽度与页面主体（搜索框、tab）对齐。
      不限制的话宽屏下列表会比上面宽出一大截、摊成一片，看着发散。 */
   #freqview, #rootsview { max-width: 680px; margin: 20px auto 0; }
-  /* 返回顶部：目录类 tab 滚长了才出现（词频一页上千条，翻到底想回去很费劲） */
+  /* 返回顶部：页面滚长了才出现（词频一页上千条，主界面长词条翻到底想回去也很费劲） */
   #to-top {
     position: fixed; right: 26px; bottom: 26px; z-index: 8;
     width: 44px; height: 44px; border-radius: 999px; cursor: pointer;
@@ -4472,7 +4533,7 @@ const ROOTS = {
   "bacill": ["杆菌", ["bacillus","bacilluria"], {"lang": "拉丁语", "word": "bacillus"}],
   "bacter": ["细菌", ["bacteria", "bacterium", "bacteriology"], {"lang": "希腊语", "word": "bakterion"}],
   "bacteri": ["细菌", ["bacteriology","bacterial"], {"lang": "希腊语", "word": "bakterion"}],
-  "bar": ["重、压力", ["barometer", "baritone"], {"lang": "希腊语", "word": "baros"}],
+  "bar": ["条、杆；栅栏；吧台", ["crossbar", "toolbar", "sandbar", "bartender"], {"lang": "古法语", "word": "barre"}],
   "barbar": ["野蛮、粗鲁", ["barbarian", "barbaric", "barbarous"], {"lang": "希腊语", "word": "barbaros"}],
   "baro": ["压力", ["baroceptor","barokinesis"]],
   "basi": ["基底、基础", ["basialis"], {"lang": "希腊语", "word": "basis"}],
@@ -6010,6 +6071,9 @@ const ROOTS = {
 /* 增强词表：word -> 该词的现成分解（由导入脚本注入，未注入时为 { }） */
 const ENHANCED = {};
 const ECDICT = {};          // 全量词典，运行时从 ecdict.json 加载
+/* 数据优先的形态库（morph.json，来自 etymology-db + Open English WordNet，开放许可）。
+   words: word -> [prefix|null, roots[], suffixes[], confidence]。未加载时为空，全部回落规则引擎。 */
+const MORPH = { words: {} };
 const OXFORD = {};          // 牛津9 数据层，运行时从 oxford.json 加载
 const ETYM = {};            // Etymonline 英文词源，运行时从 etym.json 加载
 const BNC_LEVEL = new Map();  // BNC-COCA 词频级别（词形 → "1".."9"），运行时从 bnc.json 加载
@@ -6296,6 +6360,10 @@ const PEDO_FOOT = /^pedo(metr|meter|baro|dynamo)/;
 const PEN_POENA = /^(penal|penalt|penanc|penit|penolog|poen)/;
 const PEN_PENIS = /^(penis|penile)/;
 const PEN_PENNA = /^(penman|penful|pencil|pen$)/;
+/* bar 同形异源（2026-11-02）：主义是「条、杆、栅栏、吧台」（古法语 barre，crossbar/toolbar/
+   bartender 一大片）；「重、压力」只出现在气压、重量、钡的术语里（希腊语 baros）。
+   ROOTS 的 bar 已改成主义，这里按词形把压力那一支挑回来。 */
+const BAR_PRESS = /^(?:(?:iso|isoallo|aniso|allo|anallo|hetero|meio|meso|milli|centi|deci|kilo|mega|micro|hecto|infra|hyper|hypo|normo|dys)bar(?:s|ic|ical|ically|ism|y|ometric)?|bar(?:ic|ically|ite|ites|itic|itite|itosis|ium|iums|iumism|uria|agnosis|ognosis|icalcite|iatric|iatrics|iatrician|esthesia|ion)|bary[a-z]+)$/;
 
 /* 词素来源（带词形 w，为了按位置分流同形异源的词素）。
    eur 一个词素形背两个词源：词首是「欧洲」（eurocentrism/eurozone，词根表里有权威来源 Europa），
@@ -6369,6 +6437,9 @@ function morphSource(m, w) {
   if (m === 'eur') {
     if (String(w || '').slice(0, 3) === 'eur') return (ROOTS.eur && ROOTS.eur[2]) || src;   // 词首：欧洲
     return src || (ROOTS.eur && ROOTS.eur[2]);
+  }
+  if (m === 'bar' && BAR_PRESS.test(String(w || ''))) {
+    return { lang: '希腊语', word: 'baros', note: '与表「条、杆」的 barre 同形异源' };
   }
   return src || (ROOTS[m] && ROOTS[m][2]);
 }
@@ -7106,6 +7177,10 @@ function homographMateOk(word, morph, mate) {
   }
   if (morph === 'eur') {
     return (String(word || '').slice(0, 3) === 'eur') === (String(mate || '').slice(0, 3) === 'eur');
+  }
+  /* bar 同形异源：条/杆/吧台（barre）与气压/重量/钡（baros）分开列，同根词别串味 */
+  if (morph === 'bar') {
+    return BAR_PRESS.test(word) === BAR_PRESS.test(mate);
   }
   /* vir 同形异源：triumvirate/virtue 的 vir 是「男人」（拉丁语 vir），
      viral/virology 的 vir 是「病毒」（拉丁语 virus）。两边都认得出来时才过滤，
@@ -8325,6 +8400,9 @@ const BASEWORDS = {
   "trolley": "n. 电车, 手推车, 台车；vt. 用手推车运；vi. 乘电车",
   "bagel": "n. 百吉饼（先蒸后烤的发面圈）；[俚]（体育比赛中）零蛋",
   "wheat": "n. 小麦",
+  "barley": "n. 大麦",
+  "bare": "a. 赤裸的；仅有的",
+  "barrow": "n. 手推车；古墓",
   "tummy": "n. 胃, 肚子",
   "cheetah": "n. 猎豹",
   "bobcat": "n. 红猫, 短尾猫",
@@ -10911,6 +10989,30 @@ BASE_PREFIXES.tri = ['triumph'];
 /* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
 /* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
 const WORD_SPLIT = {
+  "sunlit": {"prefix":null,"roots":[["sun","太阳"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  /* -lit 复合词（2026-11-01）：candlelit 原来落到 partial → cand|??lelit。
+     lit 是 light 的不规则过去分词；ROOTS 里的 lit 是"字母"（拉丁 littera，liter/literal 用），
+     全局加"照亮"基本词会把 obliterate 一族带偏，所以按单词逐条切，只在这些词内生效。 */
+  "underlit": {"prefix":"under","roots":[["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "overlit": {"prefix":"over","roots":[["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "relit": {"prefix":"re","roots":[["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "unlit": {"prefix":"un","roots":[["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "twilit": {"prefix":null,"roots":[["twi","二、双（twilight 的 twi-）"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "skylit": {"prefix":null,"roots":[["sky","天空"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "lamplit": {"prefix":null,"roots":[["lamp","灯"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "gaslit": {"prefix":null,"roots":[["gas","煤气"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "floodlit": {"prefix":null,"roots":[["flood","洪水、泛光"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "backlit": {"prefix":null,"roots":[["back","背后"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "spotlit": {"prefix":null,"roots":[["spot","点、聚光"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "starlit": {"prefix":null,"roots":[["star","星星"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "moonlit": {"prefix":null,"roots":[["moon","月亮"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
+  "candlesnuffer": {"prefix":null,"roots":[["candle","蜡烛"],["snuffer","熄烛器（snuff 熄灭 + -er）"]],"suffixes":[]},
+  "candleholder": {"prefix":null,"roots":[["candle","蜡烛"],["holder","托架（hold 握持 + -er）"]],"suffixes":[]},
+  "candlewick": {"prefix":null,"roots":[["candle","蜡烛"],["wick","烛芯"]],"suffixes":[]},
+  "candlepower": {"prefix":null,"roots":[["candle","蜡烛"],["power","力、强度（发光强度）"]],"suffixes":[]},
+  "candlestick": {"prefix":null,"roots":[["candle","蜡烛"],["stick","棍、杆（烛台）"]],"suffixes":[]},
+  "candlelight": {"prefix":null,"roots":[["candle","蜡烛"],["light","光"]],"suffixes":[]},
+  "candlelit": {"prefix":null,"roots":[["candle","蜡烛"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
   "catatonias": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ia","名词后缀"],["s","复数"]]},
   "catatonia": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ia","名词后缀，表病症、状态"]]},
   "catatonically": {"prefix":"cata","roots":[["ton","张力、紧张（希腊 tonos 拉紧；muscle tone 肌张力）"]],"suffixes":[["ic","形容词后缀"],["al","形容词后缀"],["ly","副词后缀"]]},
@@ -11195,6 +11297,7 @@ const WORD_SPLIT = {
   "anthology": {"prefix":null,"roots":[["antho","花 希腊语 anthos（意为“花”）"]],"suffixes":[["logy","收集/学科 希腊语 -logia（意为“收集”或"]]},
   "anthropologist": {"prefix":null,"roots":[["anthropo","人类 希腊语 anthropos（人类）"],["log","学科/研究 希腊语 -logia（学科或研究）"]],"suffixes":[["ist","从事者"]]},
   "anthropology": {"prefix":null,"roots":[["anthropo","人类"]],"suffixes":[["logy","学科"]]},
+  "antidisestablishmentarianism": {"prefix":"anti-dis","roots":[["establish","建立"]],"suffixes":[["ment","名词后缀"],["arian","形容词/名词后缀，…的追随者/…主义者"],["ism","名词后缀，表主义、学说"]]},
   "anticipate": {"prefix":"anti","roots":[["cip","拿取"]],"suffixes":[["ate","动词后缀"]]},
   "anticipatory": {"prefix":"anti","roots":[["cip","拿取"]],"suffixes":[["atory","形容词后缀"]]},
   "antidote": {"prefix":null,"roots":[["anti","对抗"],["dote","给予"]],"suffixes":[]},
@@ -16446,6 +16549,7 @@ const WORD_SPLIT = {
   "vengeful": {"prefix":null,"roots":[["venge","复仇"]],"suffixes":[["ful","充满的"]]},
   "venial": {"prefix":null,"roots":[["ven","原谅"]],"suffixes":[["al","形容词后缀"]]},
   "venom": {"prefix":null,"roots":[["ven","爱 拉丁语 venenum（最初意为“爱情药水”"],["om","名词后缀"]],"suffixes":[]},
+  "ventilate": {"prefix":null,"roots":[["vent","风/空气"],["il","动词后缀"]],"suffixes":[["ate","动词后缀"]]},
   "ventilation": {"prefix":null,"roots":[["vent","风/空气"],["il","动词后缀"]],"suffixes":[["ation","名词后缀"]]},
   "ventricular": {"prefix":null,"roots":[["ventric","心室/小腔"],["ul","指小后缀"]],"suffixes":[["ar","形容词后缀"]]},
   "ventriloquist": {"prefix":null,"roots":[["ventr","腹部"],["i","连接字母"],["loqu","说话"]],"suffixes":[["ist","从事者"]]},
@@ -18809,7 +18913,9 @@ const ROOT_BLOCK = {
      · norilskite/terskite 是矿物名（分别来自 Norilsk/Tersk 地名）
      · skittling 属 skittle(九柱戏) 家族，与 skit 跳跃无关
      注：skittish("易受惊的") 与 enhanced 词库一致，确为 skit+ish，保留 */
-  'diskitis': ['skit'], 'norilskite': ['skit'], 'terskite': ['skit'], 'skittling': ['skit'],
+  'diskitis': ['skit', 'disk'], 'norilskite': ['skit'], 'terskite': ['skit'], 'skittling': ['skit'],
+  /* 深度 4→6 冒出来的巧合拆法：nonopacities 被拆成 non-op-a|cit-y-es，拦 cit 回退 null */
+  'nonopacities': ['cit'],
   /* demean(举止、行为) 家族：mis- 前缀路径的评分天然低于后缀路径（mis|dem-ean-or 得 1.6 分 vs mis|demean-or 的 -1.4），与 astrophile/epicenter 同机制，拦掉 dem(人民) 才能让正确的 mis+demean+or 胜出 */
   'misdemean': ['dem'], 'misdemeanant': ['dem'], 'misdemeaned': ['dem'], 'misdemeaning': ['dem'], 'misdemeanor': ['dem'], 'misdemeanors': ['dem'], 'misdemeanour': ['dem'], 'misdemeanours': ['dem'], 'misdemeans': ['dem'],
   /* plegmatium 来自希腊语 plegma(编织物、网)，与 plege(打击、中风)同形不同源。加了 pleg 词根后
@@ -18913,7 +19019,51 @@ const ROOT_BLOCK = {
   'intricate': ['cat'], 'intricacy': ['cat', 'cac'], 'intricacies': ['cat', 'cac'],
   'intricately': ['cat'],
   'imprecate': ['cat'], 'imprecation': ['cat'], 'imprecations': ['cat'], 'imprecatory': ['cat'],
-  'sensitivity': ['siti', 'vit'], 'sensitivities': ['siti', 'vit']
+  'sensitivity': ['siti', 'vit'], 'sensitivities': ['siti', 'vit'],
+  /* 分层解析兜底的巧合：canary 不是 cane+ary（cane 只是拼写撞车）；
+     protocol 不是 proto+col（col 只是巧合），fetter/adesso 也是。 */
+  'canary': ['ary'],
+  'protocol': ['col'], 'fetter': ['fette'], 'adesso': ['esso'],
+  /* bar 误伤（2026-11-02）：bar 词根改回「条、杆、栅栏、吧台」（古法语 barre）后，
+     下面这些词的 bar 只是拼写巧合/另有来源，拦掉回退，不给假结构。
+     气压/重量/钡术语另由 BAR_PRESS 分到「重、压力」义，不在此列。 */
+  /* bare 家族：bare 是基本词，bar+e 只是评分巧合（基本词罚分让它输给 bar 根），拦掉 bar 让 bare 读法胜出 */
+  'bareback': ['bar'], 'barebacked': ['bar'], 'barebacking': ['bar'],
+  'bareboat': ['bar'], 'bareboating': ['bar'], 'barebone': ['bar'],
+  'bared': ['bar'], 'barefaced': ['bar'], 'barefisted': ['bar'],
+  'barefoot': ['bar'], 'barefooted': ['bar'], 'barehanded': ['bar'],
+  'bareheaded': ['bar'], 'barelegged': ['bar'], 'barenecked': ['bar'],
+  'bareness': ['bar'], 'barer': ['bar'], 'bares': ['bar'], 'barest': ['bar'],
+  'barnacle': ['bar'], 'barnacles': ['bar'],
+  'barrack': ['bar'], 'barracks': ['bar'], 'barracked': ['bar'], 'barracker': ['bar'],
+  'barracking': ['bar'], 'barrackings': ['bar'],
+  'barberry': ['bar'], 'barberries': ['bar'], 'barbadian': ['bar'], 'barbadians': ['bar'],
+  'barbital': ['bar'], 'barbitalism': ['bar'], 'barbitalum': ['bar'], 'barbitone': ['bar', 'barb'],
+  'barbiturate': ['bar'], 'barbiturates': ['bar'],
+  'barbellate': ['bar', 'barbel'], 'barbellulate': ['bar'], 'barbaree': ['bar', 'bare'],
+  'bardic': ['bar'], 'bardolatry': ['bar'], 'bardolater': ['bar'],
+  'barcarole': ['bar'],
+  'bargainable': ['bar'], 'bargainbasement': ['bar'], 'bargained': ['bar'],
+  'bargainer': ['bar'], 'bargaining': ['bar'], 'bargainor': ['bar'],
+  'bargeman': ['bar'], 'bargemen': ['bar'],
+  'barrenly': ['bar'], 'barrenness': ['bar'], 'barrens': ['bar'],
+  'barratry': ['bar'], 'barrator': ['bar'], 'barrater': ['bar'], 'barrators': ['bar'],
+  'barramundi': ['bar'], 'barbet': ['bar'], 'barwood': ['bar'], 'barbotage': ['bar'],
+  'barback': ['bar'], 'barish': ['bar'],
+  'barnabite': ['bar'], 'barnaby': ['bar'], 'barton': ['bar'], 'bartons': ['bar'],
+  'bartonella': ['bar'], 'bartonian': ['bar'], 'bartonville': ['bar'],
+  'barracuda': ['bar'], 'barracouta': ['bar'],
+  'bartered': ['bar'], 'barterer': ['bar'], 'barterers': ['bar'], 'bartering': ['bar'], 'barters': ['bar'],
+  'lumbar': ['bar'], 'lumbarization': ['bar'], 'endolumbar': ['bar'], 'intralumbar': ['bar'],
+  'sublumbar': ['bar'], 'supralumbar': ['bar'],
+  'columbaries': ['bar'], 'columbarium': ['bar'], 'columbary': ['bar'],
+  'durbar': ['bar'], 'durbars': ['bar'], 'sambar': ['bar'], 'minbar': ['bar'], 'jabbar': ['bar'],
+  'herbarize': ['bar'], 'abarticulation': ['bar', 'art'], 'barile': ['bar'],
+  'baregin': ['bare', 'bar'], 'bareilly': ['bare', 'bar'], 'baresi': ['bare', 'bar'],
+  'baryshnikov': ['bar'],
+  'inbar': ['bar'], 'outbar': ['bar'], 'barrandite': ['bar'], 'haemobartonella': ['bar'],
+  'pilbarite': ['bar'], 'barverine': ['bar'], 'narcobarbital': ['bar'], 'thiobarbital': ['bar'],
+  'allobarbitalum': ['bar']
 };
 
 /* in-/im- 前缀含义消歧：词根含"向内/进入"语义 → 向内；否则 → 不、无 */
@@ -19026,8 +19176,37 @@ function prefMeaning(pf, rootM) {
 /* 拆解评分权重（可调参）：SUF 后缀奖励、MORPH 词素惩罚、PRE 前缀系数、
    BASE 基本词惩罚、FLEX 变形还原惩罚。调参后跑 test_decompose.js --guard + --diff 回归。 */
 const SCORE = { SUF: 9, MORPH: 14, PRE: 0.2, BASE: 6, FLEX: 6 };
+/* 补 e 还原（多嵌套兜底）只对这些派生后缀生效。理由：-able/-ive/-ity 这类后缀接"去 e 词干"
+   （believe→believ+able）是英语的常规拼写规则；而 -ly/-ary/-al/-ed/-ing 等直接接 on→one、
+   can→cane 会造出 only→one-ly、canary→cane-ary 这类假拆解（2026-11-02 守护回归实测）。 */
+const E_RESTORE_SUF = new Set(['able', 'ible', 'ability', 'ibility', 'ive', 'ative', 'itive', 'y',
+  'ation', 'ition', 'ion', 'ity', 'ous', 'ious', 'ance', 'ence', 'ure', 'age', 'ate', 'ify',
+  'ize', 'ise', 'ism', 'ist', 'ment', 'ness', 'ful', 'less', 'ic', 'ical']);
+/* 常见派生后缀的词性转移（输入→输出），给「构词层级」显示用，也让层与层的词性一目了然。
+   一个后缀多义（-er 施动/比较级）时取主流那支；不是硬约束，不参与拆解评分。 */
+const SUF_POS = {
+  /* 输入词性用 / 分隔多个可接受值（-ism 接名词也接形容词：journalism / idealism；
+     -ization 接动词也接形容词：nationalize / globalization）。第一版写得太窄，
+     会把 digit-al-ism 判成冲突并改成 digit|ale-ism，2026-11-02 影子对比后放宽。 */
+  ness: ['a', 'n'], ity: ['a/n', 'n'], ty: ['a/n', 'n'], ance: ['v/n', 'n'], ence: ['v/n', 'n'],
+  ment: ['v/n', 'n'], ation: ['v/n', 'n'], ition: ['v/n', 'n'], ion: ['v/n', 'n'], ure: ['v/n', 'n'],
+  age: ['v/n', 'n'], ism: ['n/a', 'n'], ist: ['n/a', 'n'], ary: ['n/v/a', 'a/n'], ory: ['n/v/a', 'a/n'],
+  able: ['v/n', 'a'], ible: ['v/n', 'a'], ability: ['a', 'n'], ibility: ['a', 'n'],
+  ive: ['v/n', 'a'], ative: ['v/n', 'a'], itive: ['v/n', 'a'],
+  ization: ['v/n/a', 'n'], isation: ['v/n/a', 'n'], ification: ['v/n/a', 'n'],
+  ous: ['n/a', 'a'], ious: ['n/a', 'a'], ful: ['n', 'a'], less: ['n', 'a'], al: ['n/a', 'a/n'],
+  ial: ['n/a', 'a'], ic: ['n/a', 'a'], ical: ['n/a', 'a'], ish: ['n/a', 'a'], y: ['n/a', 'a/n'],
+  ly: ['a/n', 'adv'], ward: ['n', 'adv'], wise: ['n', 'adv'],
+  ize: ['n/a', 'v'], ise: ['n/a', 'v'], ify: ['n/a', 'v'], en: ['a/n', 'v'],
+  er: ['v/n', 'n'], or: ['v/n', 'n'], ant: ['v/n', 'a/n'], ent: ['v/n', 'a/n'], ee: ['v/n', 'n'],
+};
+const POS_ZH = { n: '名', v: '动', a: '形', adv: '副', num: '数', '*': '?' };
+const POS_EN = { n: 'noun', v: 'verb', a: 'adj', adv: 'adv', num: 'num', '*': '?' };
 function decompose(w, depth = 0) {
-  if (w.length < 2 || depth > 4) return null;
+  /* 深度上限 4→6（2026-11-02 结构升级）：counterrevolutionaries = counter + revolution + ary + es、
+     misinterpretation = mis + interpret + ation 这类长嵌套要 5~6 层才走得通。深度越界仍会
+     撞出巧合拆法，所以保留 ROOT_BLOCK / 评分罚分，并按 guard 回归逐条拦。 */
+  if (w.length < 2 || depth > 6) return null;
   let candidates = [];
 
   /* 词根撞名基本词时的自保（2026-10-11）：ROOT_BLOCK 里禁用了自身的词 ——
@@ -19060,6 +19239,41 @@ function decompose(w, depth = 0) {
       return { prefix: null, roots: [whole], suffixes: [{ m: whole.dropped, meaning: LISTS.suffixes.find(s => s[0] === whole.dropped)[1] }] };
     }
     return { prefix: null, roots: [whole], suffixes: [] };
+  }
+
+  /* 数据优先（2026-11-04）：morph.json 里有该词经过词源/词法数据验证的拆解时直接采用。
+     WORD_SPLIT / ROOT_BLOCK / 整词基本词都在上面先返回，保证人工精调优先于数据层。 */
+  if (!depth && !own(ROOT_BLOCK, w)) {
+    const dataBd = morphDataToBd(w);
+    if (dataBd) return dataBd;
+  }
+
+  /* 嵌套里的精确基本词（2026-11-02 结构升级）：BASEWORDS_BATCH 的闸门原本只在变形语境放行，
+     导致 mis+interpret-ation 里的 interpret 在深度 1 被挡掉。这里只在 depth>0、整段精确命中
+     batch 基本词时放行；splitRoots 的零件仍走原闸门，不会复活 def+ic+ient 那类误拆。 */
+  if (depth > 0 && !own(ROOT_BLOCK, w) && own(BASEWORDS_BATCH, w)) {
+    return { prefix: null, roots: [{ m: w, meaning: BASEWORDS[w], cognates: [], isBase: true, batch: true }], suffixes: [] };
+  }
+
+  /* -ability / -ibility 硬规则（2026-11-02）：英语里它一定是 -able/-ible + -ity 的缩合
+     （capability = capable + ity、compatibility = compatible + ity）。扁平评分会把
+     compatib 当词根、把 abil 当词干，这里按拼写还原形容词再拆，直接返回结构化结果。
+     仅在该词本身没有 WORD_SPLIT、不是整词基本词时生效（上面的 whole 检查已先返回）。 */
+  if (!own(ROOT_BLOCK, w) && (w.endsWith('ability') || w.endsWith('ibility'))) {
+    const adj = w.slice(0, -7) + (w.endsWith('ability') ? 'able' : 'ible');
+    const st = decompose(adj, depth);
+    const hasAdjSuf = st && (st.suffixes || []).some(x => x.m === 'able' || x.m === 'ible');
+    const isAdjBase = st && st.roots && st.roots.length === 1 && st.roots[0].isBase;
+    /* 词典里的形容词也算数：affable 在 ECDICT 里是 a.，但引擎会把它拆成 af|fab+le，
+       导致 affability 继续走 af|fable-ity。这里用词性确认它是形容词后直接采用。 */
+    const adjLex = layeredKnown(adj, true);
+    const adjPos = adjLex && (adjLex.pos || posOfWord(adj));
+    const lexAdj = adjLex && (!adjPos || posFits(adjPos, 'a'));
+    if ((st && (hasAdjSuf || isAdjBase)) || lexAdj) {
+      const base = (st && (hasAdjSuf || isAdjBase)) ? st
+        : { prefix: null, roots: [adjLex], suffixes: [], pos: adjPos || '' };
+      return { prefix: base.prefix, roots: base.roots, suffixes: (base.suffixes || []).concat([{ m: 'ity', meaning: SUFFIXES.ity }]) };
+    }
   }
 
   // 1. 前缀 + 递归拆剩余部分
@@ -19144,6 +19358,40 @@ function decompose(w, depth = 0) {
       if (!sr || sr.roots.some(r => r.isBase) || sr.roots.reduce((n, r) => n + r.m.length, 0) < 3 || sr.suffixes.some(x => x.m === 'e' || x.m === 's' || x.m === 'es')) continue;
     }
     const sub = decompose(rest, depth + 1);
+    /* 补 e 还原（2026-11-02，多嵌套）：believability 在深递归里 rest='believ'，而 baseRoot 的
+       补 e 只放行剥切深度 ≤1，整条嵌套链就断了。这里把 rest 补回 e（believe）再拆一次：
+       只在上面的常规路径失败时兜底，加 8 分罚分——不跟已有读法抢，只救本来拆不出的词。
+       SUF_CTX 会被内层递归复位，先存后还原，否则外层后续的上下文会丢。 */
+    if (!sub && E_RESTORE_SUF.has(suf) && !/e$/.test(rest)) {
+      const _ctx = SUF_CTX;
+      const subE = decompose(rest + 'e', depth + 1);
+      SUF_CTX = _ctx;
+      /* 补 e 的结果必须是一个「干净的词干」才采用：单个基本词（可带前缀），或
+         -y 前面的单层形容词后缀（believably = believable + y）。否则会从
+         carbonization 里造出 carbonize(carb-one-ize)、admirability 里造出
+         mirabilite（芒硝）+y 这类假读法（2026-11-02 定向 diff 实测 271 词受影响）。 */
+      const subESufs = subE ? (subE.suffixes || []) : [];
+      /* isBase 只在 rootOf 落到底层基本词表时才为真；像 use 这种「既是词根又在基本词表」
+         的词会先命中 ROOTS，对象上没有 isBase。所以额外查一次基本词表。 */
+      const cleanRoot = r => r && (r.isBase || own(BASEWORDS, r.m) || own(WHOLE_ONLY, r.m));
+      const subEClean = subE && subESufs.length === 0 && subE.roots.length === 1 && cleanRoot(subE.roots[0]);
+      /* -y/-ly/-ity/-ness 前面允许再挂一层形容词后缀（believable+y、selective+ity、
+         connectable+ity），这样 selectivity/productivity/connectivity 这类
+         "动词→形容词→名词"的嵌套能走通；形容词后缀以外的一律不放，防止 mirabilite+y、
+         carbonize+ation 这类假词干。 */
+      const subEAdj = subE && subESufs.length === 1
+        && /^(able|ible|ous|ious|ive|ative|itive|ful|less)$/.test(subESufs[0].m)
+        && subE.roots.length === 1
+        && /^(y|ly|ity|ness)$/.test(suf);
+      if (subEClean || subEAdj) {
+        const rlE = subE.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
+        candidates.push({
+          prefix: subE.prefix, roots: subE.roots,
+          suffixes: (subE.suffixes || []).concat([{ m: suf, meaning: sufM }]),
+          score: rlE * 2 + (subE.prefix ? subE.prefix.m.length * SCORE.PRE : 0) - (subE.roots.length + subE.suffixes.length) * SCORE.MORPH + (subE.suffixes.length + 1) * SCORE.SUF - (subE.roots.some(r => r.flex) ? SCORE.FLEX : 0) - 8
+        });
+      }
+    }
     if (!sub) continue;
     // -on 只作最末后缀（automaton→automat+on 放行），后面不再叠别的后缀：
     // 拦 xanthonate→xanth+on+ate、pneumonitis→pneum+on+itis 这类误拆（复数 s/es、词尾 e 除外）
@@ -19161,10 +19409,21 @@ function decompose(w, depth = 0) {
   // 3. 复合词：整段拆成 2~3 个词根（可夹连接元音）
   for (const g of splitRoots(w, depth)) {
     const rootLen = g.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
+    /* 复合词里的变形还原要补回后缀（2026-11-02）：footballer 的 baller 在 splitRoots 里被
+       baseRoot 还原成 ball + dropped 'er'，原来只留词根、把 -er 吞了 → foot+ball。
+       这里把每段 flex 还原掉的变形后缀按顺序补回 suffixes。 */
+    const dropped = [];
+    for (const r of g.roots) {
+      if (r.flex && r.dropped && !dropped.some(x => x.m === r.dropped)) {
+        const sf = LISTS.suffixes.find(x => x[0] === r.dropped);
+        dropped.push({ m: r.dropped, meaning: SUFFIXES[r.dropped] || (sf ? sf[1] : '') });
+      }
+    }
     candidates.push({
-      prefix: null, roots: g.roots, suffixes: [],
+      prefix: null, roots: g.roots, suffixes: dropped,
       // 含基本词或变形还原词根的复合候选额外罚分，避免压过"真前缀+真词根"(如 complete 不拆成 come+plete)
       score: rootLen * 2 - (g.roots.length - 1) * SCORE.MORPH - (g.roots.some(r => r.isBase) ? SCORE.BASE : 0)
+        - (dropped.length ? 5 : 0)
     });
   }
 
@@ -19196,7 +19455,14 @@ function decompose(w, depth = 0) {
       !(c.suffixes || []).some(x => blk.includes(x.m)));
   }
 
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    /* 扁平引擎完全拆不出时，交给词性驱动的分层解析器兜底（只在顶层试，避免递归里反复跑）。 */
+    if (!depth) {
+      const lay = layeredParse(w, 0, false);
+      if (lay) return lay;
+    }
+    return null;
+  }
 
   // 去重：同一(前缀, 词根组) 保留后缀最少者；再取最高分
   const best = new Map();
@@ -19208,7 +19474,16 @@ function decompose(w, depth = 0) {
       best.set(key, c);
     }
   }
-  const winner = [...best.values()].sort((a, b) => b.score - a.score)[0];
+  let winner = [...best.values()].sort((a, b) => b.score - a.score)[0];
+  /* 分层解析接管（2026-11-02 B2 第二轮）：只在「后缀与后缀之间」词性冲突时接管
+     （nationalization 的 -al 产出形容词，-ization 却要求动词）。词根→首后缀的冲突
+     不接管，否则 plan→ation、port→ation 这种多义词会被改成更差的读法。
+     还要求分层结果是单词干、没叠前缀、整链词性合法。 */
+  if (winner && !depth && flatPosConflict(winner)) {
+    const lay = layeredParse(w, 0, false);
+    if (lay && lay.roots.length === 1 && (!lay.prefix || lay.prefix.m.indexOf('-') < 0)
+        && flatPosValid(lay) === true) winner = lay;
+  }
   /* pen 的释义按词形分流（2026-10-13）：三色块直接用词根对象的释义，
      所以必须在收口处改写，只改演变链不够。**复制对象**再改——词根对象是共享的，
      原地改会把 penalty 的「惩罚」漏给 peninsula。与 morphSource / homographMateOk 同口径。 */
@@ -19334,6 +19609,257 @@ function partialDecompose(w) {
   const ms = (r.prefix ? [r.prefix.m] : [])
     .concat((r.roots || []).map(x => x.m), (r.suffixes || []).map(x => x.m));
   return ms.some(m => blk.indexOf(m) >= 0) ? null : r;
+}
+
+/* 数据优先：morph.json 里已经用开放词源/词法数据验证过的拆解，直接转成引擎的 bd 形态。
+   只在该词没有 WORD_SPLIT / ROOT_BLOCK 且整词不是基本词时启用（调用点在 decompose 里）。
+   basis 里的 roots/suffixes 已经过表面重建校验（e-drop、y→i、-able/-ible+ity 等）。 */
+function morphRootInfo(r) {
+  if (own(BASEWORDS, r)) return { m: r, meaning: BASEWORDS[r], cognates: [], isBase: true };
+  if (own(ROOTS, r)) return { m: r, meaning: ROOTS[r][0], cognates: ROOTS[r][1] || [], isBase: false };
+  if (typeof ECDICT !== 'undefined' && own(ECDICT, r) && ECDICT[r]) {
+    const t = String(ECDICT[r].t || '').split('\n')[0].trim();
+    if (t) return { m: r, meaning: t, cognates: [], isBase: true };
+  }
+  if (typeof ENHANCED !== 'undefined' && own(ENHANCED, r) && ENHANCED[r]) {
+    return { m: r, meaning: ENHANCED[r].meaning || '', cognates: [], isBase: true };
+  }
+  return { m: r, meaning: '', cognates: [], isBase: false };
+}
+function morphDataToBd(w) {
+  const m = MORPH && MORPH.words && MORPH.words[w];
+  if (!Array.isArray(m) || m.length < 3) return null;
+  /* 置信度闸门：冷僻且未经常用词/精修链校准的数据不接管，交回规则引擎（宁缺勿错）。 */
+  if (typeof m[3] === 'number' && m[3] < 0.85) return null;
+  const pre = m[0], roots = m[1] || [], sufs = m[2] || [];
+  return {
+    prefix: pre ? { m: pre, meaning: own(PREFIXES, pre) ? PREFIXES[pre] : '前缀', cognates: [] } : null,
+    roots: roots.map(morphRootInfo),
+    suffixes: sufs.map(s => ({ m: s, meaning: SUFFIXES[s] || '' })),
+    dataSource: true,
+    confidence: m[3] || 0.9,
+    family: Array.isArray(m[4]) ? m[4] : []
+  };
+}
+/* 数据层带的 OEWN 派生词族：点击跳转（.cog 由 document 级委托处理）。 */
+function familyBlockHTML(fam, w) {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const list = (fam || []).filter(x => x && x !== w);
+  if (!list.length) return '';
+  return '<div class="meaning"><div class="label" title="OEWN / UniMorph 派生关系">' +
+    (EN_MODE() ? 'Derivational family' : '派生词族') +
+    '</div><div>' + list.map(x => '<span class="cog" data-w="' + esc(x) + '">' + esc(x) + '</span>').join('') +
+    '</div></div>';
+}
+
+/* ============================================================
+   词性驱动的分层解析器（2026-11-02 结构升级第二刀）
+   ------------------------------------------------------------
+   扁平引擎靠评分抢候选，遇到 -ability / -ment / 长派生链时会拆出
+   “compatib + ili-ty”这类假词干。这里换一条路：由内向外剥后缀，
+   每一步都用 SUF_POS 的词性转移校验；词干必须是已知词/词根。
+   POS 来源优先 ECDICT 的 t 字段（n./vt./a./adv.），其次 enhanced.meaning；
+   测试环境没有这两个全局变量时 POS 为空，只做结构校验（不误伤）。
+   目前作为 decompose 的兜底（只在扁平引擎完全拆不出时启用），
+   影子对比稳定后再逐步接管已有的读法。 */
+function posOfWord(w) {
+  try {
+    if (typeof POS_GET === 'function') { const p = POS_GET(w); if (p) return p; }
+    if (typeof POS_OF !== 'undefined' && POS_OF[w]) return POS_OF[w];
+    let t = '';
+    if (typeof ECDICT !== 'undefined' && ECDICT[w] && ECDICT[w].t) t = ECDICT[w].t;
+    else if (typeof ENHANCED !== 'undefined' && ENHANCED[w] && ENHANCED[w].meaning) t = ENHANCED[w].meaning;
+    if (!t) return '';
+    const out = [];
+    const re = /(?:^|[\n;；])\s*(n|vt|vi|v|a|adj|ad|adv|prep|conj|pron|num|int|aux)\./g;
+    let m;
+    while ((m = re.exec(t))) {
+      let p = m[1];
+      p = p === 'adj' ? 'a' : ((p === 'ad' || p === 'adv') ? 'adv' : ((p === 'vt' || p === 'vi') ? 'v' : p));
+      if (/^(n|v|a|adv)$/.test(p) && out.indexOf(p) < 0) out.push(p);
+    }
+    return out.join('/');
+  } catch (e) { return ''; }
+}
+function posHas(pos, want) {
+  if (!pos || want === '*') return true;
+  return pos.split('/').indexOf(want) >= 0;
+}
+/* 后缀的“可接受输入”可以是多值（n/a）；pos 也可以是 n/v。 */
+function posFits(pos, from) {
+  if (!pos || !from || from === '*') return true;
+  return from.split('/').some(x => x !== '*' && posHas(pos, x));
+}
+/* 分层解析只认这些后缀：SUF_POS 里声明过词性转移的，加上几个常见组合后缀。 */
+const LAYER_SUFFIXES = (function () {
+  /* 单字母 y 和组合后缀 ability/ibility/ization/isation 不放进通用循环：
+     -y 会造出 affabil-i-ty 这类假层；ability 走专门分支；ization 由 ation + 补 e 处理。 */
+  const skip = { y: 1, ability: 1, ibility: 1, ization: 1, isation: 1 };
+  const seen = {}, out = [];
+  for (const s of Object.keys(SUF_POS)) {
+    if (!seen[s] && s.length >= 2 && !skip[s]) { seen[s] = 1; out.push(s); }
+  }
+  return out.sort((x, y) => y.length - x.length);
+})();
+/* 词干 + 后缀能否拼回原词（容忍 e 脱落、y→i、双写辅音）。 */
+function layeredJoinOk(stem, suf, w) {
+  const tails = [stem + suf];
+  if (/e$/.test(stem)) tails.push(stem.slice(0, -1) + suf);
+  if (/y$/.test(stem)) tails.push(stem.slice(0, -1) + 'i' + suf);
+  if (/([b-df-hj-np-tv-z])\1$/.test(stem)) tails.push(stem.slice(0, -1) + suf);
+  return tails.indexOf(w) >= 0;
+}
+/* 给扁平拆解的“后缀链”做词性体检：true=合法，false=某一步词性接不上，null=信息不足。
+   只用于决定要不要让分层解析接管——信息不足时一律不动（宁缺勿错）。 */
+function flatPosValid(bd) {
+  if (!bd || !bd.roots || !bd.roots.length) return null;
+  const last = bd.roots[bd.roots.length - 1];
+  let pos = posOfWord(last.m);
+  if (!pos) return null;
+  for (const s of (bd.suffixes || [])) {
+    const sp = SUF_POS[s.m];
+    if (!sp) return null;
+    if (sp[0] !== '*' && !posFits(pos, sp[0])) return false;
+    pos = sp[1] !== '*' ? sp[1] : pos;
+  }
+  return true;
+}
+/* 只认“后缀与后缀之间”的词性冲突（-al 产出形容词，接到要求动词的 -ization 上）。
+   词根→第一个后缀的冲突不在这里判：plan→ation、port→ation 这类依赖词根多义，
+   贸然接管会得到 ex|planation、trans-por|tat-ion 这类更差的读法（实测踩过）。 */
+function flatPosConflict(bd) {
+  if (!bd || !(bd.suffixes || []).length) return false;
+  let pos = '', seen = false;
+  for (const s of bd.suffixes) {
+    const sp = SUF_POS[s.m];
+    if (!sp) return false;
+    if (seen && pos && sp[0] !== '*' && !posFits(pos, sp[0])) return true;
+    pos = sp[1] !== '*' ? sp[1] : '';
+    seen = true;
+  }
+  return false;
+}
+function layeredKnown(w, allowLexicon) {
+  if (!w) return null;
+  if (own(BASEWORDS, w)) return { m: w, meaning: BASEWORDS[w], cognates: [], isBase: true, pos: posOfWord(w) };
+  if (own(WHOLE_ONLY, w)) return { m: w, meaning: WHOLE_ONLY[w], cognates: [], isBase: true, pos: posOfWord(w) };
+  if (own(ROOTS, w)) return { m: w, meaning: ROOTS[w][0], cognates: ROOTS[w][1] || [], isBase: false, pos: posOfWord(w) };
+  if (allowLexicon) {
+    if (typeof ECDICT !== 'undefined' && own(ECDICT, w) && ECDICT[w]) {
+      const t = String(ECDICT[w].t || '').split('\n')[0].trim();
+      if (t) return { m: w, meaning: t, cognates: [], isBase: true, pos: posOfWord(w) };
+    }
+    if (typeof ENHANCED !== 'undefined' && own(ENHANCED, w) && ENHANCED[w]) {
+      return { m: w, meaning: ENHANCED[w].meaning || '', cognates: [], isBase: true, pos: posOfWord(w) };
+    }
+    /* 测试/离线环境没有 ECDICT 时，注入的 POS_GET / POS_OF 也当作“已知词”的证据。 */
+    if (typeof POS_GET === 'function') {
+      const p = POS_GET(w);
+      if (p) return { m: w, meaning: '', cognates: [], isBase: true, pos: p };
+    }
+    if (typeof POS_OF !== 'undefined' && POS_OF[w]) {
+      return { m: w, meaning: '', cognates: [], isBase: true, pos: POS_OF[w] };
+    }
+  }
+  return null;
+}
+/* 词干拼写还原：补 e、y→i、-abil/-ibil→-able/-ible、双写辅音。 */
+function layeredStems(rest, suf, w) {
+  const out = [];
+  const add = x => { if (x && x.length >= 3 && x.length < w.length && out.indexOf(x) < 0) out.push(x); };
+  add(rest);
+  if (!/e$/.test(rest)) add(rest + 'e');
+  if (/i$/.test(rest)) add(rest.slice(0, -1) + 'y');
+  if (/(abil|ibil)$/.test(rest)) add(rest.slice(0, -2) + 'le');
+  if (suf === 'ability') add(rest + 'able');
+  if (suf === 'ibility') add(rest + 'ible');
+  if (/([b-df-hj-np-tv-z])\1$/.test(rest)) add(rest.slice(0, -1));
+  return out;
+}
+function layeredParse(w, depth, allowLexicon, noPrefix) {
+  if (!w || w.length < 2 || depth > 6) return null;
+  if (own(ROOT_BLOCK, w)) return null;
+  /* 已知词也允许继续往下拆（nationalize → nation + al + ize），但只在：
+     长度 ≥7、不是基本词、有词性可校验。短词/基本词直接整词返回，
+     避免 island → is+land、brother → broth+er 这类巧合。 */
+  let exactCand = null;
+  if (allowLexicon) {
+    const exact = layeredKnown(w, true);
+    if (exact) {
+      exactCand = { prefix: null, roots: [exact], suffixes: [], pos: exact.pos || '', conf: 3, layered: true };
+      const isBasic = own(BASEWORDS, w) || own(WHOLE_ONLY, w);
+      if (isBasic || w.length < 7 || !exact.pos) return exactCand;
+    }
+  }
+  const cands = [];
+  if (exactCand) cands.push(exactCand);
+  /* -ability/-ibility 单独处理：屈折面是 ...ability，但构词是形容词 + -ity。
+     （affability = affable + ity；compatibility = compatible + ity） */
+  if (w.endsWith('ability') || w.endsWith('ibility')) {
+    const adj = w.slice(0, -7) + (w.endsWith('ability') ? 'able' : 'ible');
+    const sub = layeredParse(adj, depth + 1, true);
+    if (sub) {
+      const sp = sub.pos || posOfWord(adj);
+      if (!sp || posFits(sp, 'a')) {
+        cands.push({
+          prefix: sub.prefix, roots: sub.roots,
+          suffixes: (sub.suffixes || []).concat([{ m: 'ity', meaning: SUFFIXES.ity }]),
+          pos: 'n', conf: (sub.conf || 0) + (sp ? 2 : 0) + 1, layered: true
+        });
+      }
+    }
+  }
+  for (const suf of LAYER_SUFFIXES) {
+    if (!w.endsWith(suf) || w.length - suf.length < 3) continue;
+    const rest = w.slice(0, w.length - suf.length);
+    const sf = SUF_POS[suf] || ['*', '*'];
+    for (const stem of layeredStems(rest, suf, w)) {
+      const sub = layeredParse(stem, depth + 1, true);
+      if (!sub) continue;
+      if (!layeredJoinOk(stem, suf, w)) continue;
+      const stemPos = sub.pos || posOfWord(stem);
+      if (sf[0] !== '*' && stemPos && !posFits(stemPos, sf[0])) continue;
+      const newPos = sf[1] !== '*' ? sf[1] : stemPos;
+      cands.push({
+        prefix: sub.prefix, roots: sub.roots,
+        suffixes: (sub.suffixes || []).concat([{ m: suf, meaning: SUFFIXES[suf] || '' }]),
+        pos: newPos || '', conf: (sub.conf || 0) + (stemPos ? 2 : 0) + 1, layered: true
+      });
+    }
+  }
+  /* 前缀只在一层里剥：rest 带 noPrefix，避免 internationalize 被拆成 in + ter + ...；
+     已知词做深拆时也只拆后缀（perishable 不要变成 peri+she+able）。 */
+  if (!noPrefix && !exactCand) {
+    for (const [pre, preM] of LISTS.prefixes) {
+      if (!w.startsWith(pre) || w.length - pre.length < 2) continue;
+      let blocked = false;
+      for (const bw of BASE_PREFIXES[pre] || []) { if (w.startsWith(bw)) { blocked = true; break; } }
+      if (blocked) continue;
+      const rest = w.slice(pre.length);
+      const sub = layeredParse(rest, depth + 1, true, true);
+      if (!sub) continue;
+      /* 前缀后面的词干必须是带实词词性的已知词：否则 perishableness 会被
+         peri + she + able + ness 这种“前缀 + 代词”假读法抢走。 */
+      const lastRoot = sub.roots[sub.roots.length - 1];
+      const rp = lastRoot ? posOfWord(lastRoot.m) : '';
+      if (!rp || !['n', 'v', 'a', 'adv'].some(p => posHas(rp, p))) continue;
+      cands.push({ prefix: { m: pre, meaning: preM }, roots: sub.roots, suffixes: sub.suffixes || [], pos: sub.pos || '', conf: (sub.conf || 0) + 1, layered: true });
+    }
+  }
+  if (!cands.length) return null;
+  if (exactCand) {
+    /* 只有当拆出来的最终词性与整词词性一致、且层数更多时才放弃整词读法。 */
+    const dec = cands.filter(c => c !== exactCand && c.pos && posFits(exactCand.pos, c.pos)
+      && (c.roots.length + c.suffixes.length) > (exactCand.roots.length + exactCand.suffixes.length));
+    if (dec.length) {
+      dec.sort((a, b) => (b.conf - a.conf) || ((b.roots.length + b.suffixes.length) - (a.roots.length + a.suffixes.length)));
+      return dec[0];
+    }
+    return exactCand;
+  }
+  cands.sort((a, b) => (b.conf - a.conf) || ((b.pos ? 1 : 0) - (a.pos ? 1 : 0))
+    || ((b.roots.length + b.suffixes.length) - (a.roots.length + a.suffixes.length)));
+  return cands[0];
 }
 
 /* 编辑距离（Damerau-Levenshtein）：相邻字母换位算一次编辑，
@@ -19759,6 +20285,24 @@ function enhancedMorphBlock(chain) {
   });
   return chunks.length ? morphChunksHTML(chunks) : '';
 }
+/* enhanced 的 chain → 层级的 bd 形态（只给「构词层级」用）：分类口径与 enhancedMorphBlock 一致。
+   前后缀按 CHUNK_CLS / 表成员 / 释义关键词判定，其余算词根。 */
+function chainToBd(chain) {
+  if (!chain || !chain.length) return null;
+  const pre = [], roots = [], sufs = [];
+  chain.forEach((m, idx) => {
+    const mm = (m.m || '').trim();
+    if (!mm) return;
+    const mean = m.meaning || '';
+    const pos = idx === 0 ? '词首' : (idx === chain.length - 1 ? '词尾' : '词中');
+    const ov = CHUNK_CLS[mm + '|' + mean + '|' + pos];
+    if (ov === 'sf' || (!ov && (SUFFIXES[mm.toLowerCase()] || /后缀/.test(mean)))) sufs.push({ m: mm, meaning: mean });
+    else if (ov === 'pf' || (!ov && (PREFIXES[mm.toLowerCase()] || /前缀/.test(mean)))) pre.push(mm);
+    else roots.push({ m: mm, meaning: mean });
+  });
+  if (!roots.length) return null;
+  return { prefix: pre.length ? { m: pre.join('-'), meaning: '前缀' } : null, roots, suffixes: sufs };
+}
 
 /* 拆解结果 → 三色词素块的数据（morphBlockHTML、builtin 卡片、复习闪卡三处共用） */
 function bdToChunks(bd) {
@@ -19783,6 +20327,87 @@ function reviewMorphHTML(r) {
   return morphChunksHTML(bdToChunks(b));
 }
 
+/* 构词层级（多嵌套展示，2026-11-02）：把扁平的三色块还原成「词干 → 逐层加后缀 → 最后加前缀」
+   的构造顺序。只做展示与词性标注，不改拆解结果——引擎的候选仍是 decompose 那一套。 */
+function layerSteps(bd, w) {
+  if (!bd) return [];
+  const ww = String(w || '');
+  const rootMean = r => (r.m === 'bar' && BAR_PRESS.test(ww)) ? (EN_MODE() ? 'weight, pressure' : '重、压力') : gl(r.m, r.meaning || '');
+  const roots = (bd.roots || []).filter(r => r && r.m);
+  if (!roots.length) return [];
+  const steps = [];
+  if (roots.length === 1) {
+    steps.push({ kind: 'root', key: roots[0].m, m: roots[0].m, label: roots[0].isBase ? 'basic' : 'root', meaning: rootMean(roots[0]) });
+  } else {
+    steps.push({ kind: 'root', key: roots.map(r => r.m).join('+'), m: roots.map(r => r.m).join(' + '), label: 'compound', meaning: roots.map(rootMean).filter(Boolean).join(' + ') });
+  }
+  for (const s of (bd.suffixes || [])) {
+    const pos = SUF_POS[s.m];
+    steps.push({ kind: 'suf', key: s.m, m: '-' + s.m, label: 'suffix', meaning: s.meaning || '', pos: pos ? (EN_MODE() ? POS_EN[pos[1]] : POS_ZH[pos[1]]) : '' });
+  }
+  if (bd.prefix) {
+    steps.push({ kind: 'pre', key: bd.prefix.m.replace(/-.*$/, ''), m: bd.prefix.m + '-', label: 'prefix', meaning: bd.prefix.meaning || '' });
+  }
+  return steps;
+}
+function layerTreeHTML(bd, w) {
+  const steps = layerSteps(bd, w);
+  /* 只在确有派生（有后缀或前缀）且至少两层时显示；单纯复合词/基本词不添乱。
+     纯屈折（bars→bar-s、walked→walk-ed）也跳过——三色块已经说清楚了，层级树留给派生。 */
+  const inflectOnly = !bd.prefix && (bd.roots || []).length === 1
+    && (bd.suffixes || []).length > 0 && (bd.suffixes || []).every(s => /^(s|es|ed|ing)$/.test(s.m));
+  if (steps.length < 2 || !((bd.suffixes || []).length || bd.prefix) || inflectOnly) return '';
+  const LBL = { root: '词根', basic: '基本词', compound: '复合词干', suffix: '后缀', prefix: '前缀（最外层）' };
+  const LBL_EN = { root: 'root', basic: 'base word', compound: 'compound stem', suffix: 'suffix', prefix: 'prefix (outermost)' };
+  let h = '<div class="meaning layer-box"><div class="label">' + (EN_MODE() ? 'Word formation layers' : '构词层级') + '</div><div class="layer-tree">';
+  steps.forEach((st, i) => {
+    const lbl = EN_MODE() ? LBL_EN[st.label] : LBL[st.label];
+    const mean = st.kind === 'pre' ? gl(st.key, st.meaning) : (st.kind === 'suf' ? gl(st.key, st.meaning) : st.meaning);
+    h += '<div class="layer-row" style="--i:' + i + '">' +
+      '<span class="layer-idx">' + (i + 1) + '</span>' +
+      '<span class="layer-node ' + st.kind + '">' + st.m + '</span>' +
+      '<span class="layer-tip">' + lbl + '</span>' +
+      (mean ? '<span class="layer-meaning">' + mean + '</span>' : '') +
+      (st.pos ? '<span class="layer-pos">' + st.pos + '</span>' : '') +
+      '</div>';
+  });
+  h += '</div></div>';
+  return h;
+}
+/* 构词层级 + 词源来源合并成一张表：每层显示词素/类型/释义/词性，有来源就接「← 语言 原词」。
+   这样不再出现「有层级没链」或「有链没层级」的半张卡，也避免同一组词素画两遍。 */
+function mergedLayerHTML(bd, w, chainMap) {
+  const steps = layerSteps(bd, w);
+  const inflectOnly = !bd.prefix && (bd.roots || []).length === 1
+    && (bd.suffixes || []).length > 0 && (bd.suffixes || []).every(s => /^(s|es|ed|ing)$/.test(s.m));
+  if (steps.length < 2 || !((bd.suffixes || []).length || bd.prefix) || inflectOnly) return '';
+  const LBL = { root: '词根', basic: '基本词', compound: '复合词干', suffix: '后缀', prefix: '前缀（最外层）' };
+  const LBL_EN = { root: 'root', basic: 'base word', compound: 'compound stem', suffix: 'suffix', prefix: 'prefix (outermost)' };
+  let h = '<div class="meaning layer-box"><div class="label">' + (EN_MODE() ? 'Morpheme breakdown' : '词根词缀分解') + '</div><div class="layer-tree">';
+  /* 同一组词素，三列信息密度一次给全：词素（三色）/ 构词层（顺序+词性）/ 词源（← 语言原词）。 */
+  h += '<div class="layer-head"><span>' + (EN_MODE() ? 'Morpheme' : '词素') + '</span><span>' +
+    (EN_MODE() ? 'Layers' : '构词层') + '</span><span>' + (EN_MODE() ? 'Etymology' : '词源') + '</span></div>';
+  steps.forEach((st, i) => {
+    const lbl = EN_MODE() ? LBL_EN[st.label] : LBL[st.label];
+    const mean = st.kind === 'pre' ? gl(st.key, st.meaning) : (st.kind === 'suf' ? gl(st.key, st.meaning) : st.meaning);
+    const src = (chainMap && chainMap[st.key]) || morphSource(st.key, w);
+    const note = (!EN_MODE() && src && src.note && src.note !== mean) ? '<span class="note">（' + src.note + '）</span>' : '';
+    const srcHTML = (src && src.lang)
+      ? '<span class="layer-src"><span class="chain-arrow">←</span> <span class="lang">' + langEn(src.lang) + '</span>' +
+        (src.word ? ' <span class="w">' + src.word + '</span>' : '') + note + '</span>'
+      : '';
+    h += '<div class="layer-row layer-grid" style="--i:' + i + '">' +
+      '<span class="lg-morph"><span class="layer-idx">' + (i + 1) + '</span>' +
+      '<span class="layer-node ' + st.kind + '">' + st.m + '</span></span>' +
+      '<span class="lg-layer"><span class="layer-tip">' + lbl + '</span>' +
+      (mean ? '<span class="layer-meaning">' + mean + '</span>' : '') +
+      (st.pos ? '<span class="layer-pos">' + st.pos + '</span>' : '') + '</span>' +
+      '<span class="lg-src">' + srcHTML + '</span>' +
+      '</div>';
+  });
+  h += '</div></div>';
+  return h;
+}
 function morphBlockHTML(w, bd) {
   if (!bd) return '';
   let h = '';
@@ -19810,7 +20435,22 @@ function morphBlockHTML(w, bd) {
       if ((c.cls === 'rt' || c.cls === 'pf') && c.m.replace(/-$/, '') === 'pedo') c.mtext = gl('ped', '脚');
     });
   }
-  if (chunks.length) h += morphChunksHTML(chunks);
+  /* bar 同形异源：气压/重量/钡术语读「重、压力」，其余读「条、杆、栅栏、吧台」（见 BAR_PRESS）。 */
+  if (BAR_PRESS.test(ww)) {
+    chunks.forEach(c => {
+      if (c.cls === 'rt' && c.m === 'bar') c.mtext = EN_MODE() ? 'weight, pressure' : '重、压力';
+    });
+  }
+  /* 有「构词与词源」合并表时，三色块和层级表是同一组词素，不再画第二遍；
+     没有合并表（基本词/纯复合/纯屈折）时才保留三色块。 */
+  const mergedH = mergedLayerHTML(bd, w, null);
+  const mergedLayer = !!mergedH;
+  if (!mergedLayer && chunks.length) h += morphChunksHTML(chunks);
+  h += mergedH;
+  if (bd.dataSource) {
+    h += `<div class="morph-src" title="etymology-db / Open English WordNet / MorphoLex">` +
+      (EN_MODE() ? 'Etymology data' : '词源数据') + ' · ' + Math.round((bd.confidence || 0.9) * 100) + '%</div>';
+  }
   const chainParts = [];
   const allMorphs = []
     /* 前缀的释义必须带上（2026-10-03 修）：原来这里只传名字，下面的 mean 回退成 `名字+'-'`，
@@ -19848,8 +20488,14 @@ function morphBlockHTML(w, bd) {
     if (PEDO_CHILD.test(ww)) cp.meaning = gl('paed', '儿童');
     else if (PEDO_FOOT.test(ww)) cp.meaning = gl('ped', '脚');
   }
+  /* bar 同形异源：气压/重量/钡术语的链条释义改回「重、压力」 */
+  if (BAR_PRESS.test(ww)) {
+    for (const cp of chainParts) {
+      if (cp.m === 'bar') cp.meaning = EN_MODE() ? 'weight, pressure' : '重、压力';
+    }
+  }
   const hasChainSrc = chainParts.some(cp => cp.src);
-  if (hasChainSrc) {
+  if (!mergedLayer && hasChainSrc) {
     h += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
     chainParts.forEach((cp, idx) => {
       if (cp.src) {
@@ -19927,7 +20573,7 @@ const MORPH_EN = {
   "ature":"noun suffix, action or result","aud":"hear","audi":"hear","audio":"hearing","audit":"hear; audit (variant of aud)","aug":"grow; augur",
   "aur":"gold, golden","austr":"Australia; southern","austro":"Austria","aut":"self (variant of auto)","auto":"self, automatic","aux":"growth, increase",
   "ava":"incarnation, form","avi":"bird","avicul":"bird-keeping","axiom":"axiom","axo":"axis","azur":"blue","bacill":"bacillus","bacter":"bacterium",
-  "bacteri":"bacteria","bar":"weight, pressure","barbar":"barbarous, rude","baro":"pressure","basi":"base, basis","basidio":"basidium","bath":"deep",
+  "bacteri":"bacteria","bar":"bar, rod; barrier","barbar":"barbarous, rude","baro":"pressure","basi":"base, basis","basidio":"basidium","bath":"deep",
   "bathy":"depth","be":"to make, to apply","beauty":"beauty","bell":"war, warlike","bene":"good, well","benef":"good, well (variant of bene)",
   "benz":"benzene","bi":"two, double","bibl":"book","biblio":"book","bigot":"bigoted person","bili":"bile","bin":"two, paired",
   "bio":"life, living thing","biochem":"biochemistry","biosis":"mode of life","bit":"bit (binary digit)","blank":"white, blank","blast":"germ, bud",
@@ -20760,6 +21406,15 @@ async function loadData() {
       const sr = await fetch('stress.json');
       if (sr.ok) Object.assign(STRESS, await sr.json());
     } catch (e) { console.warn('stress.json 加载失败', e); }
+    // 数据优先形态库（morph.json，约 9MB，开放词源/词法数据衍生）：不占进度条，失败回落规则引擎
+    try {
+      const mr = await fetch('morph.json');
+      if (mr.ok) {
+        const mj = await mr.json();
+        MORPH.words = (mj && mj.words) || {};
+        console.info('morph 数据：' + Object.keys(MORPH.words).length + ' 词');
+      }
+    } catch (e) { console.warn('morph.json 加载失败（回落规则引擎）', e); }
     LOAD_STATE.done = 5; setPill('词库装载中 ' + loadFrac());
     textEl.textContent = T('例句完成，正在加载全量词典…');
     // 全量词典（2026-10-25）：dict.db 在就**按词取**，启动零成本。
@@ -21526,10 +22181,25 @@ function cardHTMLRaw(r) {
     } else if (e.meaning) {
       html += `<div class="meaning"><div class="label">释义</div>${e.meaning}</div>`;
     }
+    let mergedEnhancedLayer = false;
     if (e.chain && e.chain.length) {
-      // chain 是结构化词素 → 渲染三色块（中英模式都走 gl()，不再拼中文 breakdown 串）
-      const blk = enhancedMorphBlock(e.chain);
-      html += blk || (e.breakdown ? `<div class="meaning"><div class="label">词根词缀分解</div>${dp(e.breakdown)}</div>` : '');
+      /* 有合并表时不再单独画三色块；没有合并表（基本词/纯复合）才用 enhancedMorphBlock。 */
+      const cbd = chainToBd(e.chain);
+      let mh = '';
+      if (cbd) {
+        const cmap = {};
+        e.chain.forEach(c => {
+          const s = chainSourceOf(c);
+          if (c.m && s && s.lang && !cmap[c.m]) cmap[c.m] = s;
+        });
+        mh = mergedLayerHTML(cbd, r.word, cmap);
+      }
+      if (!mh) {
+        const blk = enhancedMorphBlock(e.chain);
+        html += blk || (e.breakdown ? `<div class="meaning"><div class="label">词根词缀分解</div>${dp(e.breakdown)}</div>` : '');
+      }
+      if (mh) { html += mh; mergedEnhancedLayer = true; }
+      else if (cbd) html += layerTreeHTML(cbd, r.word);
     } else if (e.breakdown) {
       html += `<div class="meaning"><div class="label">词根词缀分解</div>${dp(e.breakdown)}</div>`;
     } else {
@@ -21542,7 +22212,7 @@ function cardHTMLRaw(r) {
        口径与 morphBlockHTML 里的 hasChainSrc 一致，全量词那条路本来就这么做的。 */
     const chainHasSrc = e.chain && e.chain.length &&
       e.chain.some(m => { const s = chainSourceOf(m); return s && s.lang; });
-    if (chainHasSrc) {
+    if (!mergedEnhancedLayer && chainHasSrc) {
       html += `<div class="meaning"><div class="label">词源演变链</div><div class="chain">`;
       e.chain.forEach((m, idx) => {
         const mm = dp(gl(m.m, m.meaning));
@@ -21666,6 +22336,8 @@ function cardHTMLRaw(r) {
       html += `<div class="spell-suggest">疑似拼写错误？你想查的是 <span class="cog" data-w="${r.suggestion}">${r.suggestion}</span> 吗？（点击跳转）</div>`;
     }
     html += morphChunksHTML(chunks);
+    html += layerTreeHTML(b, r.word);
+    if (b.dataSource) html += `<div class="morph-src">${EN_MODE() ? 'Etymology data' : '词源数据'} · ${Math.round((b.confidence || 0.9) * 100)}%</div>`;
 
     // 构成逻辑
     const eq = [];
@@ -21698,6 +22370,11 @@ function cardHTMLRaw(r) {
     </div></div>`;
     lastRel = '';   // 清空：否则左侧栏会继续显示上一个词的相关词汇
   }
+
+  /* 派生词族（OEWN/UniMorph）：放在卡片底部，和词光自带的「词族」分开，避免混在一起。 */
+  const famData = (r.breakdown && r.breakdown.family) ||
+    (MORPH.words && MORPH.words[r.word] && MORPH.words[r.word][4]) || null;
+  if (Array.isArray(famData) && famData.length) html += familyBlockHTML(famData, r.word);
 
   html += memoBlockHTML(r);   // 💡 AI 助记（无拆解/查不到的词返回空串）
 
@@ -24945,12 +25622,11 @@ document.addEventListener('click', (e) => {
   } catch (err) { /* 剪贴板不可用就算了，不打扰用户 */ }
 });
 
-/* 返回顶部：词根/词频目录一页上千条，滚下去后右下角浮出按钮 */
+/* 返回顶部：页面滚长了就浮出按钮——目录上千条，主界面的词条带深度讲解时也很长 */
 const toTopBtn = document.getElementById('to-top');
 function syncToTop() {
   if (!toTopBtn) return;   // switchTab 可能早于脚本末尾执行，兜一下
-  const inDir = ['rootsview', 'freqview'].some(id => document.getElementById(id).style.display !== 'none');
-  toTopBtn.classList.toggle('show', inDir && window.scrollY > 400);
+  toTopBtn.classList.toggle('show', window.scrollY > 400);
 }
 window.addEventListener('scroll', syncToTop, { passive: true });
 toTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: scrollBehavior() }));

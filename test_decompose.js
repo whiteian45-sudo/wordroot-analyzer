@@ -14,10 +14,36 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const DIR = __dirname;
 
+/* 真实词性来源：直接读 ecdict.json 的 t 字段（懒加载，第一次用到 POS 时才解析）。
+   这样 guard/audit 的分层解析读法与浏览器里一致，不再只靠一小张 POS 夹具。 */
+let ECDICT_POS_DICT = null;
+function POS_GET(w) {
+  if (!ECDICT_POS_DICT) {
+    try { ECDICT_POS_DICT = JSON.parse(fs.readFileSync(DIR + '/ecdict.json', 'utf8')); }
+    catch (e) { ECDICT_POS_DICT = {}; }
+  }
+  const t = (ECDICT_POS_DICT[w] && ECDICT_POS_DICT[w].t) || '';
+  if (!t) return '';
+  const out = [];
+  const re = /(?:^|[\n;；])\s*(n|vt|vi|v|a|adj|ad|adv)\./g;
+  let m;
+  while ((m = re.exec(t))) {
+    let p = m[1];
+    p = p === 'adj' ? 'a' : ((p === 'ad' || p === 'adv') ? 'adv' : ((p === 'vt' || p === 'vi') ? 'v' : p));
+    if (/^(n|v|a|adv)$/.test(p) && out.indexOf(p) < 0) out.push(p);
+  }
+  return out.join('/');
+}
+
 /* core 块里的渲染函数（morphBlockHTML 等）会调用 UI 块的 gl()/EN_MODE()，
    测试环境只挂 core，得先补上这三个名字，否则查词模式直接 ReferenceError。
    测试环境固定中文模式（英文释义表 MORPH_EN 在 core 里，不受影响）。 */
 const UI_SHIM = "var LANG='zh';" +
+  /* 测试环境不 load ECDICT/ENHANCED，给分层解析器补一小张 POS 夹具：
+     affability 这类“词典形容词 + -ity”的规则需要词性才能走通。 */
+  "var POS_OF={'affable':'a','compatible':'a','usable':'a','visible':'a'," +
+  "'responsible':'a','creative':'a','believable':'a','nationalize':'v','interpret':'v'," +
+  "'limber':'a','premonish':'v','maidenly':'a','blandish':'v','perishable':'a'};\n" +
   "function EN_MODE(){return false;}" +
   "function gl(m,zh){return zh||'';}" +
   "function langEn(s){return s;}\n";
@@ -133,13 +159,26 @@ function emorphs(w) {
   (d.suffixes || []).forEach(s => arr.push(s.m));
   return arr;
 }
+/* 组合后缀归一（2026-11-02）：引擎在 -ability/-ibility 里按层拆成 able+ity / ible+ity，
+   而 enhanced 的 chain 既可能写合并形式 ability/ibility，也可能写拆开的 able/ity。
+   把两边都展开成 able+ity / ible+ity 再比，避免"拆得更细"被误判成漏拆。 */
+function canonSuf(arr) {
+  const out = [];
+  for (const x of arr) {
+    if (x === 'ability') out.push('able', 'ity');
+    else if (x === 'ibility') out.push('ible', 'ity');
+    else out.push(x);
+  }
+  return out;
+}
 function matchRate(cms, ems) {
+  const a = canonSuf(cms), b = canonSuf(ems);
   let m = 0;
-  for (const cm of cms) {
-    const ok = ems.some(em => em === cm || (em.length >= 2 && cm.length >= 2 && (em.startsWith(cm) || cm.startsWith(em))));
+  for (const cm of a) {
+    const ok = b.some(em => em === cm || (em.length >= 2 && cm.length >= 2 && (em.startsWith(cm) || cm.startsWith(em))));
     if (ok) m++;
   }
-  return cms.length ? m / cms.length : 1;
+  return a.length ? m / a.length : 1;
 }
 const words = __WORDS__;
 /* 口径分层（2026-10-15）：基准是 enhanced 的 chain，而 WORD_SPLIT（逐词切分表）正是从 chain 挖出来的，

@@ -34,8 +34,9 @@ python server.py
 
 **查词**
 
-- 词根词缀拆解：前缀 / 词根 / 后缀分开拆，三色标注，每部分标含义
-- 词源演变链：单词从拉丁语 / 希腊语到英语怎么演变的
+- 词根词缀分解：词素 / 构词层 / 词源三列合一——三色标注词素，构词层给顺序和词性，词源列给「← 语言 原词」；有 `morph.json` 时优先采用开放词源/词法数据验证过的拆解（约 22.8 万词），缺词回落规则引擎
+- 派生词族：数据层带 OEWN/UniMorph 派生关系，卡片底部可点击跳转（nationalize ↔ nationalization、footballer ↔ football）；词光区块里的「词族」来自 Word Atlas，是另一套数据
+- 词源(Etymonline)：保留整段词源叙述；逐词素的来源已经并入上面的三列表
 - 同源词 / 同根词 / 同缀词：点一下跳到同词素的其他词
 - 拼写纠错：查不到的词会提示相近候选（比如 recieve → receive）
 - 段落模式：贴一段话，点词看拆解，结果在右侧抽屉里展开
@@ -177,6 +178,7 @@ python -I wr_atlas_build.py <上游>/data/word-atlas.json atlas.json --index <�
 - `bnc.json` 来自 [The BNC-COCA Lists](https://github.com/wen-zhi/the-bnc-coca-lists) —— Paul Nation 编制的学术词频表（按词族分级），公开发布，可随仓库分发
 - `stress.json` 由 CMU 发音词典（CMUdict，BSD 许可）派生，标注主重音位置，可随仓库分发
 - `atlas.json` / `atlas_media/` 来自 [designfuchen/word-atlas](https://github.com/designfuchen/word-atlas)，内容以 **CC BY 4.0** 提供，署名 “Word Atlas contributors”；本项目做了字段裁剪、键名归一和合并，未逐条人工审校。插画与录音不随仓库分发，由 `wr_atlas_media.py` 按需下载
+- `morph.json` 由 `wr_build_morph.py` 从 [etymology-db](https://github.com/droher/etymology-db)（**CC BY-SA 3.0**，基于 Wiktionary）、[Open English WordNet 2025](https://en-word.net/)（**CC BY 4.0** + Princeton WordNet License）、[MorphoLex-en](https://github.com/hugomailhot/MorphoLex-en)（**CC BY-NC-SA 4.0**，非商业 + 相同方式共享）、[UniMorph English](https://github.com/unimorph/eng)（**CC BY-SA 3.0**）和 [kaikki.org](https://kaikki.org/dictionary/English/index.html) 英文 Wiktionary 提取（**CC BY-SA 3.0 + GFDL**，只取经 OEWN 词族/实词校验的严格子集）生成：先按真实词源关系取出词根/词缀/复合成分，再用英文拼写规则做表面重建校验（e-drop、y→i、-able/-ible + -ity 等），只有能拼回原词的才落库；随后递归展开已知派生词（nationalization → nation+al+ize+ation）。MorphoLex 补常见派生词，只用于本地非商业使用。约 22.8 万词；置信度按 enhanced 精修链 / BNC / atlas / OEWN 校准，低于 0.85 的冷僻条目在 App 里回落到规则引擎；常用词还附 OEWN/UniMorph 派生词族，只保留常用词集合内的直接派生（过滤冷僻/间接噪音），卡片里显示「派生词族」。本地生成、**不入库**（见 `.gitignore`），缺了整体回落到规则引擎
 - **标 ❌ 的几个文件没有放进仓库**：`oxford.json` / `etym.json` / `thes.json` / `ex.json` 都是从商业版权词典（牛津高阶、Etymonline、朗文、柯林斯）派生的，公开分发不合适；`us_ipa.json` 的数据源本身是公开仓库，只是配套脚本没打包。
 
 缺了它们**不影响启动和核心功能** —— 拆解（引擎 + 词根表）、释义与音标（靠 `enhanced` + `ecdict`）、同根词、拼写纠错、段落模式、发音都正常。前端对每个数据文件是单独容错的，缺了只是对应区块不显示：
@@ -191,16 +193,19 @@ python -I wr_atlas_build.py <上游>/data/word-atlas.json atlas.json --index <�
 | `bnc.json` | 词频目录、BNC 词频自测 |
 | `atlas.json` | 词光数据块（分级 / 搭配 / 词族 / 雅思例句）、词光分级目录 |
 | `atlas_media/` | 卡片里的插画不显示；英美音、例句朗读回退到 TTS |
+| `morph.json` | 数据优先的词根/词缀/复合拆解（约 22.8 万词）；缺了全部回落到规则引擎 |
 | `stress.json` | 重音位置提示 |
 
 想用上全部功能，可以自备这些数据，或者换成开放许可的数据源（[Wiktionary](https://kaikki.org/dictionary/English/)、WordNet 等）自己重建。
+
+**形态数据 `morph.json`（本地）**：不入库，缺失时自动回落到规则引擎。重建链路是 `wr_extract_kaikki.py`（流式提取 kaikki）+ `wr_build_morph.py`（合并五套开放数据、表面重建校验、置信度校准、词族过滤）；原始数据与用法见脚本文件头。
 
 ## 开发 / 回归
 
 改拆解引擎或词素表后跑一遍回归（Windows 直接双击 `回归.bat`，等价于依次执行下面三条）：
 
 ```bash
-node test_decompose.js --guard         # 守护清单：738 个已验证词的拆解结果不许回退
+node test_decompose.js --guard         # 守护清单：808 个已验证词的拆解结果不许回退
 node test_decompose.js --audit --brief # 词源审计：以 enhanced 自带词源为基准，分层看总量
 node test_health.js                    # 一体化体检：表完整性、原型链、渲染冒烟、覆盖率、性能
 ```
@@ -224,8 +229,10 @@ node test_health.js                    # 一体化体检：表完整性、原型
 | `test_atlas.js` | 词光词库结构、媒体覆盖、与 enhanced 重合度体检 |
 | `wr_atlas_build.py` | 从上游 `word-atlas.json` 生成 `atlas.json`（含媒体位标记） |
 | `wr_atlas_media.py` | 下载插画 / 英美音 / 例句朗读到 `atlas_media/`，支持断点续跑 |
+| `wr_extract_kaikki.py` | 流式扫描 kaikki 英文 JSONL，按目标词提取拆解候选/词族（本地大文件） |
+| `wr_build_morph.py` | 合并 etymology-db/OEWN/MorphoLex/UniMorph/kaikki，生成 `morph.json`（本地不入库） |
 | `tune_scoring.js` | 拆解评分调参实验（结论：调参解不了误拆，靠拦截表） |
-| `guard_words.json` | 守护清单数据（转正 665 / partial 16 / 防误伤 46 / 其它 11） |
+| `guard_words.json` | 守护清单数据（转正 727 / partial 16 / 防误伤 50 / 基本词 15） |
 | `audit_report.md` | `--audit` 的输出存档 |
 | `wr_gap_batch.js` | 缺口词注入批次：自动挑「拆不出」的词、加整词词根、自带自测（由无到有>0、丢失=0 才写盘） |
 | `wr_split_table.js` | 从 enhanced 词源链生成逐词切分表 `WORD_SPLIT` |

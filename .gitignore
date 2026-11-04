@@ -91,3 +91,7 @@ dict.db
 
 # 归档：一次性过程稿（候选词表 / 报告 / 工单）按月份收进这里，根目录只留正式文件
 /_archive/
+
+# 数据优先形态库（etymology-db CC BY-SA 3.0 + Open English WordNet）；
+# 由 wr_build_morph.py 生成，体积约 11MB，本地使用，不入库。
+morph.json

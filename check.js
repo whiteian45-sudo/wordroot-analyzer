@@ -32,7 +32,8 @@ console.log(hOK ? '  ✓ 体检通过' : '  ✗ 体检未通过');
 console.log('=== 2/3 守护 ===');
 const g = run('node test_decompose.js --guard');
 const gOK = g.ok && /守护清单全部通过/.test(g.out) && !/✗/.test(g.out);
-console.log('  ' + (gOK ? '✓ 守护 738 全过' : '✗ 守护有回归'));
+const gN = (g.out.match(/守护清单全部通过 \((\d+) 词\)/) || [])[1] || '';
+console.log('  ' + (gOK ? '✓ 守护 ' + gN + ' 全过' : '✗ 守护有回归'));
 
 console.log('=== 3/3 审计 ===');
 const a = run('node test_decompose.js --audit --brief');

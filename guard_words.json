@@ -1358,10 +1358,10 @@
       "d": "im|pover-ish-ing"
     },
     "impoverishment": {
-      "d": "im|pover-ish-ment"
+      "d": "impoverish-ment"
     },
     "impoverisher": {
-      "d": "im|pover-ish-er"
+      "d": "impoverish-er"
     },
     "unimpoverished": {
       "d": "un-im|pover-ish-ed"
@@ -1547,10 +1547,10 @@
       "d": "crack-head"
     },
     "firecracker": {
-      "d": "fire+crack"
+      "d": "fire+crack-er"
     },
     "nutcracker": {
-      "d": "nut+crack"
+      "d": "nut+crack-er"
     },
     "flow": {
       "d": "flow"
@@ -1964,7 +1964,7 @@
       "d": "un|dwarf-ed"
     },
     "pinpricking": {
-      "d": "pin+prick"
+      "d": "pin+prick-ing"
     },
     "truced": {
       "d": "truce-ed"
@@ -2022,6 +2022,165 @@
     },
     "pedobaptism": {
       "d": "pedo+bapt-ism"
+    },
+    "barefoot": {
+      "d": "bare+foot"
+    },
+    "bargeman": {
+      "d": "barge+man"
+    },
+    "barbell": {
+      "d": "bar+bell"
+    },
+    "toolbar": {
+      "d": "tool+bar"
+    },
+    "crossbar": {
+      "d": "cross+bar"
+    },
+    "sandbar": {
+      "d": "sand+bar"
+    },
+    "isobar": {
+      "d": "iso|bar"
+    },
+    "isobaric": {
+      "d": "iso|bar-ic"
+    },
+    "millibar": {
+      "d": "milli|bar"
+    },
+    "baric": {
+      "d": "bar-ic"
+    },
+    "barite": {
+      "d": "bar-ite"
+    },
+    "barium": {
+      "d": "bar-ium"
+    },
+    "bariatric": {
+      "d": "bar-iatric"
+    },
+    "hyperbaric": {
+      "d": "hyper|bar-ic"
+    },
+    "bares": {
+      "d": "bare-s"
+    },
+    "barleys": {
+      "d": "barley-s"
+    },
+    "barleycorn": {
+      "d": "barley+corn"
+    },
+    "unbelievability": {
+      "d": "un|believe-able-ity"
+    },
+    "unbelievably": {
+      "d": "un|believe-able-y"
+    },
+    "footballer": {
+      "d": "foot+ball-er"
+    },
+    "ballplayer": {
+      "d": "ball+play-er"
+    },
+    "housekeeper": {
+      "d": "house+keep-er"
+    },
+    "filmmaker": {
+      "d": "film+make-er"
+    },
+    "compatibility": {
+      "d": "com|pat-ible-ity"
+    },
+    "invincibility": {
+      "d": "in|vinc-ible-ity"
+    },
+    "usability": {
+      "d": "usable-ity"
+    },
+    "sustainability": {
+      "d": "sus|tain-able-ity"
+    },
+    "applicability": {
+      "d": "apply-able-ity"
+    },
+    "flexibility": {
+      "d": "flex-ible-ity"
+    },
+    "misinterpretation": {
+      "d": "mis|interpret-ation"
+    },
+    "counterrevolutionaries": {
+      "d": "counter-re|vol-ution-ary-es"
+    },
+    "accumulation": {
+      "d": "accumulate-ion"
+    },
+    "anticipation": {
+      "d": "anticipate-ion"
+    },
+    "appropriateness": {
+      "d": "appropriate-ness"
+    },
+    "angularity": {
+      "d": "angular-ity"
+    },
+    "beaconless": {
+      "d": "beacon-less"
+    },
+    "carbonizer": {
+      "d": "carbon-izer"
+    },
+    "affability": {
+      "d": "affable-ity"
+    },
+    "anecdotally": {
+      "d": "anecdote-al-ly"
+    },
+    "drowsily": {
+      "d": "drowsy-ly"
+    },
+    "genocidal": {
+      "d": "genocide-al"
+    },
+    "crystallizable": {
+      "d": "crystall-ize-able"
+    },
+    "generalizable": {
+      "d": "general-ize-able"
+    },
+    "activatory": {
+      "d": "activate-ory"
+    },
+    "negotiatory": {
+      "d": "negotiate-ory"
+    },
+    "texturize": {
+      "d": "text-ure-ize"
+    },
+    "desalinator": {
+      "d": "desalinate-or"
+    },
+    "endorsee": {
+      "d": "endorse-ee"
+    },
+    "limberness": {
+      "d": "limber-ness"
+    },
+    "premonishment": {
+      "d": "premonish-ment"
+    },
+    "unmaidenly": {
+      "d": "un|maidenly"
+    },
+    "blandisher": {
+      "d": "blandish-er"
+    },
+    "perishableness": {
+      "d": "perish-able-ness"
     }
   },
   "partial词": {
@@ -2029,7 +2188,7 @@
       "d": "bin-ary"
     },
     "architecture": {
-      "d": null,
+      "d": "architect-ure",
       "p": "arch|??itecture"
     },
     "protocol": {
@@ -2037,7 +2196,7 @@
       "p": "proto|??col"
     },
     "vehemently": {
-      "d": null,
+      "d": "vehement-ly",
       "p": "-ly|??vehement"
     },
     "coops": {
@@ -2225,6 +2384,18 @@
     },
     "pyroninophilia": {
       "d": null
+    },
+    "barnacle": {
+      "d": null
+    },
+    "barrack": {
+      "d": null
+    },
+    "bartons": {
+      "d": null
+    },
+    "lumbar": {
+      "d": null
     }
   },
   "基本词整词": {
@@ -2263,6 +2434,15 @@
     },
     "skit": {
       "d": "skit"
+    },
+    "barley": {
+      "d": "barley"
+    },
+    "bare": {
+      "d": "bare"
+    },
+    "barrow": {
+      "d": "barrow"
     }
   }
 }
