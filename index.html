@@ -6178,6 +6178,9 @@ const MORPH_SRC = {};           // 词素 -> {lang, word, note} 词根来源（�
 // e.g. en 兼前缀 en-/后缀 -en 多义，MORPH_SRC 被 encore 的"加强"占位，但主流义是
 // "使…、进入"（encrypt=使进入隐藏→加密；enable=en+able；enact；enlarge）。
 const MORPH_SRC_PATCH = {
+  /* 法语借词整词语源（2026-11-16）：croissant 在 WORD_SPLIT 里是单个词素，
+     来源指到 crescere，和 crescent / crescendo / increase 归进同族。 */
+  croissant: { lang: '拉丁语', word: 'crescere', note: '经法语 croissant（creissant，croître 的现在分词）借入；-ant 是法语词尾，不是英语后缀' },
   en: { lang: '拉丁语', word: 'in-', note: '', meaning: '使…、进入' },
   /* 变体词根归族：同一个拉丁词的不同词干（现在分词/过去分词/变体）在 SRC_INDEX 里
      分成好几组，查 accept 看得到 concept、查 deceive 却看不到——把它们指到同一个
@@ -6266,6 +6269,9 @@ const SRC_KEEP = new Set([
    值写成 [来源词, 语言]，语言省略按拉丁语；写 null 表示这个词素不进任何族。
    来源都是拿词源核过的，不是猜的。                                        */
 const SRC_BY_WORD = {
+  /* savant（2026-11-16）：sav 是法语 savoir（知道）的词干，不是 sapor（味道）。
+     钉在这里，合并表的「词源」列和同源词归族都会用它，而不是全局 MORPH_SRC。 */
+  savant: { sav: ['savoir', '法语'] },
   // —— man：兜底是 manus（手），可这词素还背着 man（人）/ manere（停留）/ manare（流）/ mania（狂）
   chairman: { man: ['man', '古英语'] }, congressman: { man: ['man', '古英语'] },
   draughtsman: { man: ['man', '古英语'] }, fisherman: { man: ['man', '古英语'] },
@@ -11052,6 +11058,12 @@ BASE_PREFIXES.tri = ['triumph'];
 /* 少数英语基本词与拉丁词根"撞车"，这里优先用英语含义 */
 /* 整词优先：这些词不可拆分（专有名词/特殊词），直接整词命中 */
 const WORD_SPLIT = {
+  /* 法语借词（2026-11-16）：croissant 是整体借入的法语词，不能按英语构词法切。
+     croissant = creissant，croître（生长）的现在分词，源头是拉丁 crescere；
+     词尾 -ant 是法语分词词尾。原先落到 partial → croiss(未识别) + -ant，是假拆。
+     savant 同理（法语 savoir 的现在分词），原先被拆成 save(节省) + -ant。 */
+  "croissant": {"prefix":null,"roots":[["croissant","新月形；羊角面包（法语借词，本义「生长」）"]],"suffixes":[]},
+  "savant": {"prefix":null,"roots":[["sav","知道（法语 savoir ← 拉丁 sapere 有智慧）"]],"suffixes":[["ant","法语现在分词/名词后缀，…的人"]]},
   "sunlit": {"prefix":null,"roots":[["sun","太阳"],["lit","照亮的（light 的过去分词）"]],"suffixes":[]},
   /* -lit 复合词（2026-11-01）：candlelit 原来落到 partial → cand|??lelit。
      lit 是 light 的不规则过去分词；ROOTS 里的 lit 是"字母"（拉丁 littera，liter/literal 用），
@@ -20454,7 +20466,11 @@ function mergedLayerHTML(bd, w, chainMap) {
   steps.forEach((st, i) => {
     const lbl = EN_MODE() ? LBL_EN[st.label] : LBL[st.label];
     const mean = st.kind === 'pre' ? gl(st.key, st.meaning) : (st.kind === 'suf' ? gl(st.key, st.meaning) : st.meaning);
-    const src = (chainMap && chainMap[st.key]) || morphSource(st.key, w);
+    /* 词+词素 的钉死来源优先于全局 MORPH_SRC（2026-11-16）：
+       SRC_BY_WORD 本来就是「同一个词素在不同词里来源不同」的权威表，
+       以前只用在同源词归族，合并表的来源列会落到错误的默认值（如 savant→sapor）。 */
+    const ov = srcOverride(w, st.key);
+    const src = (chainMap && chainMap[st.key]) || (ov === false ? null : (ov || morphSource(st.key, w)));
     const note = (!EN_MODE() && src && src.note && src.note !== mean) ? '<span class="note">（' + src.note + '）</span>' : '';
     const srcHTML = (src && src.lang)
       ? '<span class="layer-src"><span class="chain-arrow">←</span> <span class="lang">' + langEn(src.lang) + '</span>' +
