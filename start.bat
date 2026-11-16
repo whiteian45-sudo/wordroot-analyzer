@@ -5,8 +5,9 @@ cd /d "%~dp0"
 echo 正在启动词根词缀分析器...
 
 :: 探测 Python（要求已加入 PATH，无个人专属路径）
-set "PY=python"
-where python >nul 2>nul
+set "PY=D:\Program Files\Miniconda3\python.exe"
+if not exist "%PY%" set "PY=python"
+"%PY%" -c "import sys" >nul 2>nul
 if errorlevel 1 (
     echo 未检测到 Python，请先安装 Python 3 并勾选 "Add to PATH"。
     pause
