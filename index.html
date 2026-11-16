@@ -48,6 +48,7 @@
     --srf-2: rgba(255,255,255,0.07);
     --panel-a: rgba(255,255,255,0.14);
     --panel-b: rgba(12,14,28,0.9);
+    --pop-bg: rgba(16,20,38,0.97);
     /* 描边与分隔 */
     --line-1: rgba(255,255,255,0.05);
     --line-2: rgba(255,255,255,0.12);
@@ -119,6 +120,7 @@
     --srf-2: rgba(15,23,42,0.06);
     --panel-a: rgba(255,255,255,0.86);
     --panel-b: rgba(255,255,255,0.96);
+    --pop-bg: rgba(255,255,255,0.98);
     --line-1: rgba(15,23,42,0.06);
     --line-2: rgba(15,23,42,0.10);
     --line-3: rgba(15,23,42,0.14);
@@ -561,7 +563,7 @@
   }
   .layer-row::before {
     content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 1.5px;
-    background: linear-gradient(to bottom, rgba(110,168,255,.30), rgba(110,168,255,.04));
+    background: linear-gradient(to bottom, var(--line-3), var(--line-1));
     border-radius: 2px;
   }
   .layer-row:first-child::before { top: 50%; }
@@ -572,19 +574,26 @@
     background: radial-gradient(circle at 35% 30%, #a8c8ff, var(--accent));
     box-shadow: 0 0 7px rgba(110,168,255,.45);
   }
+  /* 时间轴圆点跟着词素类型上色（2026-11-16）：类型可一眼扫读，不必逐行读文字标签 */
+  .layer-row.lg-root::after { background: radial-gradient(circle at 35% 30%, #ffe0a8, var(--rt-c)); box-shadow: 0 0 7px rgba(240,179,87,.45); }
+  .layer-row.lg-pre::after { background: radial-gradient(circle at 35% 30%, #d6cfff, var(--pf-c)); box-shadow: 0 0 7px rgba(169,155,255,.45); }
+  .layer-row.lg-suf::after { background: radial-gradient(circle at 35% 30%, #b6f5dc, var(--sf-c)); box-shadow: 0 0 7px rgba(110,231,183,.45); }
   .layer-idx {
     display: inline-flex; align-items: center; justify-content: center;
     width: 17px; height: 17px; border-radius: 50%; flex: none;
     font-size: 10.5px; font-weight: 700; color: var(--sub);
     border: 1px solid var(--glass-border); background: var(--srf-2);
   }
+  /* 词素三色在这里接回全站语义编码（2026-11-16）：
+     词根琥珀 --rt-c、前缀靛青 --pf-c、后缀薄荷 --sf-c，
+     与词卡三色块、词根目录、闪卡保持一致，别在表里另起一套。 */
   .layer-node {
-    font-weight: 600; color: var(--accent); font-size: 13.5px;
-    background: var(--accent-soft); border: 1px solid rgba(110,168,255,.22);
+    font-weight: 600; color: var(--rt-c); font-size: 13.5px;
+    background: rgba(230,155,56,.10); border: 1px solid rgba(240,179,87,.30);
     border-radius: 9px; padding: 1px 8px;
   }
-  .layer-node.pre { color: var(--gold); background: var(--gold-soft); border-color: rgba(255,212,121,.28); }
-  .layer-node.suf { color: var(--rt-c, #f0b357); background: rgba(230,155,56,.10); border-color: rgba(240,179,87,.30); }
+  .layer-node.pre { color: var(--pf-c); background: rgba(123,92,240,.12); border-color: rgba(169,155,255,.32); }
+  .layer-node.suf { color: var(--sf-c); background: rgba(16,185,129,.10); border-color: rgba(110,231,183,.32); }
   .layer-tip { color: var(--sub); font-size: 11.5px; }
   .layer-meaning { color: var(--text); font-size: 12.5px; opacity: .85; }
   .layer-pos {
@@ -764,6 +773,42 @@
   /* 提示文字（"Kokoro 服务未就绪"这类）可能很长：单独占一行，别把控件挤走 */
   .tts-hint { flex-basis: 100%; font-size: 11px; opacity: .65; margin-top: -2px; }
   .tts-hint:empty { display: none; }
+  /* 偏好弹层（2026-11-16）：顶栏只留发音引擎，音色/语速/字号/行距/主题/语言收进 ⚙。
+     弹层沿用玻璃表面与圆角；桌面锚在顶栏下方，窄屏改底部抽屉。 */
+  .pref-btn { display: inline-flex; align-items: center; gap: 4px; }
+  .pref-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .pref-pop {
+    position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    z-index: 60; width: min(340px, calc(100vw - 32px));
+    display: flex; flex-direction: column;
+    padding: 8px 12px; border-radius: 18px;
+    background: var(--pop-bg); border: 1px solid var(--glass-border-hi);
+    box-shadow: var(--shadow); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    animation: prefIn var(--dur-std) var(--ease-out) both;
+  }
+  .pref-pop[hidden] { display: none; }
+  /* .tts-bar 与 .tabs 同为 z-index:1，DOM 靠后的 tabs 会盖住弹层；打开时把这一层抬上去 */
+  .tts-bar:has(.pref-pop:not([hidden])) { z-index: 20; }
+  .pref-sec { padding: 6px 2px; }
+  .pref-sec + .pref-sec { border-top: 1px solid var(--line-2); }
+  .pref-sec-title { font-size: 11px; font-weight: 700; letter-spacing: .6px; color: var(--sub); opacity: .75; margin: 2px 0 5px; }
+  .pref-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 4px 0; font-size: 12.5px; color: var(--sub);
+  }
+  .pref-row > span { flex: none; }
+  .pref-row[hidden] { display: none; }
+  .pref-row select { min-width: 152px; }
+  .pref-row .theme-btn { min-width: 92px; text-align: center; }
+  @keyframes prefIn { from { opacity: 0; transform: translate(-50%, -5px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @media (max-width: 640px) {
+    .pref-pop {
+      position: fixed; left: 12px; right: 12px; bottom: 12px; top: auto; transform: none;
+      width: auto; max-height: 70vh; overflow-y: auto;
+      animation-name: prefInM;
+    }
+    @keyframes prefInM { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  }
   /* 主题切换：三态循环 自动 → 浅色 → 深色 */
   .theme-btn {
     transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast);
@@ -1181,26 +1226,42 @@
   <select id="tts-eng-sel" title="发音引擎">
     <option value="builtin">内置</option><option value="kokoro">Kokoro</option>
   </select>
-  <select id="tts-voice" title="声音">
-    <option value="af_heart">美音·女·Heart</option><option value="af_bella">美音·女·Bella</option><option value="af_nicole">美音·女·Nicole</option><option value="af_aoede">美音·女·Aoede</option><option value="af_kore">美音·女·Kore</option><option value="am_adam">美音·男·Adam</option><option value="am_michael">美音·男·Michael</option><option value="bf_emma">英音·女·Emma</option><option value="bf_isabella">英音·女·Isabella</option><option value="bm_george">英音·男·George</option>
-  </select>
-  <select id="tts-speed" title="语速">
-    <option value="0.75">慢</option><option value="1" selected>正常</option><option value="1.25">稍快</option><option value="1.5">快</option>
-  </select>
-  </div>
-  <div class="bar-group">
-  <select id="fs-sel" title="正文字号">
-    <option value="s">A·小</option><option value="m" selected>A·中</option><option value="l">A·大</option>
-  </select>
-  <select id="lh-sel" title="正文行距">
-    <option value="tight">≡·紧凑</option><option value="m" selected>≡·标准</option><option value="loose">≡·宽松</option>
-  </select>
-  </div>
-  <div class="bar-group">
-  <button class="theme-btn" id="theme-btn" title="切换主题：自动 → 浅色 → 深色">🌗 自动</button>
-  <button class="theme-btn" id="lang-btn" title="Switch display language / 切换界面语言">中</button>
+  <button class="theme-btn pref-btn" id="pref-btn" aria-expanded="false" aria-controls="pref-pop" title="偏好设置">⚙ 偏好</button>
   </div>
   <span class="tts-hint" id="tts-hint"></span>
+  <div class="pref-pop" id="pref-pop" hidden>
+    <div class="pref-sec">
+      <div class="pref-sec-title" data-en="Speech">朗读</div>
+      <label class="pref-row"><span>音色</span>
+        <select id="tts-voice" title="声音">
+          <option value="af_heart">美音·女·Heart</option><option value="af_bella">美音·女·Bella</option><option value="af_nicole">美音·女·Nicole</option><option value="af_aoede">美音·女·Aoede</option><option value="af_kore">美音·女·Kore</option><option value="am_adam">美音·男·Adam</option><option value="am_michael">美音·男·Michael</option><option value="bf_emma">英音·女·Emma</option><option value="bf_isabella">英音·女·Isabella</option><option value="bm_george">英音·男·George</option>
+        </select>
+      </label>
+      <label class="pref-row" id="pref-speed-row"><span>语速</span>
+        <select id="tts-speed" title="语速">
+          <option value="0.75">慢</option><option value="1" selected>正常</option><option value="1.25">稍快</option><option value="1.5">快</option>
+        </select>
+      </label>
+    </div>
+    <div class="pref-sec">
+      <div class="pref-sec-title" data-en="Reading">阅读</div>
+      <label class="pref-row"><span>正文字号</span>
+        <select id="fs-sel" title="正文字号">
+          <option value="s">A·小</option><option value="m" selected>A·中</option><option value="l">A·大</option>
+        </select>
+      </label>
+      <label class="pref-row"><span>正文行距</span>
+        <select id="lh-sel" title="正文行距">
+          <option value="tight">≡·紧凑</option><option value="m" selected>≡·标准</option><option value="loose">≡·宽松</option>
+        </select>
+      </label>
+    </div>
+    <div class="pref-sec">
+      <div class="pref-sec-title" data-en="Interface">界面</div>
+      <div class="pref-row"><span>主题</span><button class="theme-btn" id="theme-btn" title="切换主题：自动 → 浅色 → 深色">🌗 自动</button></div>
+      <div class="pref-row"><span>语言</span><button class="theme-btn" id="lang-btn" title="Switch display language / 切换界面语言">中</button></div>
+    </div>
+  </div>
 </div>
 
 <div class="tabs">
@@ -20364,7 +20425,7 @@ function layerTreeHTML(bd, w) {
   steps.forEach((st, i) => {
     const lbl = EN_MODE() ? LBL_EN[st.label] : LBL[st.label];
     const mean = st.kind === 'pre' ? gl(st.key, st.meaning) : (st.kind === 'suf' ? gl(st.key, st.meaning) : st.meaning);
-    h += '<div class="layer-row" style="--i:' + i + '">' +
+    h += '<div class="layer-row lg-' + (st.kind || 'root') + '" style="--i:' + i + '">' +
       '<span class="layer-idx">' + (i + 1) + '</span>' +
       '<span class="layer-node ' + st.kind + '">' + st.m + '</span>' +
       '<span class="layer-tip">' + lbl + '</span>' +
@@ -20397,7 +20458,7 @@ function mergedLayerHTML(bd, w, chainMap) {
       ? '<span class="layer-src"><span class="chain-arrow">←</span> <span class="lang">' + langEn(src.lang) + '</span>' +
         (src.word ? ' <span class="w">' + src.word + '</span>' : '') + note + '</span>'
       : '';
-    h += '<div class="layer-row layer-grid" style="--i:' + i + '">' +
+    h += '<div class="layer-row layer-grid lg-' + (st.kind || 'root') + '" style="--i:' + i + '">' +
       '<span class="lg-morph"><span class="layer-idx">' + (i + 1) + '</span>' +
       '<span class="layer-node ' + st.kind + '">' + st.m + '</span></span>' +
       '<span class="lg-layer"><span class="layer-tip">' + lbl + '</span>' +
@@ -21013,6 +21074,7 @@ const UI_EN = {
 '近义':'syn','反义':'ant','同源':'cognate','同根':'root','同缀':'suffix',
 '发音':'Audio','内置':'Built-in','语速':'Speed','朗读整段':'Read whole passage','译整段':'Translate passage',
     '正文字号':'Body font size','正文行距':'Body line height','发音引擎':'Pronunciation engine',
+    '偏好':'Settings','偏好设置':'Settings','音色':'Voice','主题':'Theme','语言':'Language','界面':'Interface',
     'A·小':'A small','A·中':'A medium','A·大':'A large',
     '≡·紧凑':'≡ tight','≡·标准':'≡ normal','≡·宽松':'≡ loose',
 '慢':'Slow','正常':'Normal','稍快':'Faster','快':'Fast','详细':'Details','✕ 关闭':'✕ Close',
@@ -25223,6 +25285,8 @@ function updateTtsHint() {
 const ttsEngSel = document.getElementById('tts-eng-sel');
 function applyTtsEngine() {
   if (ttsEngSel) ttsEngSel.value = ttsEngine;
+  const speedRow = document.getElementById('pref-speed-row');
+  if (speedRow) speedRow.hidden = (ttsEngine !== 'kokoro');
   ttsSpeedSel.hidden = (ttsEngine !== 'kokoro');
   fillVoiceOptions();
   updateTtsHint();
@@ -25235,6 +25299,28 @@ if (ttsEngSel) {
   });
 }
 applyTtsEngine();
+/* 偏好弹层（2026-11-16）：顶栏只留发音引擎，其余偏好收进 ⚙。
+   控件 id 与 localStorage 键都不变，只是换了位置。 */
+const prefBtn = document.getElementById('pref-btn');
+const prefPop = document.getElementById('pref-pop');
+function setPrefOpen(open) {
+  if (!prefBtn || !prefPop) return;
+  prefPop.hidden = !open;
+  prefBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  prefBtn.classList.toggle('active', open);
+}
+if (prefBtn && prefPop) {
+  prefBtn.addEventListener('click', () => setPrefOpen(prefPop.hidden));
+  document.addEventListener('click', (e) => {
+    if (prefPop.hidden) return;
+    const t = e.target;
+    if (t && t.closest && (t.closest('#pref-pop') || t.closest('#pref-btn'))) return;
+    setPrefOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !prefPop.hidden) { setPrefOpen(false); prefBtn.focus(); }
+  });
+}
 ttsVoiceSel.addEventListener('change', () => {
   if (ttsEngine === 'kokoro') {
     ttsKokoroVoice = ttsVoiceSel.value;
