@@ -260,10 +260,42 @@ MEMO_SYSTEM = ('你是一位幽默的英语词汇老师。用户会给你一个�
                '请用一句极短、生动、有画面感的中文（25 字以内）说明这个词为什么是这个意思，'
                '可以用比喻、联想或玩梗帮助记忆。只输出这一句话，不要引号、编号或任何多余文字。')
 # 英文版助记：界面是中文时用（中文界面给英文钩子、英文界面给中文钩子，换一种语言加深印象）
-MEMO_SYSTEM_EN = ('You are a witty English vocabulary teacher. The user gives you a word, its morpheme breakdown '
-                  'and a Chinese definition. Reply with ONE very short, vivid, memorable English sentence '
-                  '(at most 15 words) explaining why the word means what it means — use a metaphor, image or pun. '
-                  'Output only that sentence: no quotes, no numbering, no extra text.')
+# 2026-11-17 改版：旧提示词只要求"生动、有画面感的比喻/玩梗"，4B 会把词根释义逐字翻成英文
+# （re=again → "ask back"/"ask again"），还会套 "X is when you…" 的定义句，requisition 这种
+# 正式词的语域整个丢掉（实测输出："…like a ghost asking for a snack"）。现在用硬规则 + 正反例：
+# 必须含该词、语域要对、禁止直译/生造短语、"is when"/"X =" 句式禁用、8-18 词、只留一个破折号。
+# 当天第二轮补充（fling 实测）：
+#   ① 多义词会硬塞两个义项 → 要求只取最常用的一个，或用一个自然场景同时带出两个；
+#   ② 出现"扔鞋砸猫"这种伤害动物的画面 → 要求画面无害；
+#   ③ 出现 "leaves a splash"（正确是 make a splash）→ 要求只用真实搭配，拿不准就用大白话。
+# 中文版和词源版提示词实测改新版反而更差（中文会硬套"军官…"模板、词源版会丢掉词源），故保持原样。
+MEMO_SYSTEM_EN = 'You are a witty English vocabulary teacher. The user gives you a word, its morpheme breakdown, and a Chinese definition. ' \
+    'Write ONE natural English sentence, 8-18 words, that makes the word stick: a concrete scene with a small twist, ' \
+    'not a dictionary definition and not a bland example.\n' \
+    'Rules:\n' \
+    '1. The sentence MUST contain the word (or an inflected form of it).\n' \
+    '2. Keep the register: an official, legal or military word must sound official (paperwork, orders, officers); ' \
+    'a casual word can sound casual.\n' \
+    '3. Make the core meaning guessable from the scene. If the word has several senses, focus on the one a learner ' \
+    'most needs, or bring two senses together in one natural scene — never force every sense in.\n' \
+    '4. Use the breakdown only to understand the word. Do NOT translate or mention the morphemes in the sentence — ' \
+    'a reader should never meet "again" or "back" just because re- means that.\n' \
+    '5. Avoid definition frames such as "X is when you ..." or "X = ...". Drop the word into a real scene with a ' \
+    'specific person, object or institution.\n' \
+    '6. Keep it under 20 words. Use at most one dash, and do not end every sentence with an "— then ..." reveal; ' \
+    'vary the shape.\n' \
+    '7. Keep the image harmless and friendly — no violence, cruelty, or harm to people or animals.\n' \
+    '8. Use only real English collocations and idioms. If you are not sure a phrase exists, use plain words instead.\n' \
+    'Output only the sentence: no quotes, no numbering, no notes.\n' \
+    'Before answering, silently check: (a) the word appears, (b) it sounds like real English, ' \
+    '(c) the tone matches how formal the word is, (d) the image is harmless.\n' \
+    'Examples (other words):\n' \
+    'BAD: "A monopoly is when you mono-poly — like one shop selling everything." (invented phrase, no image)\n' \
+    'GOOD: "A monopoly is a shop with no rivals and no shame about its prices."\n' \
+    'BAD: "To peruse is when you per-use something again." (literal gloss)\n' \
+    'GOOD: "She perused the contract like a detective hunting for traps."\n' \
+    'BAD: "A subpoena is when you sub-poen — like a scary letter." (literal gloss, wrong tone)\n' \
+    'GOOD: "A subpoena is the court\'s way of saying \'show up, or else.\'"'
 # 无词根可拆的词（lawn、desk 这类单语素词）：素材换成词源，模型不许自己造词根
 MEMO_SYSTEM_ETYM = ('你是一位幽默的英语词汇老师。用户会给你一个单词、它的词源或来历和中文释义。'
                     '这个词没有词根词缀可拆，请用一句极短、生动、有画面感的中文（25 字以内）帮人记住它——'
@@ -602,11 +634,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if not word:
                 self._send_json({'ok': False, 'err': '没有要助记的单词'}, 400)
                 return
-            prompt = '单词：' + word
-            if morph:
-                prompt += ('\n词源或来历：' if kind == 'etym' else '\n词根词缀拆解：') + morph
-            if meaning:
-                prompt += '\n释义：' + meaning
             model = body.get('model') or OLLAMA_MODEL
             # 界面语言与助记语言相反：中文界面出英文口诀、英文界面出中文口诀
             want_en = str(body.get('lang') or '').lower() == 'en'
@@ -614,6 +641,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 system = MEMO_SYSTEM_EN if want_en else MEMO_SYSTEM
             else:
                 system = MEMO_SYSTEM_ETYM_EN if want_en else MEMO_SYSTEM_ETYM
+            label = '\n词源或来历：' if kind == 'etym' else '\n词根词缀拆解：'
+            # 多义词（名词义、动词义确实不同）：一条一句话分开生成。4B 对「优先取引申义」
+            # 这类软指令不敏感——只给 fling 的名词释义，它照样写 "flung open the door"；
+            # 必须硬指定「这句只能当名词用」才肯写 "a summer fling"。所以不靠模型自己选，
+            # 而是按词性各发一次请求，前端用「／」连起来显示（见 _dual_memo_stream）。
+            groups = _memo_sense_groups(meaning) if want_en else []
+            if groups:
+                self._stream_ollama(_dual_memo_stream(word, groups, model, system), model)
+                return
+            prompt = _memo_user_prompt(word, label, morph, meaning)
             self._stream_ollama(iter_chat_stream(prompt, model, system), model)
             return
         # /explain：本地 Ollama 依「本地真实素材」写一份深度讲解（流式，做法同 /memo）
@@ -787,6 +824,69 @@ def _http_error_text(e, model):
     if 'not found' in err.lower():
         err = '本地还没装这个模型，请先在命令行运行：ollama pull ' + model
     return err
+
+
+# ---------- 多义词助记：按词性各生成一句 ----------
+# 只认这些词性标记；「；」是释义数据里义项之间的分隔符。
+_SENSE_RE = re.compile(r'(?:^|；)\s*(vt|vi|v|n|adj|adv)\.\s*')
+_POS_RULE = {
+    'n': ' IMPORTANT: in this sentence "{word}" must be used as a NOUN (like "a summer fling"), never as a verb.',
+    'v': ' IMPORTANT: in this sentence "{word}" must be used as a VERB (like "he flung the ball"), never as a noun.',
+}
+
+
+def _memo_user_prompt(word, label, morph, meaning):
+    p = '单词：' + word
+    if morph:
+        p += label + morph
+    if meaning:
+        p += '\n释义：' + meaning
+    return p
+
+
+def _memo_sense_groups(meaning):
+    """把「v. 猛投；…；n. 短暂的放纵；…」切成 [(词性, 义项), …]。
+
+    只有同时存在名词义和动词义、且两边内容确实不同时才返回两组；
+    requisition 那种 n./vt. 都是「正式要求；征用」的（一边包含另一边）不拆，
+    否则会生成两条几乎一样的句子。
+    """
+    meaning = meaning or ''
+    marks = list(_SENSE_RE.finditer(meaning))
+    if len(marks) < 2:
+        return []
+    groups = []
+    for i, m in enumerate(marks):
+        end = marks[i + 1].start() if i + 1 < len(marks) else len(meaning)
+        text = meaning[m.end():end].strip().strip('；').strip()
+        if text:
+            groups.append((m.group(1), text))
+    noun = next((g for g in groups if g[0] == 'n'), None)
+    verb = next((g for g in groups if g[0] in ('v', 'vt', 'vi')), None)
+    if not noun or not verb:
+        return []
+    if noun[1] in verb[1] or verb[1] in noun[1]:
+        return []
+    return [noun, verb]   # 名词义在前：考试里更值钱的通常是引申出来的名词义
+
+
+def _dual_memo_stream(word, groups, model, system):
+    """两个义项各调一次 Ollama，用「／」连成一条流。
+
+    _stream_ollama 会先取第一块再发响应头，所以第一次请求的连接失败仍能回 502；
+    第二次失败时头已经发出去了，只能把提示写进正文（不让异常冒到 handler）。
+    """
+    for i, (pos, sense) in enumerate(groups):
+        if i:
+            yield ' ／ '
+        # 分条时故意不带词根拆解：fl(快速移动)+ing 这类词源信息会把 4B 又拽回动词义，
+        # 实测带上它时「这句必须当名词」的硬规则会被无视（fling 三条全写成 flung…）。
+        prompt = '单词：' + word + '\n释义：' + pos + '. ' + sense
+        rule = _POS_RULE['n' if pos == 'n' else 'v'].replace('{word}', word)
+        try:
+            yield from iter_chat_stream(prompt, model, system + rule)
+        except Exception:
+            yield '（这一义项没生成出来，点「重新生成」再试）'
 
 
 def iter_chat_stream(text, model, system=None):
