@@ -15,7 +15,9 @@ start.bat 同时启动两个，前端点「Kokoro」按钮时请求本服务。
 """
 import io
 import json
+import os
 import threading
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
@@ -45,15 +47,45 @@ pipe = None
 # 一把锁管两件事：保证模型只加载一次 + 合成串行化（KPipeline 非线程安全，这点保持原样）
 pipe_lock = threading.Lock()
 
+# 探测用哪个地址：跟 hf_hub_download 实际请求的是同一条路径（会 302 到 CDN 再 HEAD）
+_HF_PROBE_URL = 'https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/config.json'
+
+
+def _use_local_cache_if_hub_unreachable(timeout=3.0):
+    """huggingface.co 不可达时切到离线模式，直接读本地缓存。返回是否处于离线模式。
+
+    模型和声线早就缓存在本机了，但 huggingface_hub 每次初始化 KModel 都要对
+    config.json、权重各发一次 HEAD 做「新鲜度检查」。断网/连不上时这次检查是
+    「10 秒读超时 × 5 次重试 + 1/2/4/8 秒退避」≈ 55 秒一个文件，两个文件下来
+    启动能卡近两分钟 —— 日志里一直刷 ReadTimeoutError 就是这个，不是模型加载慢
+    （本地 import + 读权重一共十几秒）。
+
+    HF_HUB_OFFLINE 是 huggingface_hub 在 import 时读的环境变量，而 kokoro 是懒加载的
+    （见 _ensure_pipe），所以在这里设还来得及；代价是启动多一次最多 3 秒的探测。
+    """
+    if os.environ.get('HF_HUB_OFFLINE') == '1':
+        return True
+    try:
+        req = urllib.request.Request(_HF_PROBE_URL, method='HEAD')
+        with urllib.request.urlopen(req, timeout=timeout):
+            pass
+        return False
+    except Exception:
+        os.environ['HF_HUB_OFFLINE'] = '1'
+        return True
+
 
 def _ensure_pipe():
     """确保模型已加载并返回它。第一次调用会阻塞几秒~几十秒（import + 读权重），之后就只是取引用。"""
     global pipe
     with pipe_lock:
         if pipe is None:
+            # 先决定走在线还是离线，再 import：huggingface_hub 只认 import 时的 HF_HUB_OFFLINE
+            _use_local_cache_if_hub_unreachable()
             # 延迟到这一步才 import：import 本身就占了大头，别挡着端口绑定
             from kokoro import KPipeline
-            pipe = KPipeline(lang_code='a')
+            # 显式传 repo_id：不传会打印一行「Defaulting repo_id to ...」的警告
+            pipe = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M')
         return pipe
 
 
@@ -65,7 +97,17 @@ def synth(text, voice='af_heart', speed=1.0):
         voice = 'af_heart'
     p = _ensure_pipe()
     with pipe_lock:
-        gen = p(text, voice=voice, speed=max(0.5, min(2.0, speed)))
+        try:
+            v = p.load_voice(voice)
+        except Exception as e:
+            # 离线模式只能读到本地已缓存的声线（目前只有 af_heart）。
+            # 选了没缓存的声线时退回默认声线，总比整句朗读报错强；在线时照旧把错误抛出去。
+            if os.environ.get('HF_HUB_OFFLINE') == '1' and voice != 'af_heart':
+                print('[TTS] 声线 %s 未缓存且当前离线，改用 af_heart。(%s)' % (voice, e))
+                v = p.load_voice('af_heart')
+            else:
+                raise
+        gen = p(text, voice=v, speed=max(0.5, min(2.0, speed)))
         all_audio = [a.numpy() for _gs, _ps, a in gen]
     if not all_audio:
         raise RuntimeError('no audio produced')
@@ -156,6 +198,8 @@ if __name__ == '__main__':
         # 加载失败要吭声：否则 /health 永远停在 loading=true，前端一直重试，黑窗口却什么都不说
         try:
             _ensure_pipe()
+            if os.environ.get('HF_HUB_OFFLINE') == '1':
+                print('huggingface.co 不可达：已切到本地缓存离线加载（省掉约两分钟的 HEAD 重试）。')
             # 报一下跑在哪：这是排查「怎么变慢了」第一眼要看的信息
             #（KokoroGPU 环境是 CUDA 版 torch = GPU；moss-tts-nano 是 CPU 版 = 纯 CPU，整段朗读会慢好几倍）
             import torch
