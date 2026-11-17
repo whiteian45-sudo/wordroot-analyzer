@@ -1,5 +1,9 @@
 # 词根词缀分析器
 
+[![Download](https://img.shields.io/github/v/release/whiteian45-sudo/wordroot-analyzer?label=download&color=brightgreen)](https://github.com/whiteian45-sudo/wordroot-analyzer/releases/latest)
+
+> **不想 clone？** 直接下载 [最新离线包](https://github.com/whiteian45-sudo/wordroot-analyzer/releases/latest)，解压后双击 `start.bat`（需要 Python 3，无需安装第三方库）。
+
 一个本地英语查词工具：输入单词，拆出它的前缀 / 词根 / 后缀，解释每部分什么意思，顺带看词源演变和同根词，并围绕「背单词」做了词频分级、例句检索和 FSRS-6 间隔重复复习。
 
 ```
