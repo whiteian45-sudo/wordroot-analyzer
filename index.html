@@ -4732,6 +4732,10 @@ const ROOTS = {
   "crani": ["颅、头骨", ["cranium", "cranial", "craniotomy"], {"lang": "希腊语", "word": "kranion"}],
   "crat": ["统治、权力", ["democracy", "aristocrat", "bureaucracy"], {"lang": "希腊语", "word": "kratos"}],
   "cre": ["创造、生长", ["create", "increase", "concrete"], {"lang": "拉丁语", "word": "creare"}],
+  /* 批次 113（2026-11-18）：cresc 生长 ← 拉丁语 crescere。表里原有 cre（创造）/create（增长）/
+     crete（固化），唯独缺了最直接的 cresc：excrescence 拆不出来，excrescent 还被误拆成
+     ex + cre + scent（scent=气味）。撞名面只有含 cresc 的 37 个 ecdict 词，影响面见 --diff。 */
+  "cresc": ["生长", ["crescent", "crescendo", "increase", "decrease", "concrete"], {"lang": "拉丁语", "word": "crescere", "note": "意为“生长、增加”"}],
   "credulit": ["轻信(cred的变体)", ["credulity", "credulous"], {"lang": "拉丁语", "word": "credere"}],
   "creste": ["冠、羽冠", ["crested", "crest"], {"lang": "拉丁语", "word": "crista"}],
   "crim": ["罪、罪行", ["crime", "criminal", "incriminate"], {"lang": "拉丁语", "word": "crimen"}],
@@ -12297,6 +12301,16 @@ const WORD_SPLIT = {
   "cremate": {"prefix":null,"roots":[["crem","燃烧 拉丁语 cremare（燃烧）"]],"suffixes":[["ate","动词后缀"]]},
   "crepuscular": {"prefix":null,"roots":[["crepuscul","黄昏/微光"]],"suffixes":[["ar","形容词后缀"]]},
   "crescent": {"prefix":null,"roots":[["cresc","增长 拉丁语 crescere（意为“生长、增加"]],"suffixes":[["ent","形容词后缀"]]},
+  /* cresc 家族（2026-11-18）：给规则引擎加了 cresc 词根后，下面这几个词会被拼出别扭的切分
+     （crescendo→cresc+end+o、crescentic→cresc+en+tic、redcrescent→red(红色的)+cresc+ent），
+     用逐词覆盖锁定正确读法。excrescence/excrescent 规则引擎已能自然拆出，这里一并锁定防回归。 */
+  "crescendo": {"prefix":null,"roots":[["cresc","生长 拉丁语 crescere（生长、增加）"]],"suffixes":[["endo","意大利语动名词后缀（音乐术语「渐强」）"]]},
+  "decrescendo": {"prefix":"de","roots":[["cresc","生长 拉丁语 crescere（生长、增加）"]],"suffixes":[["endo","意大利语动名词后缀（音乐术语「渐弱」）"]]},
+  "crescentic": {"prefix":null,"roots":[["crescent","新月（cresc 生长 + -ent）"]],"suffixes":[["ic","形容词后缀"]]},
+  "bicrescentic": {"prefix":"bi","roots":[["crescent","新月（cresc 生长 + -ent）"]],"suffixes":[["ic","形容词后缀"]]},
+  "redcrescent": {"prefix":null,"roots":[["red","红"],["crescent","新月"]],"suffixes":[]},
+  "excrescence": {"prefix":"ex","roots":[["cresc","生长 拉丁语 crescere（生长、增加）"]],"suffixes":[["ence","名词后缀，表性质、状态"]]},
+  "excrescent": {"prefix":"ex","roots":[["cresc","生长 拉丁语 crescere（生长、增加）"]],"suffixes":[["ent","形容词后缀"]]},
   "crest": {"prefix":null,"roots":[["cre","生长 拉丁语 crista（羽冠、突起）"],["st","名词后缀"]],"suffixes":[]},
   "crestfallen": {"prefix":null,"roots":[["crest","冠羽；顶部"],["fallen","下垂的"]],"suffixes":[]},
   "criminal": {"prefix":null,"roots":[["crim","犯罪"],["in","与...相关"]],"suffixes":[["al","形容词/名词后缀"]]},
