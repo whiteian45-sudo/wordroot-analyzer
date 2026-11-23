@@ -441,9 +441,11 @@
   .explain-box .md-p { margin: 3px 0; }
   .explain-box .md-li { padding-left: 16px; position: relative; margin: 2px 0; }
   .explain-box .md-li::before { content: '·'; position: absolute; left: 4px; color: var(--accent); opacity: .7; }
-  .explain-box .md-table { border-collapse: collapse; margin: 8px 0; font-size: calc(13.5px * var(--fs-scale)); width: 100%; table-layout: auto; font-variant-numeric: tabular-nums; }
-  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 5px 10px; text-align: left; word-break: break-word; }
-  .explain-box .md-table th:nth-child(2), .explain-box .md-table td:nth-child(2) { white-space: nowrap; }
+  .explain-box .md-table { border-collapse: collapse; margin: 8px 0; font-size: calc(13.5px * var(--fs-scale)); width: 100%; max-width: 100%; table-layout: auto; font-variant-numeric: tabular-nums; }
+  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 5px 10px; text-align: left; word-break: normal; overflow-wrap: anywhere; }
+  /* 首列是词/场景：不要让英文词从中间断开（effuse 不能拆成 effus/e），宽度交给自动布局 */
+  .explain-box .md-table th:first-child, .explain-box .md-table td:first-child { overflow-wrap: break-word; }
+  .explain-box .md-table-reg th:nth-child(2), .explain-box .md-table-reg td:nth-child(2) { white-space: nowrap; }
   .explain-box .md-table th { color: var(--sub); font-weight: 600; background: var(--glass-card); white-space: nowrap; }
   .explain-box .md-table tr:nth-child(even) td { background: var(--srf-2); }
   .explain-box .md-hr { border: 0; border-top: 1px solid var(--glass-border); margin: 12px 0; }
@@ -22219,7 +22221,8 @@ function mdToHTML(text) {
     const sep = rows.length > 1 && rows[1].every(c => /^:?-{2,}:?$/.test(c));
     const head = sep ? rows[0] : null;
     const body = sep ? rows.slice(2) : rows;
-    let h = '<table class="md-table">';
+    const reg = head && head.some(c => /自然度|Naturalness|Register/.test(c));
+    let h = '<table class="md-table' + (reg ? ' md-table-reg' : '') + '">';
     if (head) h += '<tr>' + head.map(c => '<th>' + mdInline(c) + '</th>').join('') + '</tr>';
     body.forEach(r => { h += '<tr>' + r.map(c => '<td>' + mdInline(c) + '</td>').join('') + '</tr>'; });
     out.push(h + '</table>');
