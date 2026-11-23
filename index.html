@@ -83,6 +83,9 @@
     --aurora-a: 1;
     --overlay: rgba(0,0,0,0.45);
     --mask: rgba(10,12,24,0.62);
+    /* 布局与排版缩放 */
+    --col-w: 660px;
+    --fs-scale: 1;
     /* 表单与滚动条 */
     --option-bg: #1a1e2e;
     --scroll-thumb-c: rgba(255,255,255,0.13);
@@ -191,9 +194,21 @@
   :root[data-theme="light"] .morph.pf { border-color: rgba(109,77,232,0.34); background-image: linear-gradient(180deg, rgba(109,77,232,0.10), rgba(109,77,232,0.03)); }
   :root[data-theme="light"] .morph.rt { border-color: rgba(184,114,26,0.34); background-image: linear-gradient(180deg, rgba(184,114,26,0.10), rgba(184,114,26,0.03)); }
   :root[data-theme="light"] .morph.sf { border-color: rgba(15,157,107,0.32); background-image: linear-gradient(180deg, rgba(15,157,107,0.10), rgba(15,157,107,0.03)); }
-  :root[data-theme="light"] .load-track { background: rgba(15,23,42,0.10); }
+  :root[data-theme="light"] .load-track,
+  :root[data-theme="light"] .rev-prog { background: rgba(15,23,42,0.10); }
+  /* 浅色主题：AI/词典来源徽章与 CEFR 分级色按 WCAG AA 压深，避免浅底白字发糊 */
+  :root[data-theme="light"] .src-badge.ai   { background: #ede5ff; color: #5b2fb3; border-color: #c4a8f0; }
+  :root[data-theme="light"] .src-badge.dict { background: #e6f9ed; color: #136b33; border-color: #8ed4a8; }
+  :root[data-theme="light"] .badge.atlas-cefr.lv-A1 { color: #0e7c44; border-color: rgba(14,124,68,.32); background: rgba(14,124,68,.10); }
+  :root[data-theme="light"] .badge.atlas-cefr.lv-A2 { color: #0b7a6b; border-color: rgba(11,122,107,.32); background: rgba(11,122,107,.10); }
+  :root[data-theme="light"] .badge.atlas-cefr.lv-B1 { color: #1d57c9; border-color: rgba(29,87,201,.32); background: rgba(29,87,201,.10); }
+  :root[data-theme="light"] .badge.atlas-cefr.lv-B2 { color: #5b3fd6; border-color: rgba(91,63,214,.32); background: rgba(91,63,214,.10); }
+  :root[data-theme="light"] .badge.atlas-cefr.lv-C1 { color: #9c5b06; border-color: rgba(156,91,6,.34); background: rgba(156,91,6,.10); }
+  :root[data-theme="light"] .badge.atlas-cefr.lv-C2 { color: #c4304b; border-color: rgba(196,48,75,.32); background: rgba(196,48,75,.10); }
+  :root[data-theme="light"] .q-key,
+  :root[data-theme="light"] .pref-keys kbd { background: rgba(15,23,42,0.06); }
   * { box-sizing: border-box; }
-  html { height: 100%; }
+  html { height: 100%; overflow-y: scroll; }
   body {
     margin: 0; min-height: 100%;
     background: var(--glass-bg);
@@ -250,7 +265,7 @@
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   }
   .brand .subtitle { color: var(--sub); font-size: 13px; margin: 5px 0 0; }
-  .search { width: 100%; max-width: 560px; display: flex; gap: 10px; position: relative; z-index: 1; }
+  .search { width: 100%; max-width: var(--col-w); display: flex; gap: 10px; position: relative; z-index: 1; }
   .search input {
     flex: 1; padding: 14px 20px; font-size: 16px; border-radius: 16px;
     border: 1px solid var(--glass-border);
@@ -290,9 +305,9 @@
   .search button:hover::after { transform: translateX(467%) skewX(-20deg); }
   .search button:hover { box-shadow: 0 8px 26px rgba(92,141,255,0.55), inset 0 1px 0 rgba(255,255,255,0.4); background: linear-gradient(135deg, rgba(92,141,255,0.72), rgba(122,92,255,0.72)); transform: translateY(-1px); }
   .search button:active { transform: translateY(0); }
-  .result { width: 100%; max-width: 560px; margin-top: 26px; display: none; position: relative; z-index: 1; }
+  .result { width: 100%; max-width: var(--col-w); margin-top: 26px; display: none; position: relative; z-index: 1; }
   /* 搜索联想下拉 */
-  #suggest { width: 100%; max-width: 560px; display: none; position: relative; z-index: 3; margin-top: 6px;
+  #suggest { width: 100%; max-width: var(--col-w); display: none; position: relative; z-index: 3; margin-top: 6px;
     background: linear-gradient(150deg, var(--srf-a), var(--srf-b));
     border: 1px solid var(--glass-border); border-radius: 16px;
     backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
@@ -341,7 +356,7 @@
      抬升是假的"能点"暗示；而且整卡位移会让它背后的 backdrop blur 每帧重新采样。
      hover 该留给真正能点的小件，让每个元素说自己的话。 */
   .word-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .word { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+  .word { font-size: calc(26px * var(--fs-scale)); font-weight: 700; letter-spacing: .5px; }
   .badge {
     font-size: 12px; padding: 4px 12px; border-radius: 999px;
     background: var(--accent-soft); border: 1px solid rgba(110,168,255,0.25);
@@ -361,8 +376,8 @@
     background: var(--glass-card-strong); border: 1px solid var(--glass-border);
     
   }
-  .morph b { font-size: 17px; letter-spacing: .5px; }
-  .morph .m { color: var(--sub); font-size: 12px; max-width: 130px; text-align: center; overflow-wrap: anywhere; }
+  .morph b { font-size: calc(17px * var(--fs-scale)); letter-spacing: .5px; }
+  .morph .m { color: var(--sub); font-size: calc(12px * var(--fs-scale)); max-width: 130px; text-align: center; overflow-wrap: anywhere; }
   /* 词素三色语义编码：前缀靛青、词根琥珀、后缀薄荷。
      只染「词素文字 + 边框 + 极淡底色（background-image 叠加，不动玻璃底色）」，保持液态玻璃质感。 */
   .morph.pf { border-color: rgba(169,155,255,0.40); background-image: linear-gradient(180deg, rgba(123,92,240,0.20), rgba(123,92,240,0.05)); }
@@ -401,7 +416,7 @@
   .memo-btn:active:not([disabled]) { transform: scale(.97); }
   .memo-btn[disabled] { opacity: .65; cursor: default; }
   .memo-box {
-    margin-top: 10px; padding: 12px 15px; border-radius: 16px; font-size: 14.5px; line-height: 1.75;
+    margin-top: 10px; padding: 12px 15px; border-radius: 16px; font-size: calc(14.5px * var(--fs-scale)); line-height: 1.75;
     background: var(--glass-card); border: 1px solid var(--glass-border); color: var(--text);
   }
   .memo-box[hidden] { display: none; }
@@ -413,25 +428,24 @@
     vertical-align: middle; margin-left: 6px; opacity: .85;
     position: relative; top: -1px;
   }
-  .src-badge.ai  { background: #ede5ff; color: #6a39c0; border: 1px solid #c4a8f0; }
-  .src-badge.dict { background: #e6f9ed; color: #1a7a3c; border: 1px solid #8ed4a8; }
-  .dark .src-badge.ai   { background: #2a1a4a; color: #c89ef8; border-color: #6a3ab0; }
-  .dark .src-badge.dict { background: #0e2a18; color: #5cd488; border-color: #2a7a4a; }
+  .src-badge.ai   { background: rgba(123,92,240,0.22); color: #d6c3ff; border: 1px solid rgba(169,155,255,0.42); }
+  .src-badge.dict { background: rgba(16,185,129,0.18); color: #7ee2a8; border: 1px solid rgba(126,226,168,0.38); }
   /* 📖 深度讲解：正文用极简 markdown 渲染（见 mdToHTML）；流式期间是纯文本，靠 pre-wrap 保换行 */
-  .explain-box { white-space: pre-wrap; font-size: 14px; line-height: 1.85; }
+  .explain-box { white-space: pre-wrap; font-size: calc(14px * var(--fs-scale)); line-height: 1.85; }
   .explain-h { color: var(--accent); font-weight: 600; }
   .explain-box .md-h {
-    color: var(--accent); font-weight: 600; font-size: 15px; letter-spacing: .2px;
+    color: var(--accent); font-weight: 600; font-size: calc(15px * var(--fs-scale)); letter-spacing: .2px;
     margin: 16px 0 6px; padding-top: 12px; border-top: 1px solid var(--glass-border);
   }
   .explain-box .md-h:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
   .explain-box .md-p { margin: 3px 0; }
   .explain-box .md-li { padding-left: 16px; position: relative; margin: 2px 0; }
   .explain-box .md-li::before { content: '·'; position: absolute; left: 4px; color: var(--accent); opacity: .7; }
-  .explain-box .md-table { border-collapse: collapse; margin: 8px 0; font-size: 13.5px; width: 100%; table-layout: fixed; }
-  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 4px 10px; text-align: left; word-break: break-word; }
-  .explain-box .md-table th { color: var(--sub); font-weight: 600; background: var(--glass-card); }
-  .explain-box .md-table tr:nth-child(even) td { background: rgba(255, 255, 255, .03); }
+  .explain-box .md-table { border-collapse: collapse; margin: 8px 0; font-size: calc(13.5px * var(--fs-scale)); width: 100%; table-layout: auto; font-variant-numeric: tabular-nums; }
+  .explain-box .md-table th, .explain-box .md-table td { border: 1px solid var(--glass-border); padding: 5px 10px; text-align: left; word-break: break-word; }
+  .explain-box .md-table th:nth-child(2), .explain-box .md-table td:nth-child(2) { white-space: nowrap; }
+  .explain-box .md-table th { color: var(--sub); font-weight: 600; background: var(--glass-card); white-space: nowrap; }
+  .explain-box .md-table tr:nth-child(even) td { background: var(--srf-2); }
   .explain-box .md-hr { border: 0; border-top: 1px solid var(--glass-border); margin: 12px 0; }
   .explain-box code { background: var(--glass-card); padding: 0 4px; border-radius: 4px; font-size: 13px; }
   .explain-box b { color: var(--text); font-weight: 600; }
@@ -447,21 +461,25 @@
   .ex-word { font-weight: 600; font-size: 15px; margin-right: auto; }
   .explain-regen { font-size: 12px; padding: 3px 10px; }
   #panel-explain { max-height: none; }
-  /* 字号 / 行距（2026-10-05）：字号用 zoom 加在结果与面板上——卡片里全是写死的 px，
-     只有 zoom 能把它们整体缩放；行距单独用 !important 覆盖几个正文块。都存 localStorage。 */
-  html[data-fs="s"] #result, html[data-fs="s"] #panel-body { zoom: .92; }
-  html[data-fs="l"] #result, html[data-fs="l"] #panel-body { zoom: 1.08; }
+  /* 字号 / 行距：改用 CSS 变量 --fs-scale 缩放全站正文（卡片/抽屉/侧栏/历史/复习同步生效，
+     避免非标准 zoom 破坏 1px 描边清晰度与毛玻璃采样）。 */
+  html[data-fs="s"] { --fs-scale: .92; }
+  html[data-fs="l"] { --fs-scale: 1.09; }
   html[data-lh="tight"] #result .meaning, html[data-lh="tight"] #result .memo-box,
   html[data-lh="tight"] #result .ex-en, html[data-lh="tight"] #result .ex-zh,
-  html[data-lh="tight"] #panel-body .meaning, html[data-lh="tight"] #panel-body .memo-box { line-height: 1.5 !important; }
+  html[data-lh="tight"] #panel-body .meaning, html[data-lh="tight"] #panel-body .memo-box,
+  html[data-lh="tight"] #panel-body .explain-box { line-height: 1.5 !important; }
   html[data-lh="loose"] #result .meaning, html[data-lh="loose"] #result .memo-box,
   html[data-lh="loose"] #result .ex-en, html[data-lh="loose"] #result .ex-zh,
-  html[data-lh="loose"] #panel-body .meaning, html[data-lh="loose"] #panel-body .memo-box { line-height: 2.15 !important; }
-  .meaning { margin-top: 14px; line-height: 1.7; font-size: 14px; }
+  html[data-lh="loose"] #panel-body .meaning, html[data-lh="loose"] #panel-body .memo-box,
+  html[data-lh="loose"] #panel-body .explain-box { line-height: 2.15 !important; }
+  .meaning { margin-top: 14px; line-height: 1.7; font-size: calc(14px * var(--fs-scale)); }
   .meaning .label {
-    color: var(--sub); font-size: 12px; letter-spacing: .4px; margin-bottom: 5px;
+    color: var(--sub); font-size: calc(12px * var(--fs-scale)); letter-spacing: .4px; margin-bottom: 5px;
     display: flex; align-items: center; gap: 6px;
+    transition: color var(--dur-fast);
   }
+  .meaning.sec-flash > .label, .atlas-block.sec-flash > .label { color: var(--accent); }
   /* 小节标签左侧的主题色竖条（2026-10-05）：卡片里十几处 label 一处生效，扫读时有节奏 */
   .meaning .label::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); opacity: .75; flex: none; }
   /* 词源段落里的源词（"gore" 这类带引号的）高亮 */
@@ -484,8 +502,8 @@
   .rel-col { min-width: 0; }
   .rel-col .cognates { margin-top: 0; }
   @media (max-width: 720px) { .rel-wrap { grid-template-columns: 1fr; } }
-  /* 左侧相关词汇侧边栏：宽屏显示、贴近卡片、滚动跟随；窗口窄时回退卡片内 */
-  #side-rel { display: none; position: fixed; top: 88px; width: 250px; max-height: 82vh; overflow-y: auto; overflow-x: hidden; z-index: 5;
+  /* 左侧相关词汇侧边栏：宽屏（>=1220px）显示，确保与 660px 主卡片之间至少留 20px 呼吸间距，绝不重叠 */
+  #side-rel { display: none; position: fixed; top: 88px; width: 244px; max-height: 82vh; overflow-y: auto; overflow-x: hidden; z-index: 5;
     scrollbar-width: thin; scrollbar-color: var(--scroll-thumb-c) transparent; }
   #side-rel::-webkit-scrollbar { width: 4px; }
   #side-rel::-webkit-scrollbar-thumb { background: var(--scroll-thumb-c); border-radius: 4px; }
@@ -493,8 +511,8 @@
   #side-rel::-webkit-scrollbar-track { background: transparent; }
   #side-rel .rel-wrap { grid-template-columns: 1fr; margin-top: 0; }
   #side-rel .rel-col .cognates { margin-top: 14px; }
-  @media (min-width: 1080px) {
-    #side-rel { display: block; left: max(14px, calc(50% - 554px)); }
+  @media (min-width: 1220px) {
+    #side-rel { display: block; left: max(14px, calc(50% - 594px)); }
     .result .rel-wrap { display: none; }
   }
   .cognates .tag {
@@ -507,14 +525,14 @@
     margin-top: 7px; padding: 9px 12px; background: var(--glass-card);
     border: 1px solid var(--glass-border); border-radius: 10px; font-size: 13px; color: var(--sub);
   }
-  .ex-en { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; color: var(--text); line-height: 1.6; }
+  .ex-en { display: flex; align-items: flex-start; gap: 8px; font-size: calc(13.5px * var(--fs-scale)); color: var(--text); line-height: 1.6; }
   .ex-en-txt { flex: 1; }
   .def-line { margin-top: 6px; }
   .def-line:first-of-type { margin-top: 0; }
   /* 「其它义项」的编号与收尾（2026-10-03，多义项） */
   .sx-num { color: var(--sub); font-size: 12px; margin-right: 5px; }
   .sx-more { color: var(--sub); font-size: 12px; }
-  .ex-zh { font-size: 13px; color: var(--sub); line-height: 1.6; margin-top: 3px; }
+  .ex-zh { font-size: calc(13px * var(--fs-scale)); color: var(--sub); line-height: 1.6; margin-top: 3px; }
   /* 英文模式下例句只留英文：中文译文对英语用户没意义，隐藏掉 */
   html[data-lang="en"] .ex-zh { display: none; }
   /* 英文模式也隐藏「译整段」（目标是中文，方向反了） */
@@ -646,7 +664,7 @@
   }
   .cog.xr-word:hover { background: none; border-bottom-color: var(--accent); }
   /* 段落阅读模式 */
-  .para { line-height: 2.3; font-size: 16px; }
+  .para { line-height: 2.3; font-size: calc(16px * var(--fs-scale)); }
   /* 段落里的可点词：按压用底色而不是缩放——缩放一个词会让它与左右邻居视觉重叠，
      段落里"字挨字"，任何位移都读作排版抖动 */
   .ptok {
@@ -678,7 +696,7 @@
   }
   .panel.open { transform: translateX(0); }
   .panel-head {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 16px 20px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0;
   }
   /* 标题可长（📖 gory · 深度讲解）：占满中间、单行省略，别把两边的按钮挤走 */
@@ -688,19 +706,34 @@
   }
   .panel-back {
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
-    border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; flex-shrink: 0;
+    border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; flex-shrink: 0; white-space: nowrap;
     transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast);
   }
   .panel-back:hover { color: var(--accent); border-color: var(--accent); }
   .panel-back[hidden] { display: none; }
   .panel-close {
     border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub);
-    border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer;
+    border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer; flex-shrink: 0; white-space: nowrap;
     transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast);
   }
   .panel-close:hover { color: var(--text); border-color: var(--glass-border-hi); }
   .panel-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
   .panel-body .card { max-width: none; }
+  /* 卡片内快速目录条：区块 >= 4 时出现，单行轻导航直达对应小节 */
+  .card-nav {
+    display: flex; align-items: center; gap: 4px;
+    margin: 12px 0 2px; padding: 8px 0 4px;
+    border-top: 1px solid var(--line-1);
+    overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .card-nav::-webkit-scrollbar { display: none; }
+  .card-nav-btn {
+    flex: none; border: 0; background: transparent; color: var(--sub);
+    font-size: 12px; padding: 3px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+    transition: color var(--dur-fast), background var(--dur-fast);
+  }
+  .card-nav-btn:hover { color: var(--accent); background: var(--accent-soft); }
+  .card-nav-sep { color: var(--line-3); font-size: 11px; user-select: none; flex: none; }
   /* 收藏按钮 */
   .fav-btn {
     margin-left: auto; border: 1px solid var(--glass-border); background: var(--glass-card);
@@ -753,7 +786,7 @@
      （原来是末组 margin-left:auto 推到最右，中间空出一大片）。 */
   .tts-bar {
     display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
-    width: 100%; max-width: 560px; margin-top: 12px; position: relative; z-index: 1;
+    width: 100%; max-width: var(--col-w); margin-top: 12px; position: relative; z-index: 1;
     font-size: 13px; color: var(--sub);
   }
   .bar-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
@@ -803,6 +836,21 @@
   .pref-row[hidden] { display: none; }
   .pref-row select { min-width: 152px; }
   .pref-row .theme-btn { min-width: 92px; text-align: center; }
+  .study-quick { display: inline-flex; align-items: center; gap: 5px; color: var(--text); }
+  .study-quick:hover { color: var(--accent); border-color: var(--accent); }
+  .tab-cnt {
+    font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+    margin-left: 4px; opacity: .82;
+  }
+  .tab-cnt.due { color: var(--gold); opacity: 1; }
+  .tab.active .tab-cnt { color: #fff; opacity: .9; }
+  .pref-keys { display: flex; flex-direction: column; gap: 5px; }
+  .pref-key-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--sub); }
+  .pref-keys kbd {
+    display: inline-block; padding: 1px 6px; border-radius: 6px; font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text);
+    background: var(--srf-2); border: 1px solid var(--glass-border); line-height: 1.5;
+  }
   @keyframes prefIn { from { opacity: 0; transform: translate(-50%, -5px); } to { opacity: 1; transform: translate(-50%, 0); } }
   @media (max-width: 640px) {
     .pref-pop {
@@ -846,27 +894,42 @@
   }
   .switch-btn:hover { color: var(--accent); border-color: var(--accent); }
   /* 复习模式（主动回忆闪卡） */
-  .rev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: var(--sub); }
+  .rev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--sub); font-variant-numeric: tabular-nums; }
   .rev-head .h-btn { margin: 0; }
+  .rev-prog {
+    width: 100%; height: 4px; border-radius: 999px; margin-bottom: 12px;
+    background: var(--srf-a); overflow: hidden;
+  }
+  .rev-prog-fill {
+    width: 100%; height: 100%; border-radius: 999px; transform-origin: 0 50%;
+    background: linear-gradient(90deg, var(--accent), var(--ok));
+    transition: transform var(--dur-std) var(--ease-out);
+  }
   .review { background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 22px; padding: 26px 22px; text-align: center; backdrop-filter: var(--blur); }
-  .rev-word { font-size: 34px; font-weight: 700; color: var(--text); letter-spacing: .5px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .rev-word { font-size: calc(34px * var(--fs-scale)); font-weight: 700; color: var(--text); letter-spacing: .5px; display: flex; align-items: center; justify-content: center; gap: 10px; }
   .rev-word .tts-btn { font-size: 20px; }
-  .rev-date { margin-top: 6px; font-size: 11px; color: var(--sub); opacity: .7; }
-  .rev-sum { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border); font-size: 14.5px; color: var(--text); line-height: 1.7; }
-  .rev-hint { margin-top: 16px; font-size: 12.5px; color: var(--sub); }
-  .rev-btn { display: inline-block; margin: 8px 6px 0; padding: 9px 18px; background: var(--glass-card); border: 1px solid var(--glass-border); color: var(--text); border-radius: 999px; cursor: pointer; font-size: 13.5px; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); }
+  .rev-date { margin-top: 6px; font-size: 11.5px; color: var(--sub); opacity: .78; font-variant-numeric: tabular-nums; }
+  .rev-date .rev-leech { color: var(--gold); font-weight: 600; }
+  .rev-sum { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border); font-size: calc(14.5px * var(--fs-scale)); color: var(--text); line-height: 1.7; }
+  .rev-hint { margin-top: 16px; font-size: calc(12.5px * var(--fs-scale)); color: var(--sub); }
+  .rev-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 6px 0; padding: 9px 18px; background: var(--glass-card); border: 1px solid var(--glass-border); color: var(--text); border-radius: 999px; cursor: pointer; font-size: 13.5px; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast); }
   .rev-btn:hover { border-color: var(--accent); color: var(--accent); }
   .rev-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .rev-btn.primary:hover { filter: brightness(1.08); color: #fff; }
   .rev-btn[disabled] { opacity: .4; cursor: default; }
-  /* 间隔重复的两个自评按钮：忘了偏暖、记住了偏绿，扫一眼就能分清 */
+  /* 间隔重复的三档自评按钮：带可见快捷键角标 + FSRS 预演下次间隔 */
+  .rev-btn.grade-btn {
+    flex-direction: column; gap: 2px; min-width: 106px; padding: 9px 16px; border-radius: 16px;
+  }
+  .rev-btn .rev-btn-top { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .rev-btn .rev-ivl { font-size: 11px; opacity: .78; font-variant-numeric: tabular-nums; }
   .rev-btn.bad { color: var(--gold); border-color: var(--gold); background: var(--gold-soft); }
   .rev-btn.bad:hover { color: var(--gold); border-color: var(--gold); filter: brightness(1.06); }
   .rev-btn.ok { color: var(--ok); border-color: var(--ok); background: rgba(126,226,168,0.12); }
   .rev-btn.ok:hover { color: var(--ok); border-color: var(--ok); filter: brightness(1.06); }
   .rev-btn.great { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
   .rev-btn.great:hover { color: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
-  .rev-nav { margin-top: 8px; }
+  .rev-nav { margin-top: 10px; display: flex; align-items: stretch; justify-content: center; flex-wrap: wrap; gap: 4px; }
   /* FSRS / 四题型复习 */
   .rev-head { flex-wrap: wrap; gap: 8px; }
   .q-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -880,7 +943,7 @@
   .q-opt {
     display: flex; align-items: flex-start; gap: 8px; text-align: left;
     padding: 12px 14px; border-radius: 14px; border: 1px solid var(--glass-border);
-    background: var(--glass-card); color: var(--text); font-size: 13.5px; line-height: 1.5;
+    background: var(--glass-card); color: var(--text); font-size: calc(13.5px * var(--fs-scale)); line-height: 1.5;
     cursor: pointer; transition: transform var(--dur-press), border-color var(--dur-fast), background var(--dur-fast);
   }
   .q-opt:hover { border-color: var(--accent); }
@@ -892,10 +955,10 @@
     align-items: center; justify-content: center; font-size: 11px; color: var(--sub);
     background: rgba(255, 255, 255, 0.06); border: 1px solid var(--glass-border);
   }
-  .q-feedback { margin-top: 16px; font-size: 14px; font-weight: 600; }
+  .q-feedback { margin-top: 16px; font-size: calc(14px * var(--fs-scale)); font-weight: 600; }
   .q-feedback.ok { color: var(--ok); }
   .q-feedback.bad { color: var(--gold); }
-  .q-prompt { margin-top: 14px; font-size: 16px; color: var(--text); line-height: 1.6; }
+  .q-prompt { margin-top: 14px; font-size: calc(16px * var(--fs-scale)); color: var(--text); line-height: 1.6; }
   .q-audio { margin-top: 14px; }
   .q-spell { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
   .q-spell input {
@@ -936,8 +999,8 @@
   .atlas-senses { flex: 1; min-width: 0; }
   .atlas-sense { display: flex; gap: 8px; margin-bottom: 6px; }
   .atlas-pos { color: var(--accent); font-weight: 600; min-width: 30px; }
-  .atlas-zh { font-size: 14px; color: var(--text); }
-  .atlas-en { font-size: 12.5px; color: var(--sub); line-height: 1.55; margin-top: 2px; }
+  .atlas-zh { font-size: calc(14px * var(--fs-scale)); color: var(--text); }
+  .atlas-en { font-size: calc(12.5px * var(--fs-scale)); color: var(--sub); line-height: 1.55; margin-top: 2px; }
   .atlas-audio-row { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
   .atlas-audio { font-size: 11px; padding: 2px 8px; }
   .atlas-sub { margin-top: 12px; font-size: 12px; color: var(--sub); font-weight: 600; }
@@ -947,10 +1010,10 @@
   .atlas-col span { color: var(--sub); font-size: 11.5px; }
   .atlas-fam { font-size: 12.5px; }
   .atlas-ex { margin-top: 8px; padding: 8px 10px; background: var(--srf-2); border-radius: 12px; border: 1px solid var(--glass-border); }
-  .atlas-ex-en { font-size: 13.5px; line-height: 1.55; color: var(--text); }
+  .atlas-ex-en { font-size: calc(13.5px * var(--fs-scale)); line-height: 1.55; color: var(--text); }
   .atlas-ex-en .h-btn { margin-left: 6px; padding: 2px 8px; font-size: 11px; }
-  .atlas-ex-zh { font-size: 12px; color: var(--sub); margin-top: 3px; }
-  .atlas-tip { margin-top: 12px; padding: 8px 10px; border-radius: 12px; background: var(--gold-soft); border: 1px solid rgba(255,212,121,.25); font-size: 12.5px; color: var(--text); line-height: 1.55; }
+  .atlas-ex-zh { font-size: calc(12px * var(--fs-scale)); color: var(--sub); margin-top: 3px; }
+  .atlas-tip { margin-top: 12px; padding: 8px 10px; border-radius: 12px; background: var(--gold-soft); border: 1px solid rgba(255,212,121,.25); font-size: calc(12.5px * var(--fs-scale)); color: var(--text); line-height: 1.55; }
   .atlas-src { margin-top: 10px; font-size: 10.5px; color: var(--sub); opacity: .55; }
   .atlas-pic-lb { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.72); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
   .atlas-pic-lb img { max-width: 92vw; max-height: 86vh; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
@@ -971,7 +1034,7 @@
   .pager-btn[disabled] { opacity: .35; cursor: default; }
   .pager-info { min-width: 60px; text-align: center; }
   /* Tab 导航 */
-  .tabs { display: flex; gap: 8px; width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
+  .tabs { display: flex; gap: 8px; width: 100%; max-width: var(--col-w); margin-top: 22px; position: relative; z-index: 1; }
   .tab {
     flex: 1; padding: 10px 0; text-align: center; font-size: 14px; font-weight: 500;
     border: 1px solid var(--glass-border); border-radius: 16px;
@@ -1021,7 +1084,7 @@
     border-radius: 3px; background: linear-gradient(90deg, var(--accent), #8e7bff);
     transition: transform var(--dur-fast) linear; }
   /* 词根目录：按词素浏览整族词 */
-  #rootsview { width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
+  #rootsview { width: 100%; max-width: var(--col-w); margin-top: 22px; position: relative; z-index: 1; }
   .rd-bar { margin-bottom: 10px; }
   .rd-bar input {
     width: 100%; padding: 11px 16px; font-size: 14px; border-radius: 14px;
@@ -1049,16 +1112,15 @@
   .rd-m.pf { color: var(--pf-c); }
   .rd-m.rt { color: var(--rt-c); }
   .rd-m.sf { color: var(--sf-c); }
-  .rd-mean { color: var(--text); flex: 1; font-size: 13px; opacity: .82;
+  .rd-mean { color: var(--text); flex: 1; font-size: calc(13px * var(--fs-scale)); opacity: .82;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rd-n { color: var(--sub); font-size: 11.5px; flex-shrink: 0; }
   .rd-body { padding: 2px 12px 12px; font-size: 13px; }
   .rd-sub { color: var(--accent); font-size: 11.5px; font-weight: 600; margin: 10px 0 3px; }
   .rd-sub .rd-n { font-weight: 400; margin-left: 6px; }
   .rd-more { margin-top: 12px; text-align: center; }
-  /* 词频/词根目录：限制内容宽度与页面主体（搜索框、tab）对齐。
-     不限制的话宽屏下列表会比上面宽出一大截、摊成一片，看着发散。 */
-  #freqview, #rootsview { max-width: 680px; margin: 20px auto 0; }
+  /* 词频/词根目录：与页面主列 --col-w (660px) 严格对齐，切 Tab 不左右跳动 */
+  #freqview, #rootsview { width: 100%; max-width: var(--col-w); margin: 20px auto 0; position: relative; z-index: 1; }
   /* 返回顶部：页面滚长了才出现（词频一页上千条，主界面长词条翻到底想回去也很费劲） */
   #to-top {
     position: fixed; right: 26px; bottom: 26px; z-index: 8;
@@ -1088,7 +1150,7 @@
   /* 例句搜索：这个容器原先一条样式都没有，作为 body 的 flex 子项（align-items:center）
      会被压缩成"内容宽度"，导致整块比别的 tab 又窄又右移，还紧贴 tab 没有间距。
      补上和 #history/#favlist/#rootsview 一致的宽度约束。 */
-  #exsearch { width: 100%; max-width: 560px; margin-top: 18px; position: relative; z-index: 1; }
+  #exsearch { width: 100%; max-width: var(--col-w); margin-top: 18px; position: relative; z-index: 1; }
   .ex-count { color: var(--sub); font-size: 12px; margin: 8px 2px 6px; }
   /* 例句行尾的「挖空练习」小按钮 */
   .ex-practice {
@@ -1101,31 +1163,69 @@
   .ex-practice[disabled] { opacity: .35; cursor: default; }
   .ex-more-link { margin-bottom: 8px; }
   /* 挖空自测：句子里被挖掉的位置 */
-  .rev-ex { font-size: 17px; line-height: 1.9; color: var(--text); text-align: left; }
+  .rev-ex { font-size: calc(17px * var(--fs-scale)); line-height: 1.9; color: var(--text); text-align: left; }
   /* 挖空位置：画一条等宽下划线，别用成串的下划线字符（字体渲染出来像三段横线） */
   .cloze { display: inline-block; min-width: 58px; height: 1em; vertical-align: -2px;
     border-bottom: 2.5px solid var(--accent); margin: 0 5px; }
   .h-kind { margin-left: 5px; padding: 0 5px; border-radius: 6px; font-size: 10px;
     background: var(--accent-soft); color: var(--accent); font-weight: 400; }
-  #history { width: 100%; max-width: 560px; margin-top: 22px; display: none; position: relative; z-index: 1; }
+  #history { width: 100%; max-width: var(--col-w); margin-top: 22px; display: none; position: relative; z-index: 1; }
   #history.show { display: block; }
-  #favlist { width: 100%; max-width: 560px; margin-top: 22px; position: relative; z-index: 1; }
-  .h-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--sub); font-size: 13px; margin-bottom: 8px; }
-  .h-n { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 0 8px; font-size: 12px; }
+  #favlist { width: 100%; max-width: var(--col-w); margin-top: 22px; position: relative; z-index: 1; }
+  .h-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--sub); font-size: 13px; margin-bottom: 10px; }
+  .h-head-meta { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-right: auto; font-variant-numeric: tabular-nums; }
+  .h-head-acts { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .h-study-line { flex-basis: 100%; font-size: 12px; color: var(--sub); opacity: .82; margin-top: -2px; font-variant-numeric: tabular-nums; }
+  .h-n { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 0 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
   .h-n.due { background: var(--gold-soft); color: var(--gold); }
-  .h-btn { border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub); border-radius: 10px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: transform var(--dur-press), color var(--dur-fast); }
-  .h-btn:hover { color: var(--text); }
+  .h-btn { border: 1px solid var(--glass-border); background: var(--glass-card); color: var(--sub); border-radius: 10px; padding: 4px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: transform var(--dur-press), color var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast); }
+  .h-btn:hover { color: var(--text); border-color: var(--glass-border-hi); }
   .h-btn:disabled { opacity: .55; cursor: default; }
-  #h-clear { margin-left: auto; }
-  .h-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; transition: background var(--dur-fast) linear; }
+  .h-btn.confirming, .h-menu-item.confirming { color: var(--danger); border-color: var(--danger-line); background: rgba(255,100,100,0.12); }
+  /* 历史「更多」折叠菜单（把计划设置/导出/导入/清空收拢，避免头部一行堆 10 个按钮） */
+  .h-more-wrap { position: relative; display: inline-flex; }
+  .h-more-menu {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 156px;
+    padding: 5px; border-radius: 14px;
+    background: var(--pop-bg); border: 1px solid var(--glass-border-hi);
+    box-shadow: var(--shadow); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .h-more-menu[hidden] { display: none; }
+  .h-menu-item {
+    width: 100%; text-align: left; border: 1px solid transparent; background: transparent;
+    color: var(--text); border-radius: 9px; padding: 7px 10px; font-size: 12.5px;
+    cursor: pointer; white-space: nowrap;
+    transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  }
+  .h-menu-item:hover { background: var(--srf-2); }
+  .h-menu-item.danger { color: var(--danger); }
+  .h-menu-sep { height: 1px; background: var(--line-2); margin: 3px 4px; }
+  #fav-clear { margin-left: auto; }
+  .h-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: calc(13px * var(--fs-scale)); transition: background var(--dur-fast) linear; }
   .h-item:hover { background: var(--glass-card); }
   .h-w { font-weight: 600; color: var(--accent); min-width: 90px; }
   .h-s { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
-  .h-t { color: var(--sub); font-size: 12px; flex-shrink: 0; }
+  .h-t { color: var(--sub); font-size: calc(12px * var(--fs-scale)); flex-shrink: 0; font-variant-numeric: tabular-nums; }
   .fav-rm { color: var(--sub); cursor: pointer; padding: 0 4px; font-size: 12px; }
   .fav-rm:hover { color: var(--gold); }
   /* 收藏列表里的词条容器也玻璃化 */
-  .favlist .h-item { border: 1px solid var(--glass-border); margin-bottom: 8px; background: var(--glass-card);  }
+  .favlist .h-item { border: 1px solid var(--glass-border); margin-bottom: 8px; background: var(--glass-card); }
+  /* 液态玻璃 Toast：替代原生 alert() */
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; z-index: 1100;
+    transform: translate(-50%, 14px); opacity: 0; pointer-events: none;
+    max-width: min(440px, calc(100vw - 32px));
+    padding: 10px 18px; border-radius: 999px; font-size: 13px; line-height: 1.45;
+    color: var(--text); background: var(--pop-bg);
+    border: 1px solid var(--glass-border-hi);
+    box-shadow: 0 1px 2px var(--shadow-contact), 0 12px 36px var(--shadow-c);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-std) var(--ease-out);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast.ok { border-color: rgba(126,226,168,0.5); }
+  .toast.warn { border-color: var(--warn-line-hi); }
 
   /* ===== 动效关键帧 ===== */
   @keyframes cardIn { from { transform: translateY(10px); } to { transform: none; } }
@@ -1139,7 +1239,7 @@
   :where(a, button, [role="button"], select, summary,
          .tab, .cog, .ptok, .tts-btn, .fav-btn, .rev-btn, .pager-btn, .h-btn, .rd-chip, .rd-head,
          .theme-btn, .trans-btn, .switch-btn, .ex-practice, .grimm, .tts-eng, .fav-rm,
-         .panel-close, .h-item, .sg-item):focus-visible {
+         .panel-close, .h-item, .sg-item, .card-nav-btn, .h-menu-item):focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
   }
@@ -1234,6 +1334,9 @@
   </select>
   </div>
   <div class="bar-group">
+  <button class="theme-btn study-quick" id="top-daily" title="直接开始今日到期词与新词学习">📅 <span data-en="Today">今日学习</span><span class="tab-cnt due" id="top-due-cnt" hidden></span></button>
+  </div>
+  <div class="bar-group">
   <button class="theme-btn pref-btn" id="pref-btn" aria-expanded="false" aria-controls="pref-pop" title="设置">⚙ 设置</button>
   </div>
   <span class="tts-hint" id="tts-hint"></span>
@@ -1269,6 +1372,16 @@
       <div class="pref-row"><span>主题</span><button class="theme-btn" id="theme-btn" title="切换主题：自动 → 浅色 → 深色">🌗 自动</button></div>
       <div class="pref-row"><span>语言</span><button class="theme-btn" id="lang-btn" title="Switch display language / 切换界面语言">中</button></div>
     </div>
+    <div class="pref-sec">
+      <div class="pref-sec-title" data-en="Shortcuts">快捷键</div>
+      <div class="pref-keys">
+        <div class="pref-key-row"><span>聚焦搜索 / 直接敲字母</span><span><kbd>/</kbd></span></div>
+        <div class="pref-key-row"><span>朗读 / 慢速朗读</span><span><kbd>Space</kbd> <kbd>Shift</kbd></span></div>
+        <div class="pref-key-row"><span>上一个 / 下一个词</span><span><kbd>[</kbd> <kbd>]</kbd></span></div>
+        <div class="pref-key-row"><span>复习评分 / 揭晓</span><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> <kbd>Space</kbd></span></div>
+        <div class="pref-key-row"><span>关闭面板 / 弹层</span><span><kbd>Esc</kbd></span></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1277,7 +1390,7 @@
   <button class="tab" data-tab="roots" data-en="Roots">词根</button>
   <button class="tab" data-tab="freq" data-en="Frequency">词频</button>
   <button class="tab" data-tab="ex" data-en="Examples">例句</button>
-  <button class="tab" data-tab="fav" data-en="Favourites">收藏</button>
+  <button class="tab" data-tab="fav"><span data-en="Favourites">收藏</span><span class="tab-cnt" id="tab-fav-cnt" hidden></span></button>
 </div>
 
 <button id="to-top" title="返回顶部" data-en="Back to top">↑</button>
@@ -1321,6 +1434,7 @@
   <div id="ex-list"></div>
 </div>
 
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="load-pill" style="display:none"></div>
 <div id="load-mask" class="load-mask">
   <div class="load-card">
@@ -21354,6 +21468,13 @@ const UI_EN = {
 '保存图片':'Save image','随机词根':'Random root','没有匹配的词根':'No matching root',
 '点击看词卡':'Click for the word card','点击切换中心':'Click to re-centre',
 '到期上限':'Due limit',
+'今日学习':'Today','学习计划设置':'Study plan settings','导出记录':'Export backup','导入备份':'Import backup',
+'清空全部记录':'Clear all history','再点一次确认清空':'Click again to confirm','已清空查词记录':'History cleared',
+'已清空收藏':'Favourites cleared','已导出记录':'Backup exported','更多操作':'More actions',
+'聚焦搜索 / 直接敲字母':'Search / type a word','朗读 / 慢速朗读':'Speak / slow speak',
+'上一个 / 下一个词':'Previous / next word','复习评分 / 揭晓':'Rate / reveal card','关闭面板 / 弹层':'Close panel / popup',
+'明天':'Tomorrow','新词':'New','易错':'Leech','稳定度':'Stability','巩固中':'Learning','已练':'Reps ','次':'',
+'顽固词':'Leech',
 };
 function T(s) { return EN_MODE() ? (UI_EN[s] !== undefined ? UI_EN[s] : s) : s; }
 
@@ -22648,6 +22769,115 @@ function clearSideRel() {
   if (side) side.innerHTML = '';
 }
 
+/* 液态玻璃 Toast：替代原生 alert()，不破坏页面视觉也避免嵌套环境拦截 */
+let _toastTimer = null;
+function showToast(msg, tone) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = String(msg || '');
+  el.className = 'toast show' + (tone ? ' ' + tone : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2800);
+}
+
+/* 内联二次确认：替代原生 confirm()，首点进入确认态，3.5s 内再点执行 */
+function armConfirm(btn, confirmText, onConfirm) {
+  if (!btn) return;
+  if (btn.dataset.armed === '1') {
+    clearTimeout(btn._armTimer);
+    btn.dataset.armed = '';
+    btn.classList.remove('confirming');
+    if (btn.dataset.origText) btn.textContent = btn.dataset.origText;
+    onConfirm();
+    return;
+  }
+  btn.dataset.origText = btn.textContent;
+  btn.dataset.armed = '1';
+  btn.classList.add('confirming');
+  btn.textContent = confirmText;
+  clearTimeout(btn._armTimer);
+  btn._armTimer = setTimeout(() => {
+    btn.dataset.armed = '';
+    btn.classList.remove('confirming');
+    if (btn.dataset.origText) btn.textContent = btn.dataset.origText;
+  }, 3500);
+}
+
+/* 同步顶部 Tab 收藏计数 & 顶栏「今日学习」到期角标 */
+function syncNavCounts() {
+  const favEl = document.getElementById('tab-fav-cnt');
+  if (favEl) {
+    const fn = loadFavs().length;
+    favEl.textContent = fn ? String(fn) : '';
+    favEl.hidden = !fn;
+  }
+  const dueEl = document.getElementById('top-due-cnt');
+  if (dueEl) {
+    const dn = dueItems(loadHistory()).length;
+    dueEl.textContent = dn ? String(dn) : '';
+    dueEl.hidden = !dn;
+  }
+}
+
+/* 长词卡内快跳目录：可见区块 >= 4 时在词头下方插入单行轻锚点条 */
+function injectCardNav(scope) {
+  const card = scope && scope.querySelector('.card');
+  if (!card || card.querySelector('.miss')) return;
+  const rawSecs = [...card.children].filter(el =>
+    (el.classList.contains('meaning') || el.classList.contains('atlas-block')) &&
+    el.querySelector(':scope > .label')
+  );
+  const shortLabel = (raw) => {
+    const t = String(raw || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    if (!t || /^(音标|重音|词性|Pronunciation|Part of speech)/i.test(t)) return '';
+    if (t.startsWith('词根词缀分解')) return EN_MODE() ? 'Morphology' : '拆解';
+    if (t.startsWith('词源演变链')) return EN_MODE() ? 'Chain' : '演变链';
+    if (t.startsWith('词源')) return EN_MODE() ? 'Etymology' : '词源';
+    if (t.startsWith('其它义项')) return EN_MODE() ? 'Senses' : '义项';
+    if (t.startsWith('英文释义')) return EN_MODE() ? 'English' : '英释';
+    if (t.startsWith('释义')) return EN_MODE() ? 'Meaning' : '释义';
+    if (t.startsWith('词光')) return EN_MODE() ? 'Atlas' : '词光';
+    if (t.startsWith('例句')) return EN_MODE() ? 'Examples' : '例句';
+    if (t.startsWith('同源') || t.startsWith('同根')) return EN_MODE() ? 'Cognates' : '同根';
+    if (t.startsWith('近义')) return EN_MODE() ? 'Thesaurus' : '近反义';
+    return t.replace(/[（(·:].*$/, '').trim().slice(0, 8);
+  };
+  const secs = [];
+  const seen = new Set();
+  for (const el of rawSecs) {
+    const lbl = el.querySelector(':scope > .label');
+    const name = shortLabel(lbl ? lbl.textContent : '');
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    secs.push({ el, name });
+  }
+  if (secs.length < 4) return;
+  const anchor = card.querySelector(':scope > .word-actions') || card.querySelector(':scope > .word-line');
+  if (!anchor) return;
+  const nav = document.createElement('div');
+  nav.className = 'card-nav';
+  secs.forEach((s, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'card-nav-sep';
+      sep.textContent = '·';
+      sep.setAttribute('aria-hidden', 'true');
+      nav.appendChild(sep);
+    }
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'card-nav-btn';
+    b.textContent = s.name;
+    b.addEventListener('click', () => {
+      s.el.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+      s.el.classList.add('sec-flash');
+      setTimeout(() => s.el.classList.remove('sec-flash'), 900);
+    });
+    nav.appendChild(b);
+  });
+  anchor.insertAdjacentElement('afterend', nav);
+}
+
 function render(r, bannerHTML) {
   result.innerHTML = (bannerHTML || '') + cardHTML(r);
   decorateBnc(result, r);
@@ -22656,6 +22886,7 @@ function render(r, bannerHTML) {
   const side = document.getElementById('side-rel');
   if (side) side.innerHTML = lastRel;
   translateDOM(document.body);   // 必须放在左侧栏赋值之后：栏内容也是这个函数渲染的
+  injectCardNav(result);
 }
 
 /* 装载完成后，把当时被搁置的查询补上：主查询 + 右侧面板各查一次。
@@ -23202,6 +23433,7 @@ function renderFavs() {
   const el = document.getElementById('favlist');
   if (!el) return;
   const f = loadFavs();
+  syncNavCounts();
   if (!f.length) {
     el.innerHTML = '<div class="card"><div class="miss">还没有收藏的单词。查询一个词，点右上角「☆ 收藏」即可加入。</div></div>';
     translateDOM(el);   // 空态也要过翻译层：启动时就渲染，否则英文模式下一直挂中文
@@ -24128,7 +24360,7 @@ function searchExamples(q) {
 
 // 按词表搜例句：从词根目录 / 词卡跳过来，看这批词在真实语境里怎么用
 function searchExamplesByWords(words, title) {
-  if (!EXAMPLES_READY) { alert(T('例句库还在建立索引，稍等几秒再试。')); return; }
+  if (!EXAMPLES_READY) { showToast(T('例句库还在建立索引，稍等几秒再试。'), 'warn'); return; }
   const set = new Set();
   (words || []).forEach(w => { const k = String(w).toLowerCase(); if (k) set.add(k); });
   const hits = [];
@@ -24356,6 +24588,49 @@ function fsrsSchedule(it, rating, now, history) {
   it.d = now + ivl * DAY_MS;
   return ivl;
 }
+/* 纯预览：按 FSRS-6 推算三档自评的下次间隔天数（不改动任何状态，供按钮副标题展示） */
+function fsrsPreviewInterval(cur, rating, now) {
+  const h = loadHistory();
+  const src = h.find(x => (x.k || x.w) === (cur.k || cur.w)) || cur;
+  const f = Object.assign({}, fsrsOf(src));
+  const isNew = f.state === FSRS_STATE.NEW || !(f.s > 0);
+  if (isNew) return rating === 4 ? 3 : 1;
+  if (rating === 1) return 1;
+  const elapsed = Math.max(0, ((now || Date.now()) - f.last) / DAY_MS);
+  const mem = fsrsNextMemory(f, rating, elapsed);
+  return fsrsInterval(mem.s);
+}
+function fmtInterval(days) {
+  const d = Math.max(1, Math.round(days || 1));
+  if (EN_MODE()) {
+    if (d === 1) return '1d';
+    if (d < 14) return d + 'd';
+    if (d < 60) return Math.round(d / 7) + 'w';
+    return Math.round(d / 30) + 'mo';
+  }
+  if (d === 1) return '明天';
+  if (d < 14) return d + ' 天';
+  if (d < 60) return Math.round(d / 7) + ' 周';
+  return Math.round(d / 30) + ' 个月';
+}
+function fsrsStatusHTML(cur) {
+  const h = loadHistory();
+  const src = h.find(x => (x.k || x.w) === (cur.k || cur.w)) || cur;
+  const f = fsrsOf(src);
+  if (f.state === FSRS_STATE.NEW || !(f.s > 0)) return escapeHtml(T('新词'));
+  const parts = [];
+  if (f.s >= 1) {
+    parts.push(EN_MODE() ? ('S ' + Math.round(f.s) + 'd') : (T('稳定度') + ' ' + Math.round(f.s) + '天'));
+  } else {
+    parts.push(T('巩固中'));
+  }
+  if (f.reps > 0) parts.push(EN_MODE() ? (f.reps + '×') : (T('已练') + f.reps + T('次')));
+  let out = escapeHtml(parts.join(' · '));
+  if ((f.lapses || 0) >= LEECH_LAPSES) {
+    out += ' · <span class="rev-leech">⚠ ' + escapeHtml(T('易错')) + ' (' + f.lapses + ')</span>';
+  }
+  return out;
+}
 
 /* 学习统计：只记「第一次作答」。答错后换题型补看的那次不重复计分，
    所以正确率不会被反复重做刷高。存在 localStorage，随导出/导入一起走。 */
@@ -24566,7 +24841,7 @@ function saveHistory(r) {
 // 一键导出当前记录（另存一份，用于备份或换电脑迁移）
 async function exportHistory() {
   const h = loadHistory();
-  if (!h.length) { alert(T('暂无记录可导出')); return; }
+  if (!h.length) { showToast(T('暂无记录可导出'), 'warn'); return; }
   const stamp = new Date().toISOString().slice(0, 10);
   const blob = new Blob([JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), items: h, study: loadStudy() }, null, 2)],
     { type: 'application/json' });
@@ -24579,6 +24854,7 @@ async function exportHistory() {
       const w = await handle.createWritable();
       await w.write(blob);
       await w.close();
+      showToast(T('已导出记录'), 'ok');
       return;
     } catch (e) { /* 用户取消则走下方降级下载 */ }
   }
@@ -24587,6 +24863,7 @@ async function exportHistory() {
   a.href = url; a.download = '查词记录-' + stamp + '.json';
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 3000);
+  showToast(T('已导出记录'), 'ok');
 }
 
 /* 导入备份：合并而不是覆盖——同 k 取 t 更新的那条，学习统计按天取较大值，
@@ -24602,7 +24879,7 @@ function importHistory() {
       const doc = JSON.parse(await file.text());
       const items = Array.isArray(doc) ? doc : (doc && Array.isArray(doc.items) ? doc.items : []);
       const clean = items.map(normHistItem).filter(Boolean);
-      if (!clean.length) { alert(T('这个文件里没有可导入的记录。')); return; }
+      if (!clean.length) { showToast(T('这个文件里没有可导入的记录。'), 'warn'); return; }
       const map = new Map();
       loadHistory().forEach(x => map.set(x.k || x.w, x));
       let added = 0;
@@ -24616,9 +24893,9 @@ function importHistory() {
       pushStudy(loadStudy());
       persistHistory(merged);
       renderHistory();
-      alert(T('已导入') + ' ' + added + ' ' + T('条记录'));
+      showToast(T('已导入') + ' ' + added + ' ' + T('条记录'), 'ok');
     } catch (e) {
-      alert(T('导入失败：文件不是有效的 JSON 备份。'));
+      showToast(T('导入失败：文件不是有效的 JSON 备份。'), 'warn');
     }
   };
   inp.style.display = 'none';
@@ -24823,7 +25100,7 @@ async function startDaily() {
   const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0)).slice(0, cfg.dueCap);
   const td = studyToday();
   const fresh = pickNewWords(Math.max(0, cfg.perDay - td.new));
-  if (!due.length && !fresh.length) { alert(T('今天没有到期的词，也没有新词可学。')); return; }
+  if (!due.length && !fresh.length) { showToast(T('今天没有到期的词，也没有新词可学。'), 'warn'); return; }
   await ensureDict(fresh.concat(due.map(x => x.w)));
   const list = disperseRootSiblings(due.concat(fresh.map(w => normHistItem({
     k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word', fresh: true
@@ -24832,6 +25109,8 @@ async function startDaily() {
   input.blur();
   switchTab('query');
   renderReview();
+  const histEl = document.getElementById('history');
+  if (histEl) histEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 }
 
 /* 复习入口。all=true 洗牌全部；默认只复习到期的词、按到期先后排。
@@ -24849,6 +25128,8 @@ async function startReview(all) {
   input.blur();
   await ensureDict(list.map(x => x.w));
   renderReview();
+  const histEl = document.getElementById('history');
+  if (histEl) histEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 }
 
 /* 按词频级别抽一批测一测：复用同一套题型与 FSRS 评分。 */
@@ -25090,7 +25371,7 @@ function startExamplePractice(only) {
     seen.add(it.k);
     deck.push(it);
   }
-  if (!deck.length) { alert(T('这批例句里没有可用于挖空的句子（句中找不到目标词形）。')); return; }
+  if (!deck.length) { showToast(T('这批例句里没有可用于挖空的句子（句中找不到目标词形）。'), 'warn'); return; }
   // 先把它们收进历史，等于"加入复习队列"
   const h = loadHistory();
   const incoming = new Map(deck.map(it => [it.k, it]));
@@ -25103,6 +25384,8 @@ function startExamplePractice(only) {
   };
   switchTab('query');    // 复习卡渲染在 #history，只有查询 tab 显示它
   renderReview();
+  const histEl = document.getElementById('history');
+  if (histEl) histEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 }
 
 // 主动回忆：闪卡 / 选义 / 听音 / 拼写四种题型共用同一套 FSRS 评分。
@@ -25146,7 +25429,8 @@ function renderReview() {
   if (!s || s.finished || !s.list.length) { renderHistory(); return; }
   const cur = s.list[s.i];
   const q = ensureQuestion(cur);
-  const d = new Date(cur.t || Date.now());
+  const now = Date.now();
+  const d = new Date(cur.t || now);
   const ts = (d.getMonth() + 1) + '-' + d.getDate();
   const modeNames = { mix: '混合', choice: '选义', listen: '听音', spell: '拼写', flash: '闪卡' };
   const modeSel = '<label class="q-mode" title="' + escapeHtml(T('选择练习题型')) + '">' + T('题型') +
@@ -25158,13 +25442,24 @@ function renderReview() {
     '<span class="q-tools">' + modeSel +
     '<button class="h-btn" data-rev="all" title="' + escapeHtml(T('不看排程，洗牌复习全部')) + '">🔀 ' + T('全部') + '</button>' +
     '<button class="h-btn" data-rev="quit">' + T('退出') + '</button></span></div>';
+  const prog = Math.min(1, s.done / Math.max(1, s.total + (s.requeued || 0)));
+  const progBar = '<div class="rev-prog" aria-hidden="true"><div class="rev-prog-fill" style="transform:scaleX(' + prog.toFixed(4) + ')"></div></div>';
+  const ivlBad = fmtInterval(fsrsPreviewInterval(cur, 1, now));
+  const ivlOk = fmtInterval(fsrsPreviewInterval(cur, 3, now));
+  const ivlGreat = fmtInterval(fsrsPreviewInterval(cur, 4, now));
   const grades =
     '<div class="rev-nav">' +
-    '<button class="rev-btn bad" data-rev="bad" title="' + escapeHtml(T('忘了：明天重来，本轮稍后再考一次（快捷键 1）')) + '">😰 ' + T('忘了') + '</button>' +
-    '<button class="rev-btn ok" data-rev="ok" title="' + escapeHtml(T('还行：按 FSRS 排期（快捷键 2）')) + '">😊 ' + T('还行') + '</button>' +
-    '<button class="rev-btn great" data-rev="great" title="' + escapeHtml(T('轻松：间隔拉长（快捷键 3）')) + '">😎 ' + T('轻松') + '</button>' +
+    '<button class="rev-btn grade-btn bad" data-rev="bad" title="' + escapeHtml(T('忘了：明天重来，本轮稍后再考一次（快捷键 1）')) + '">' +
+      '<span class="rev-btn-top"><span class="q-key">1</span>😰 ' + T('忘了') + '</span>' +
+      '<span class="rev-ivl">' + escapeHtml(ivlBad) + '</span></button>' +
+    '<button class="rev-btn grade-btn ok" data-rev="ok" title="' + escapeHtml(T('还行：按 FSRS 排期（快捷键 2）')) + '">' +
+      '<span class="rev-btn-top"><span class="q-key">2</span>😊 ' + T('还行') + '</span>' +
+      '<span class="rev-ivl">' + escapeHtml(ivlOk) + '</span></button>' +
+    '<button class="rev-btn grade-btn great" data-rev="great" title="' + escapeHtml(T('轻松：间隔拉长（快捷键 3）')) + '">' +
+      '<span class="rev-btn-top"><span class="q-key">3</span>😎 ' + T('轻松') + '</span>' +
+      '<span class="rev-ivl">' + escapeHtml(ivlGreat) + '</span></button>' +
     '</div>';
-  let h = head + '<div class="review">';
+  let h = head + progBar + '<div class="review">';
 
   if (cur.kind === 'ex') {
     // 句子卡：揭晓前把目标词挖掉，揭晓后高亮原词并给出中文
@@ -25178,7 +25473,7 @@ function renderReview() {
         escapeHtml(decodeEntities(cur.en.slice(m.index + m[0].length)));
     }
     h += '<div class="rev-ex">' + sentence + '</div>';
-    h += '<div class="rev-date">' + ts + (cur.b ? ' · 第 ' + (cur.b + 1) + ' 档' : '') + '　例句挖空</div>';
+    h += '<div class="rev-date">' + ts + ' · ' + fsrsStatusHTML(cur) + '　例句挖空</div>';
     if (s.shown) {
       h += '<div class="rev-sum"><b>' + escapeHtml(decodeEntities(cur.w)) + '</b>　' +
         escapeHtml(decodeEntities(EN_MODE() ? (summaryFor(cur.w) || cur.zh || '') : (cur.zh || '(暂无中文)'))) + '</div>';
@@ -25192,13 +25487,14 @@ function renderReview() {
     el.innerHTML = h;
     el.classList.add('show');
     translateDOM(el);
+    syncNavCounts();
     return;
   }
 
   if (q.type === 'choice') {
     h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
       '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
-    h += '<div class="rev-date">' + ts + ' · ' + T('选义') + '</div>';
+    h += '<div class="rev-date">' + ts + ' · ' + T('选义') + ' · ' + fsrsStatusHTML(cur) + '</div>';
     if (!s.answered) h += '<div class="rev-hint">' + T('选一个意思') + '</div>';
     h += qOptionsHTML(q, s);
     if (s.answered) h += qFeedbackHTML(cur, s, s.result === 'wrong' ? T('正确答案') + ': ' + cur.w : '');
@@ -25211,14 +25507,14 @@ function renderReview() {
       h += '<div class="q-audio"><button class="rev-btn primary" data-rev="replay">🔊 ' + T('播放发音') + '</button></div>';
       h += '<div class="rev-hint">' + T('听发音，选出这个词') + '</div>';
     }
-    h += '<div class="rev-date">' + ts + ' · ' + T('听音') + '</div>';
+    h += '<div class="rev-date">' + ts + ' · ' + T('听音') + ' · ' + fsrsStatusHTML(cur) + '</div>';
     h += qOptionsHTML(q, s);
     if (s.answered) h += qFeedbackHTML(cur, s, s.result === 'wrong' ? T('正确答案') + ': ' + cur.w : '');
     h += '</div>';
   } else if (q.type === 'spell') {
     h += '<div class="q-prompt">' + escapeHtml(meaningFor(cur)) + '</div>';
     h += '<div class="q-audio"><button class="rev-btn" data-rev="replay">🔊 ' + T('播放发音') + '</button></div>';
-    h += '<div class="rev-date">' + ts + ' · ' + T('拼写') + '</div>';
+    h += '<div class="rev-date">' + ts + ' · ' + T('拼写') + ' · ' + fsrsStatusHTML(cur) + '</div>';
     if (s.answered) {
       h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span></div>';
       const extra = s.result === 'wrong'
@@ -25239,7 +25535,7 @@ function renderReview() {
     // 闪卡：保持原来的「先看词 → 揭晓 → 三档自评」
     h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
       '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
-    h += '<div class="rev-date">' + ts + (cur.b ? ' · 第 ' + (cur.b + 1) + ' 档' : '') + '</div>';
+    h += '<div class="rev-date">' + ts + ' · ' + fsrsStatusHTML(cur) + '</div>';
     if (s.shown) {
       h += '<div class="rev-sum">' + escapeHtml(meaningFor(cur) || (EN_MODE() ? '(no definition)' : '(暂无释义)')) + '</div>';
       const rv = analyze(cur.w);
@@ -25256,6 +25552,7 @@ function renderReview() {
   el.innerHTML = h;
   el.classList.add('show');
   translateDOM(el);
+  syncNavCounts();
   if (q.type === 'spell' && !s.answered) {
     setTimeout(() => { const box = document.getElementById('spell-in'); if (box) box.focus(); }, 0);
   }
@@ -25271,12 +25568,26 @@ function renderHistory() {
   const hc = todayCfg();
   const todayTitle = '到期词（最多 ' + (hc.dueCap >= 9999 ? '全部' : hc.dueCap + ' 张') +
     '）+ 今日新词（' + hc.perDay + ' 个）';
+  syncNavCounts();
+  const moreMenu = (hasItems) =>
+    '<div class="h-more-wrap">' +
+      '<button class="h-btn" id="h-more-btn" aria-expanded="false" aria-controls="h-more-menu" title="' + escapeHtml(T('更多操作')) + '">···</button>' +
+      '<div class="h-more-menu" id="h-more-menu" hidden>' +
+        '<button class="h-menu-item" id="h-today-cfg">⚙ ' + escapeHtml(T('学习计划设置')) + '</button>' +
+        (hasItems ? '<button class="h-menu-item" id="h-export">↗ ' + escapeHtml(T('导出记录')) + '</button>' : '') +
+        '<button class="h-menu-item" id="h-import">↙ ' + escapeHtml(T('导入备份')) + '</button>' +
+        (hasItems ? '<div class="h-menu-sep"></div><button class="h-menu-item danger" id="h-clear">✕ ' + escapeHtml(T('清空全部记录')) + '</button>' : '') +
+      '</div>' +
+    '</div>';
   if (!h.length) {
-    el.innerHTML = '<div class="h-head">查词记录<span class="h-n">0</span>' +
-      '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
-      '<button class="h-btn" id="h-today-cfg" title="起点 CEFR / 话题 / 每日新词">⚙</button>' +
-      '<button class="h-btn" id="h-import">导入</button>' +
-      '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span></div>' +
+    el.innerHTML = '<div class="h-head">' +
+      '<span class="h-head-meta">查词记录<span class="h-n">0</span></span>' +
+      '<span class="h-head-acts">' +
+        '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
+        moreMenu(false) +
+      '</span>' +
+      '<div class="h-study-line" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</div>' +
+      '</div>' +
       '<div class="miss" style="opacity:.55;font-size:12.5px;padding:4px 2px">查询过的词会累积到这里</div>';
     el.classList.add('show');
     translateDOM(el);
@@ -25309,16 +25620,18 @@ function renderHistory() {
       '</div>' : '';
 
   const dueN = dueItems(h).length;
-  const _hist = '<div class="h-head">查词记录' +
-    '<span class="h-n">' + h.length + '</span>' +
-    (dueN ? '<span class="h-n due" title="按间隔重复排到的词">待复习 ' + dueN + '</span>' : '') +
-    '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">🎲 复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
-    '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
-    '<button class="h-btn" id="h-today-cfg" title="起点 CEFR / 话题 / 每日新词">⚙</button>' +
-    '<button class="h-btn" id="h-export">导出</button>' +
-    '<button class="h-btn" id="h-import">导入</button>' +
-    '<span class="h-n study" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</span>' +
-    '<button class="h-btn" id="h-clear">清空</button></div>' + items + pager;
+  const _hist = '<div class="h-head">' +
+    '<span class="h-head-meta">查词记录' +
+      '<span class="h-n">' + h.length + '</span>' +
+      (dueN ? '<span class="h-n due" title="按间隔重复排到的词">待复习 ' + dueN + '</span>' : '') +
+    '</span>' +
+    '<span class="h-head-acts">' +
+      '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
+      '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">🎲 复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
+      moreMenu(true) +
+    '</span>' +
+    '<div class="h-study-line" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</div>' +
+    '</div>' + items + pager;
   el.innerHTML = _hist;
   el.classList.add('show');
   translateDOM(el);
@@ -25369,18 +25682,38 @@ document.getElementById('history').addEventListener('click', (e) => {
     renderHistory();
     return;
   }
+  const moreBtn = e.target.closest('#h-more-btn');
+  if (moreBtn) {
+    const menu = document.getElementById('h-more-menu');
+    if (menu) {
+      const open = menu.hidden;
+      menu.hidden = !open;
+      moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    return;
+  }
+  const closeMore = () => {
+    const m = document.getElementById('h-more-menu');
+    const b = document.getElementById('h-more-btn');
+    if (m) m.hidden = true;
+    if (b) b.setAttribute('aria-expanded', 'false');
+  };
   if (e.target.id === 'h-shuffle') { startReview(); return; }
   if (e.target.id === 'h-daily') { startDaily(); return; }
-  if (e.target.id === 'h-today-cfg') { openTodayCfg(); return; }
-  if (e.target.id === 'h-export') { exportHistory(); return; }
-  if (e.target.id === 'h-import') { importHistory(); return; }
-  if (e.target.id === 'h-clear' && confirm(T('确定清空全部查词记录吗？'))) {
-    HISTORY = [];
-    HIST_CLEARED = Date.now();   // 打一个水位：此后除了本页签新查的词，早于此刻的条目一律作废
-    try { localStorage.removeItem(HIST_KEY); } catch (e2) {}
-    fetch('/history', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ version: 1, items: [], clearedAt: HIST_CLEARED }) }).catch(() => {});
-    renderHistory();
+  if (e.target.id === 'h-today-cfg') { closeMore(); openTodayCfg(); return; }
+  if (e.target.id === 'h-export') { closeMore(); exportHistory(); return; }
+  if (e.target.id === 'h-import') { closeMore(); importHistory(); return; }
+  if (e.target.id === 'h-clear') {
+    armConfirm(e.target, '⚠ ' + T('再点一次确认清空'), () => {
+      closeMore();
+      HISTORY = [];
+      HIST_CLEARED = Date.now();   // 打一个水位：此后除了本页签新查的词，早于此刻的条目一律作废
+      try { localStorage.removeItem(HIST_KEY); } catch (e2) {}
+      fetch('/history', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version: 1, items: [], clearedAt: HIST_CLEARED }) }).catch(() => {});
+      renderHistory();
+      showToast(T('已清空查词记录'), 'ok');
+    });
   }
 });
 
@@ -25548,6 +25881,8 @@ if (ttsEngSel) {
 applyTtsEngine();
 /* 偏好弹层（2026-11-16）：顶栏只留发音引擎，其余偏好收进 ⚙。
    控件 id 与 localStorage 键都不变，只是换了位置。 */
+const topDailyBtn = document.getElementById('top-daily');
+if (topDailyBtn) topDailyBtn.addEventListener('click', () => startDaily());
 const prefBtn = document.getElementById('pref-btn');
 const prefPop = document.getElementById('pref-pop');
 function setPrefOpen(open) {
@@ -25559,13 +25894,27 @@ function setPrefOpen(open) {
 if (prefBtn && prefPop) {
   prefBtn.addEventListener('click', () => setPrefOpen(prefPop.hidden));
   document.addEventListener('click', (e) => {
-    if (prefPop.hidden) return;
     const t = e.target;
-    if (t && t.closest && (t.closest('#pref-pop') || t.closest('#pref-btn'))) return;
-    setPrefOpen(false);
+    if (!prefPop.hidden && !(t && t.closest && (t.closest('#pref-pop') || t.closest('#pref-btn')))) {
+      setPrefOpen(false);
+    }
+    const hm = document.getElementById('h-more-menu');
+    if (hm && !hm.hidden && !(t && t.closest && t.closest('.h-more-wrap'))) {
+      hm.hidden = true;
+      const hb = document.getElementById('h-more-btn');
+      if (hb) hb.setAttribute('aria-expanded', 'false');
+    }
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !prefPop.hidden) { setPrefOpen(false); prefBtn.focus(); }
+    if (e.key === 'Escape') {
+      const hm = document.getElementById('h-more-menu');
+      if (hm && !hm.hidden) {
+        hm.hidden = true;
+        const hb = document.getElementById('h-more-btn');
+        if (hb) { hb.setAttribute('aria-expanded', 'false'); hb.focus(); }
+      }
+    }
   });
 }
 ttsVoiceSel.addEventListener('change', () => {
@@ -25777,6 +26126,7 @@ document.addEventListener('click', (e) => {
     const on = toggleFav(fb.dataset.fav);
     fb.classList.toggle('on', on);
     fb.textContent = on ? '★ 已收藏' : '☆ 收藏';
+    syncNavCounts();
     return;
   }
   const dl = e.target.closest('.fav-rm');
@@ -25792,7 +26142,13 @@ document.addEventListener('click', (e) => {
     search();
   }
   const fc = e.target.closest('#fav-clear');
-  if (fc) { clearFavs(); renderFavs(); }
+  if (fc) {
+    armConfirm(fc, '⚠ ' + T('再点一次确认清空'), () => {
+      clearFavs();
+      renderFavs();
+      showToast(T('已清空收藏'), 'ok');
+    });
+  }
 });
 btn.addEventListener('click', search);
 /* 搜索联想：输入防抖 + ↑↓导航 + Enter选中 + 点击 */
