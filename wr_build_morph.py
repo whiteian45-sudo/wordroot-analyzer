@@ -54,14 +54,28 @@ def is_word(w):
 
 def suffix_forms(stem, suf):
     out = {stem + suf}
-    if stem.endswith('e') and suf and suf[0] in 'aeiouy':
+    if not stem or not suf:
+        return out
+    starts_vowel = suf[0] in 'aeiouy'
+    if stem.endswith('e') and starts_vowel:
         out.add(stem[:-1] + suf)
-    if stem.endswith('y') and suf and suf[0] not in 'aeiou':
+    if stem.endswith('ie') and suf.startswith('ing'):
+        out.add(stem[:-2] + 'y' + suf)
+    if stem.endswith('y') and suf[0] not in 'aeiou':
         out.add(stem[:-1] + 'i' + suf)
+    if stem.endswith('ic') and suf[0] in 'eiy':
+        out.add(stem + 'k' + suf)
     if stem.endswith('able') and suf in ('ity', 'ability'):
         out.add(stem[:-4] + 'ability')
     if stem.endswith('ible') and suf in ('ity', 'ibility'):
         out.add(stem[:-4] + 'ibility')
+    # Forward CVC consonant doubling: run+ing->running, plan+ed->planned, commit+ed->committed
+    if (starts_vowel and len(stem) >= 3
+            and stem[-1] in 'bcdfghjklmnpqrstvz'
+            and stem[-2] in 'aeiou'
+            and stem[-3] not in 'aeiou'):
+        out.add(stem + stem[-1] + suf)
+    # Reverse dedup when stem already carries doubled final consonant
     if len(stem) >= 3 and stem[-1] == stem[-2]:
         out.add(stem[:-1] + suf)
     return out

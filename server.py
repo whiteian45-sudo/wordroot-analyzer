@@ -330,15 +330,9 @@ EXPLAIN_SYSTEM = (
 
     '易混词要给出"核心差异"而不是同义反复，**至少两个学习者最容易混的常见近义词**——'
     '**本任务不提供同义词表，直接用你自己可靠的高频近义词**（例如讲 redound 就该对比 '
-    'result in / contribute to / benefit / accrue，而不是 react / reverberate 这种语义很远的），'
-
+    'result in / contribute to / benefit / accrue，而不是 react / reverberate 这种语义很远的；'
+    '讲 gory 就该对比 bloody / gruesome / grisly / macabre），'
     '差异里点明语气、强度或"结果归属"这类结构差别。\n'
-
-
-    '（例如讲 redound 时 react / reverberate 就不该进这张表；该用你自己知道的高频近义词，'
-    '如 result in / contribute to / benefit / accrue），差异里点明语气、强度或"结果归属"这类结构差别。\n'
-
-    '比如讲 gory 就该对比 bloody / gruesome / grisly / macabre），差异里点明气势或强度的不同。\n'
     'D. 拿不准就不写。宁可少一段，不要编。\n'
     '只输出讲解正文：不要开场白、不要"好的"、不要说明你在做什么。\n'
     '输出格式：用 **markdown** 排版（小标题用 ##，表格用 | a | b |，列表用 - ，重点用 **粗体**）；'
@@ -407,27 +401,46 @@ def _norm_lookup_word(w):
     return re.sub(r'\s+', ' ', s).strip()
 
 
+_DICT_TLS = threading.local()
+
+
+def _get_dict_conn(dbp):
+    """线程局部只读 SQLite 连接缓存：按 (路径, mtime) 自动失效，重建 dict.db 后无需重启服务。"""
+    try:
+        mtime = os.path.getmtime(dbp)
+    except OSError:
+        mtime = 0
+    cached = getattr(_DICT_TLS, 'dict_conn', None)
+    if cached is not None and cached[0] == dbp and cached[1] == mtime:
+        return cached[2]
+    if cached is not None:
+        try:
+            cached[2].close()
+        except Exception:
+            pass
+    conn = sqlite3.connect('file:' + dbp + '?mode=ro', uri=True)
+    _DICT_TLS.dict_conn = (dbp, mtime, conn)
+    return conn
+
+
 def _lookup_rows(dbp, words):
     """一次连接取一批词，返回 {word: {src: doc}}。
 
-    只读打开（mode=ro），缺词就是不在结果里，不当错误。
+    只读打开（mode=ro）并按线程复用连接，缺词就是不在结果里，不当错误。
     批量是一件事的关键：段落模式一段话几十个词、历史清理一次上百个词，
     一个请求全取回来，别让前端对每个词各打一次网络。
     """
     out = {}
-    db = sqlite3.connect('file:' + dbp + '?mode=ro', uri=True)
-    try:
-        for w in words:
-            row = {}
-            for src, doc in db.execute('SELECT src, doc FROM dict WHERE word=?', (w,)):
-                try:
-                    row[src] = json.loads(doc)
-                except Exception:
-                    pass      # 单条坏数据跳过，不影响同词其它源
-            if row:
-                out[w] = row
-    finally:
-        db.close()
+    db = _get_dict_conn(dbp)
+    for w in words:
+        row = {}
+        for src, doc in db.execute('SELECT src, doc FROM dict WHERE word=?', (w,)):
+            try:
+                row[src] = json.loads(doc)
+            except Exception:
+                pass      # 单条坏数据跳过，不影响同词其它源
+        if row:
+            out[w] = row
     return out
 
 

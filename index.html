@@ -19178,9 +19178,9 @@ const IN_NOT = { vis:1, vari:1, fin:1, finit:1, sens:1, correct:1, direct:1, def
    注意 SUF_CTX 是"当前正在剥的后缀"，递归会继承——所以 rais 里那个补 e 还原仍算在 -ing 语境里。 */
 const INFLECT_SUF = { s: 1, es: 1, ed: 1, ing: 1, er: 1, est: 1 };
 let SUF_CTX = '';
-function baseRoot(seg, depth) {
+function baseRoot(seg, depth, sufCtx = SUF_CTX) {
   // batch 标记：命中批量补的基词时打上（splitRoots 会据它把这类词挡在复合切分之外）
-  const allow = m => !own(BASEWORDS_BATCH, m) || !!INFLECT_SUF[SUF_CTX];
+  const allow = m => !own(BASEWORDS_BATCH, m) || !!INFLECT_SUF[sufCtx];
   if (own(BASEWORDS, seg) && allow(seg)) return { m: seg, meaning: BASEWORDS[seg], batch: own(BASEWORDS_BATCH, seg) };
   if (depth > 1) return null;
   // flex 标记：变形还原得到的词根（去y/补e/双写），评分时额外罚分，
@@ -19190,7 +19190,7 @@ function baseRoot(seg, depth) {
     if (own(BASEWORDS, y) && allow(y)) return { m: y, meaning: BASEWORDS[y], flex: true, batch: own(BASEWORDS_BATCH, y) };
   }
   // 补 e 还原只对 ≥3 字母做：2 字母词补 e 会误伤基本词（to→toe、us→use、do→doe、be→bee）
-  if (seg.length >= 3 && (own(BASEWORDS, seg + 'e') || ((SUF_CTX === 'ed' || SUF_CTX === 'ing' || SUF_CTX === 'er' || SUF_CTX === 'est') && E_STEMS.has(seg + 'e'))) && allow(seg + 'e')) return { m: seg + 'e', meaning: BASEWORDS[seg + 'e'], flex: true, batch: own(BASEWORDS_BATCH, seg + 'e') };
+  if (seg.length >= 3 && (own(BASEWORDS, seg + 'e') || ((sufCtx === 'ed' || sufCtx === 'ing' || sufCtx === 'er' || sufCtx === 'est') && E_STEMS.has(seg + 'e'))) && allow(seg + 'e')) return { m: seg + 'e', meaning: BASEWORDS[seg + 'e'], flex: true, batch: own(BASEWORDS_BATCH, seg + 'e') };
   if (seg.length >= 4 && seg[seg.length - 1] === seg[seg.length - 2]) {
     const d = seg.slice(0, -1);
     if (own(BASEWORDS, d) && allow(d)) return { m: d, meaning: BASEWORDS[d], flex: true, batch: own(BASEWORDS_BATCH, d) };
@@ -19223,7 +19223,7 @@ function baseRoot(seg, depth) {
 function own(obj, key) {
   return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
 }
-function rootOf(seg, depth) {
+function rootOf(seg, depth, sufCtx = SUF_CTX) {
   /* 这些表都是对象字面量，直接 TBL[seg] 在 seg 是 'constructor'/'toString' 这类名字时
      会取到 Object.prototype 上的函数（查 constructor 这个词就会崩：展开一个函数得到
      {isBase:true}，没有 m，后面 bdToChunks 一路拿到 undefined 才炸）。所以只认自己的键。 */
@@ -19231,25 +19231,25 @@ function rootOf(seg, depth) {
   if (own(WHOLE_ONLY, seg)) return { m: seg, meaning: WHOLE_ONLY[seg], cognates: [], isBase: true };
   /* 「动词去 e + 后缀」还原优先于词根命中（2026-10-03）：moved 里 mov 是词根，但 move 才是基本词。
      只在剥 ed/ing/er/est 时放行；复数 s/es 不放（cars 是 car+s，不是 care+s）。 */
-  if ((SUF_CTX === 'ed' || SUF_CTX === 'ing' || SUF_CTX === 'er' || SUF_CTX === 'est') && own(BASEWORDS, seg + 'e')) {
+  if ((sufCtx === 'ed' || sufCtx === 'ing' || sufCtx === 'er' || sufCtx === 'est') && own(BASEWORDS, seg + 'e')) {
     return { m: seg + 'e', meaning: BASEWORDS[seg + 'e'] || '', cognates: [], isBase: true, flex: true };
   }
   /* 三字母基本词的重叠辅音还原（同 BASEWORDS_SHORT）：只在剥 ed/ing/est 且分段以重叠辅音结尾时放行，
      且排在词根命中之前（budding 里的 budd 是「佛」词根，但这里要的是 bud）。 */
   /* 三字母形容词的比较级/最高级（fatter/fattest）：只放形容词，
      否则 butter/summer 那种巧合重叠会被当成派生（but-er / sum-er）。 */
-  if ((SUF_CTX === 'er' || SUF_CTX === 'est') && seg.length >= 4
+  if ((sufCtx === 'er' || sufCtx === 'est') && seg.length >= 4
       && seg[seg.length - 1] === seg[seg.length - 2] && own(BASEWORDS_SHORT_ADJ, seg.slice(0, -1))) {
     const da = seg.slice(0, -1);
     return { m: da, meaning: BASEWORDS_SHORT_ADJ[da], cognates: [], isBase: true, flex: true };
   }
-  if ((SUF_CTX === 'ed' || SUF_CTX === 'ing' || SUF_CTX === 'est') && seg.length >= 4
+  if ((sufCtx === 'ed' || sufCtx === 'ing' || sufCtx === 'est') && seg.length >= 4
       && seg[seg.length - 1] === seg[seg.length - 2] && own(BASEWORDS_SHORT, seg.slice(0, -1))) {
     const d0 = seg.slice(0, -1);
     return { m: d0, meaning: BASEWORDS_SHORT[d0], cognates: [], isBase: true, flex: true };
   }
   if (own(ROOTS, seg)) return { m: seg, meaning: ROOTS[seg][0], cognates: ROOTS[seg][1] || [] };
-  const b = baseRoot(seg, depth);
+  const b = baseRoot(seg, depth, sufCtx);
   return b ? { m: b.m, meaning: b.meaning, cognates: [], isBase: true, flex: !!b.flex, dropped: b.dropped, batch: !!b.batch } : null;
 }
 
@@ -19298,85 +19298,194 @@ const SUF_POS = {
 };
 const POS_ZH = { n: '名', v: '动', a: '形', adv: '副', num: '数', '*': '?' };
 const POS_EN = { n: 'noun', v: 'verb', a: 'adj', adv: 'adv', num: 'num', '*': '?' };
-function decompose(w, depth = 0) {
+/* 语源层一致性（Stratum Compatibility）：希腊/拉丁/日耳曼同层微调分，用于打破近分竞争的平局。 */
+const GREEK_AFFIX = new Set([
+  'aero', 'anti', 'auto', 'bio', 'chrono', 'dia', 'dys', 'endo', 'epi', 'eu', 'exo', 'geo',
+  'hemi', 'hetero', 'homo', 'hydro', 'hyper', 'hypo', 'iso', 'macro', 'mega', 'meta', 'micro',
+  'mono', 'neo', 'ortho', 'pan', 'para', 'peri', 'philo', 'phon', 'photo', 'poly', 'proto',
+  'pseudo', 'psych', 'sym', 'syn', 'tele', 'theo', 'therm',
+  'logy', 'graphy', 'graph', 'gram', 'metry', 'meter', 'scope', 'scopy', 'phobia', 'phile',
+  'pathy', 'cracy', 'crat', 'sis', 'osis', 'itis', 'oid', 'ic', 'ical', 'anthropy'
+]);
+const LATIN_AFFIX = new Set([
+  'ab', 'abs', 'ad', 'ante', 'circum', 'co', 'col', 'com', 'con', 'contra', 'cor', 'counter',
+  'de', 'dis', 'ex', 'extra', 'il', 'im', 'in', 'inter', 'intra', 'ir', 'mal', 'multi', 'ob',
+  'per', 'post', 'pre', 'pro', 're', 'retro', 'se', 'semi', 'sub', 'super', 'trans', 'ultra',
+  'tion', 'ation', 'ition', 'sion', 'ment', 'able', 'ible', 'ive', 'ative', 'itive', 'ous',
+  'ious', 'ance', 'ence', 'ity', 'ary', 'ory', 'ate', 'ure', 'ify'
+]);
+function rootStratum(m) {
+  const src = (own(ROOTS, m) && ROOTS[m][2]) || (own(MORPH_SRC, m) && MORPH_SRC[m]);
+  const lang = src && src.lang ? String(src.lang) : '';
+  if (!lang) return '';
+  if (lang.indexOf('希腊') >= 0) return 'greek';
+  if (lang.indexOf('拉丁') >= 0 || lang.indexOf('法语') >= 0) return 'latin';
+  if (lang.indexOf('英语') >= 0 || lang.indexOf('日耳曼') >= 0) return 'native';
+  return '';
+}
+function stratumBonus(c) {
+  if (!c || !c.roots || !c.roots.length) return 0;
+  let greek = 0, latin = 0, native = 0;
+  for (const r of c.roots) {
+    if (r.isBase) { native++; continue; }
+    const st = rootStratum(r.m);
+    if (st === 'greek') greek++;
+    else if (st === 'latin') latin++;
+    else if (st === 'native') native++;
+  }
+  const affixes = [];
+  if (c.prefix && c.prefix.m) {
+    for (const p of c.prefix.m.split('-')) affixes.push(p);
+  }
+  for (const s of (c.suffixes || [])) affixes.push(s.m);
+  let gAff = 0, lAff = 0;
+  for (const a of affixes) {
+    if (GREEK_AFFIX.has(a)) gAff++;
+    else if (LATIN_AFFIX.has(a)) lAff++;
+  }
+  if ((greek + gAff) >= 2 && latin === 0 && lAff === 0 && native === 0) return 1.2;
+  if ((latin + lAff) >= 2 && greek === 0 && gAff === 0 && native === 0) return 1.0;
+  if (native > 0 && c.roots.some(r => r.isBase && r.m.length <= 3) && (gAff > 0 || lAff > 0)) return -1.2;
+  return 0;
+}
+
+/* 广义同形异源词根消歧：结合本地词典中文释义做语义对齐（保留 pen/pedo 精确正则）。 */
+const HOMOGRAPH_SENSES = {
+  arch: [[/古|原始|旧|先祖|考古/, '古老、原始'], [/弓|拱|弧/, '弓、拱形'], [/统治|君主|首领|主教|政体|无政府/, '统治、首要']],
+  cap: [[/头|首|帽|资本|首都|队长|斩首/, '头、首'], [/抓|捕|容|占|俘|能力|概念|接受/, '抓、取、容']],
+  fin: [[/鳍|鱼/, '鳍'], [/终|结|限|界|完|精细|微|精炼|罚/, '边界、结束']],
+  man: [[/手|人工|操作|管理|操纵|制造|手稿/, '手'], [/留|居|宅|延续|保持/, '停留、居住']],
+  pat: [[/父|祖|爱国|赞助|贵族|遗产/, '父亲、祖国'], [/忍|耐|病|痛|同情|激情/, '忍受、感受']],
+  pel: [[/推|驱|迫|逐|冲|脉|弹/, '推、驱动'], [/皮|毛|膜/, '皮、毛']],
+  port: [[/港|口岸|门|入口/, '港口、门'], [/搬|运|带|报|支|携|出口|进口|运输/, '搬运、携带']],
+  val: [[/强|勇|健|效|值|价|评估|有效/, '强壮、价值'], [/告别|辞别/, '告别']],
+  ver: [[/真|实|核实|证实|裁决/, '真实'], [/转|翻|倒|变|反向|宇宙|诗|多才/, '转、改变']],
+  bar: [[/气压|压力|重|钡|等压/, '重、压力'], [/条|杆|栅|栏|吧|阻|禁|律/, '条、杆、栅栏']]
+};
+function wordChineseGloss(w) {
+  if (typeof ENHANCED !== 'undefined' && own(ENHANCED, w) && ENHANCED[w] && ENHANCED[w].meaning) return String(ENHANCED[w].meaning);
+  if (typeof ECDICT !== 'undefined' && own(ECDICT, w) && ECDICT[w] && ECDICT[w].t) return String(ECDICT[w].t);
+  return '';
+}
+function disambiguateRoots(w, roots) {
+  if (!roots || !roots.length) return roots;
+  let gloss = null;
+  return roots.map(r => {
+    if (r.m === 'pen') {
+      const sense = PEN_POENA.test(w) ? '惩罚'
+        : (PEN_PENIS.test(w) ? '尾巴' : (PEN_PENNA.test(w) ? '羽毛、笔' : ''));
+      return sense ? { ...r, meaning: sense } : r;
+    }
+    if (r.m === 'pedo') {
+      const sense = PEDO_CHILD.test(w) ? '儿童' : (PEDO_FOOT.test(w) ? '脚' : '');
+      return sense ? { ...r, meaning: sense } : r;
+    }
+    if (!r.isBase && own(HOMOGRAPH_SENSES, r.m)) {
+      if (gloss === null) gloss = wordChineseGloss(w);
+      if (gloss) {
+        for (const [re, sense] of HOMOGRAPH_SENSES[r.m]) {
+          if (re.test(gloss)) return { ...r, meaning: sense };
+        }
+      }
+    }
+    return r;
+  });
+}
+
+const DECOMPOSE_BEAM = 4;
+const EARLY_FIXED = Symbol('earlyFixed');
+function dedupTopK(candidates, k) {
+  const best = new Map();
+  for (const c of candidates) {
+    const key = (c.prefix ? c.prefix.m : '') + '|' + c.roots.map(r => r.m).join('+');
+    const prev = best.get(key);
+    if (!prev || c.suffixes.length < prev.suffixes.length ||
+        (c.suffixes.length === prev.suffixes.length && c.score > prev.score)) {
+      best.set(key, c);
+    }
+  }
+  // 主分相同时用语源层一致性（stratumBonus）打破平局，不破坏已校准的 SCORE 权重关系
+  const arr = [...best.values()].sort((a, b) => (b.score - a.score) || (stratumBonus(b) - stratumBonus(a)));
+  return k > 0 && arr.length > k ? arr.slice(0, k) : arr;
+}
+
+function decomposeMemo(w, depth, sufCtx, memo, wantTopK) {
   /* 深度上限 4→6（2026-11-02 结构升级）：counterrevolutionaries = counter + revolution + ary + es、
-     misinterpretation = mis + interpret + ation 这类长嵌套要 5~6 层才走得通。深度越界仍会
-     撞出巧合拆法，所以保留 ROOT_BLOCK / 评分罚分，并按 guard 回归逐条拦。 */
-  if (w.length < 2 || depth > 6) return null;
-  let candidates = [];
+     misinterpretation = mis + interpret + ation 这类长嵌套要 5~6 层才走得通。 */
+  if (w.length < 2 || depth > 6) return wantTopK ? [] : null;
+  const memoKey = (wantTopK ? 'K:' : '1:') + depth + ':' + sufCtx + ':' + w;
+  if (memo && memo.has(memoKey)) return memo.get(memoKey);
+
+  const finish = (val) => {
+    if (memo) memo.set(memoKey, val);
+    return val;
+  };
+  const wrap = (single, fixed) => {
+    if (single && fixed) single[EARLY_FIXED] = true;
+    return finish(wantTopK ? (single ? [single] : []) : single);
+  };
 
   /* 词根撞名基本词时的自保（2026-10-11）：ROOT_BLOCK 里禁用了自身的词 ——
-     目前只有 cup（杯子）与 cup 词根（抓、拿 ← capere）撞名 —— 第 0 步优先给基本词读法。
-     为什么不能用 BASEWORD_OVERRIDE：那张表按名字全局生效，会把 occupy 里的真词根 cup 也变成"杯子"；
-     而候选级过滤（decompose 中段）与 partialDecompose 的整词作废都管不到这条最短路径。 */
+     目前只有 cup（杯子）与 cup 词根（抓、拿 ← capere）撞名 —— 第 0 步优先给基本词读法。 */
   if (own(ROOT_BLOCK, w) && ROOT_BLOCK[w].indexOf(w) >= 0) {
-    /* 基本词可能在任意一张基本词表里（cup 在 BASEWORDS_SHORT —— 三字母动词表，用手捧成杯状） */
     const bm = own(BASEWORDS, w) ? BASEWORDS[w]
       : own(BASEWORDS_SHORT, w) ? BASEWORDS_SHORT[w]
       : own(BASEWORDS_SHORT_ADJ, w) ? BASEWORDS_SHORT_ADJ[w]
       : own(WHOLE_ONLY, w) ? WHOLE_ONLY[w] : null;
-    if (bm) return { prefix: null, roots: [{ m: w, meaning: bm, cognates: [], isBase: true }], suffixes: [] };
+    if (bm) return wrap({ prefix: null, roots: [{ m: w, meaning: bm, cognates: [], isBase: true }], suffixes: [], score: 0 }, true);
   }
   /* 逐词切分覆盖（2026-10-15）：只在该词本身命中 WORD_SPLIT 时生效（depth 0），
      不改变任何其他词的切分 —— 这是"全局词根"做不到的（全局词根会切坏同形词）。 */
-  if (!depth && own(WORD_SPLIT, w)) {   /* depth 可能是 0 也可能被省略（内部调用） */
+  if (!depth && own(WORD_SPLIT, w)) {
     const sp = WORD_SPLIT[w];
-    return {
+    return wrap({
       prefix: sp.prefix ? { m: sp.prefix, meaning: own(PREFIXES, sp.prefix) ? PREFIXES[sp.prefix] : '前缀', cognates: [] } : null,
       roots: (sp.roots || []).map(function (x) { return { m: x[0], meaning: x[1], cognates: [], isBase: false }; }),
-      suffixes: (sp.suffixes || []).map(function (x) { return { m: x[0], meaning: x[1] }; })
-    };
+      suffixes: (sp.suffixes || []).map(function (x) { return { m: x[0], meaning: x[1] }; }),
+      score: 100
+    }, true);
   }
   // 0. 整段本身是词根/基本词
-  const whole = rootOf(w, depth);
+  const whole = rootOf(w, depth, sufCtx);
   if (whole) {
-    // flex 变形还原剥掉了 -er/-ing 后缀（teacher→teach+er），补回 suffixes 避免丢后缀
     if (whole.flex && whole.dropped && LISTS.suffixes.some(s => s[0] === whole.dropped)) {
-      return { prefix: null, roots: [whole], suffixes: [{ m: whole.dropped, meaning: LISTS.suffixes.find(s => s[0] === whole.dropped)[1] }] };
+      return wrap({ prefix: null, roots: [whole], suffixes: [{ m: whole.dropped, meaning: LISTS.suffixes.find(s => s[0] === whole.dropped)[1] }], score: 0 }, true);
     }
-    return { prefix: null, roots: [whole], suffixes: [] };
+    return wrap({ prefix: null, roots: [whole], suffixes: [], score: 0 }, true);
   }
 
-  /* 数据优先（2026-11-04）：morph.json 里有该词经过词源/词法数据验证的拆解时直接采用。
-     WORD_SPLIT / ROOT_BLOCK / 整词基本词都在上面先返回，保证人工精调优先于数据层。 */
+  /* 数据优先（2026-11-04）：morph.json 里有该词经过词源/词法数据验证的拆解时直接采用。 */
   if (!depth && !own(ROOT_BLOCK, w)) {
     const dataBd = morphDataToBd(w);
-    if (dataBd) return dataBd;
+    if (dataBd) return wrap(dataBd, true);
   }
 
-  /* 嵌套里的精确基本词（2026-11-02 结构升级）：BASEWORDS_BATCH 的闸门原本只在变形语境放行，
-     导致 mis+interpret-ation 里的 interpret 在深度 1 被挡掉。这里只在 depth>0、整段精确命中
-     batch 基本词时放行；splitRoots 的零件仍走原闸门，不会复活 def+ic+ient 那类误拆。 */
+  /* 嵌套里的精确基本词（2026-11-02 结构升级） */
   if (depth > 0 && !own(ROOT_BLOCK, w) && own(BASEWORDS_BATCH, w)) {
-    return { prefix: null, roots: [{ m: w, meaning: BASEWORDS[w], cognates: [], isBase: true, batch: true }], suffixes: [] };
+    return wrap({ prefix: null, roots: [{ m: w, meaning: BASEWORDS[w], cognates: [], isBase: true, batch: true }], suffixes: [], score: 0 }, true);
   }
 
-  /* -ability / -ibility 硬规则（2026-11-02）：英语里它一定是 -able/-ible + -ity 的缩合
-     （capability = capable + ity、compatibility = compatible + ity）。扁平评分会把
-     compatib 当词根、把 abil 当词干，这里按拼写还原形容词再拆，直接返回结构化结果。
-     仅在该词本身没有 WORD_SPLIT、不是整词基本词时生效（上面的 whole 检查已先返回）。 */
+  /* -ability / -ibility 硬规则（2026-11-02） */
   if (!own(ROOT_BLOCK, w) && (w.endsWith('ability') || w.endsWith('ibility'))) {
     const adj = w.slice(0, -7) + (w.endsWith('ability') ? 'able' : 'ible');
-    const st = decompose(adj, depth);
+    const st = decomposeMemo(adj, depth, sufCtx, memo, false);
     const hasAdjSuf = st && (st.suffixes || []).some(x => x.m === 'able' || x.m === 'ible');
     const isAdjBase = st && st.roots && st.roots.length === 1 && st.roots[0].isBase;
-    /* 词典里的形容词也算数：affable 在 ECDICT 里是 a.，但引擎会把它拆成 af|fab+le，
-       导致 affability 继续走 af|fable-ity。这里用词性确认它是形容词后直接采用。 */
     const adjLex = layeredKnown(adj, true);
     const adjPos = adjLex && (adjLex.pos || posOfWord(adj));
     const lexAdj = adjLex && (!adjPos || posFits(adjPos, 'a'));
     if ((st && (hasAdjSuf || isAdjBase)) || lexAdj) {
       const base = (st && (hasAdjSuf || isAdjBase)) ? st
         : { prefix: null, roots: [adjLex], suffixes: [], pos: adjPos || '' };
-      return { prefix: base.prefix, roots: base.roots, suffixes: (base.suffixes || []).concat([{ m: 'ity', meaning: SUFFIXES.ity }]) };
+      return wrap({ prefix: base.prefix, roots: base.roots, suffixes: (base.suffixes || []).concat([{ m: 'ity', meaning: SUFFIXES.ity }]), score: 50 }, true);
     }
   }
+
+  let candidates = [];
 
   // 1. 前缀 + 递归拆剩余部分
   for (const [pre, preM] of LISTS.prefixes) {
     if (!w.startsWith(pre)) continue;
-    // 整词以某个"更长的基本词"开头时，禁止剥前缀
-    // （apple-polish 的 apple 是基本词，不能被 ap- 吃掉拆成 ap+pple-polish）
     if (w.length > pre.length) {
       let blocked = false;
       for (const bw of BASE_PREFIXES[pre] || []) {
@@ -19386,10 +19495,9 @@ function decompose(w, depth = 0) {
     }
     const rest = w.slice(pre.length);
     if (rest.length < 2) continue;
-    const sub = decompose(rest, depth + 1);
+    const sub = decomposeMemo(rest, depth + 1, sufCtx, memo, false);
     if (!sub) continue;
     const rootLen = sub.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
-    // 子拆解里已有前缀时，合并显示为"双前缀"(如 mis-under)
     const prefix = sub.prefix
       ? { m: pre + '-' + sub.prefix.m, meaning: preM + '；' + sub.prefix.meaning }
       : { m: pre, meaning: preM };
@@ -19401,24 +19509,14 @@ function decompose(w, depth = 0) {
     });
   }
 
-  // 2. 剥后缀（可连续多个），递归拆剩余部分
+  // 2. 剥后缀（可连续多个），递归拆剩余部分（参数传递 sufCtx，彻底消除全局状态污染）
   for (const [suf, sufM] of LISTS.suffixes) {
     if (!w.endsWith(suf) || w.length - suf.length < 2) continue;
-    // -o 不走这条通用后缀路径：它是罗曼语借词的词尾，在这里参与评分会顶掉已有的正确拆解
-    // （aerophoto 的 aero|photo→aero|phot-o、albino 的 alb+ino→albin-o），只留给下面 3.5 兜底
     if (suf === 'o') continue;
     const rest = w.slice(0, w.length - suf.length);
-    /* y->i 还原（2026-10-12 做，10-13 改）：sanctified / occupies / applies 这类 y 结尾词，
-       y->i 的拼写变化让 rest 变成 sanctifi / appli，拆不出来（-ied / -ies 不在后缀表里）。
-       把结尾 i 换回 y 试一次，能完整拆解就额外推一个候选——原来那条路径照走，
-       不会像第一版（直接替换 rest）那样顶掉 arteri-es 这类正确读法（那版丢了 8 个词）。
-       **改法**：候选永远追加，但记 8 分罚分 —— 于是「整词现有最佳」只要是个像样的读法就
-       赢不了它（unmarried 依旧 un|marry-ed），而现有最佳为空或只剩 partial 时它就能赢
-       （occupies / parties / species 因此转正）。比「先查是否完整」更直接：交给评分去判。
-       只认非基本词根的拆解，避免引入基本词词根的假结构。
-       实测 -ies/-ied 结尾词 5653 个：由无到有 1023、丢失 0、改写 12（多数为改善）。 */
+    /* y->i 还原（2026-10-12） */
     if (/i$/.test(rest) && (suf === 'ed' || suf === 'es' || suf === 's' || suf === 'ous' || suf === 'ious')) {
-      const subY = decompose(rest.slice(0, -1) + 'y', depth + 1);
+      const subY = decomposeMemo(rest.slice(0, -1) + 'y', depth + 1, sufCtx, memo, false);
       if (subY && subY.roots.length && !subY.roots.some(r => r.isBase)) {
         const rootLenY = subY.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
         candidates.push({
@@ -19428,53 +19526,34 @@ function decompose(w, depth = 0) {
           score: rootLenY * 2 + (subY.prefix ? subY.prefix.m.length * SCORE.PRE : 0)
             - (subY.roots.length + subY.suffixes.length) * SCORE.MORPH
             + (subY.suffixes.length + 1) * SCORE.SUF
-            - (subY.roots.some(r => r.flex) ? SCORE.FLEX : 0) - 8   // 罚分，见块首注释：让评分决定它该不该赢
+            - (subY.roots.some(r => r.flex) ? SCORE.FLEX : 0) - 8
         });
       }
     }
-    SUF_CTX = suf;   // 剥后缀期间给递归一个"正在剥什么"的上下文，供 baseRoot 判断能否用批量基词
-    // 弱后缀(s/es/e)只允许直接接在整词词根后，避免过度拆分(如 revers→rever+s 假拆分)
-    // 复数s兜底：剥掉s/es后剩余部分能完整拆解才放行(acquaintances→quaint+ance+s)。防误伤三门槛：
-    // ① es形变须符合复数形态(s/z/x/ch/sh/o结尾)  ② 拆解无基本词、词根合计≥3字符  ③ 拆解不再含e/s/es弱后缀
-    if (suf === 'e' && !rootOf(rest, depth)) continue;
-    // -on(希腊中性名词后缀)：只接"长真词根"，防 2 字符后缀疯狂误拆
-    // （automaton→automat+on 放行；ablon→able+on、ademption→ad+empty+on 被拦）
+    const nextCtx = suf;
+    if (suf === 'e' && !rootOf(rest, depth, nextCtx)) continue;
     if (suf === 'on') {
-      const rr = rootOf(rest, depth);
+      const rr = rootOf(rest, depth, nextCtx);
       if (!rr || rr.isBase || rr.m.length < 5 || rr.flex) continue;
     }
-    // -et 小称后缀只接"真词根"、不接基本词（防 wallet→wall+et、rocket→rock+et、bucket→buck+et 假拆）
     if (suf === 'et') {
-      const rr = rootOf(rest, depth);
+      const rr = rootOf(rest, depth, nextCtx);
       if (!rr || rr.isBase) continue;
     }
-    if ((suf === 's' || suf === 'es') && !rootOf(rest, depth)) {
+    let sub = undefined;
+    if ((suf === 's' || suf === 'es') && !rootOf(rest, depth, nextCtx)) {
       if (suf === 'es' && !/[szx]$/.test(rest) && !/(ch|sh|o)$/.test(rest)) continue;
-      const sr = decompose(rest, depth + 1);
-      if (!sr || sr.roots.some(r => r.isBase) || sr.roots.reduce((n, r) => n + r.m.length, 0) < 3 || sr.suffixes.some(x => x.m === 'e' || x.m === 's' || x.m === 'es')) continue;
+      // 复用 sr，不再对同一 rest 重复递归第二次
+      sub = decomposeMemo(rest, depth + 1, nextCtx, memo, false);
+      if (!sub || sub.roots.some(r => r.isBase) || sub.roots.reduce((n, r) => n + r.m.length, 0) < 3 || sub.suffixes.some(x => x.m === 'e' || x.m === 's' || x.m === 'es')) continue;
     }
-    const sub = decompose(rest, depth + 1);
-    /* 补 e 还原（2026-11-02，多嵌套）：believability 在深递归里 rest='believ'，而 baseRoot 的
-       补 e 只放行剥切深度 ≤1，整条嵌套链就断了。这里把 rest 补回 e（believe）再拆一次：
-       只在上面的常规路径失败时兜底，加 8 分罚分——不跟已有读法抢，只救本来拆不出的词。
-       SUF_CTX 会被内层递归复位，先存后还原，否则外层后续的上下文会丢。 */
+    if (sub === undefined) sub = decomposeMemo(rest, depth + 1, nextCtx, memo, false);
+    /* 补 e 还原（2026-11-02，多嵌套） */
     if (!sub && E_RESTORE_SUF.has(suf) && !/e$/.test(rest)) {
-      const _ctx = SUF_CTX;
-      const subE = decompose(rest + 'e', depth + 1);
-      SUF_CTX = _ctx;
-      /* 补 e 的结果必须是一个「干净的词干」才采用：单个基本词（可带前缀），或
-         -y 前面的单层形容词后缀（believably = believable + y）。否则会从
-         carbonization 里造出 carbonize(carb-one-ize)、admirability 里造出
-         mirabilite（芒硝）+y 这类假读法（2026-11-02 定向 diff 实测 271 词受影响）。 */
+      const subE = decomposeMemo(rest + 'e', depth + 1, nextCtx, memo, false);
       const subESufs = subE ? (subE.suffixes || []) : [];
-      /* isBase 只在 rootOf 落到底层基本词表时才为真；像 use 这种「既是词根又在基本词表」
-         的词会先命中 ROOTS，对象上没有 isBase。所以额外查一次基本词表。 */
       const cleanRoot = r => r && (r.isBase || own(BASEWORDS, r.m) || own(WHOLE_ONLY, r.m));
       const subEClean = subE && subESufs.length === 0 && subE.roots.length === 1 && cleanRoot(subE.roots[0]);
-      /* -y/-ly/-ity/-ness 前面允许再挂一层形容词后缀（believable+y、selective+ity、
-         connectable+ity），这样 selectivity/productivity/connectivity 这类
-         "动词→形容词→名词"的嵌套能走通；形容词后缀以外的一律不放，防止 mirabilite+y、
-         carbonize+ation 这类假词干。 */
       const subEAdj = subE && subESufs.length === 1
         && /^(able|ible|ous|ious|ive|ative|itive|ful|less)$/.test(subESufs[0].m)
         && subE.roots.length === 1
@@ -19489,8 +19568,6 @@ function decompose(w, depth = 0) {
       }
     }
     if (!sub) continue;
-    // -on 只作最末后缀（automaton→automat+on 放行），后面不再叠别的后缀：
-    // 拦 xanthonate→xanth+on+ate、pneumonitis→pneum+on+itis 这类误拆（复数 s/es、词尾 e 除外）
     if (suf !== 's' && suf !== 'es' && suf !== 'e' && (sub.suffixes || []).some(x => x.m === 'on')) continue;
     const rootLen = sub.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
     candidates.push({
@@ -19500,14 +19577,10 @@ function decompose(w, depth = 0) {
       score: rootLen * 2 + (sub.prefix ? sub.prefix.m.length * SCORE.PRE : 0) - (sub.roots.length + sub.suffixes.length) * SCORE.MORPH + (sub.suffixes.length + 1) * SCORE.SUF - (sub.roots.some(r => r.flex) ? SCORE.FLEX : 0)
     });
   }
-  SUF_CTX = '';   // 后缀循环结束复位：复合切分/前缀路径都不算变形语境
 
   // 3. 复合词：整段拆成 2~3 个词根（可夹连接元音）
-  for (const g of splitRoots(w, depth)) {
+  for (const g of splitRoots(w, depth, '')) {
     const rootLen = g.roots.reduce((n, r) => n + (r.isBase ? 0 : r.m.length), 0);
-    /* 复合词里的变形还原要补回后缀（2026-11-02）：footballer 的 baller 在 splitRoots 里被
-       baseRoot 还原成 ball + dropped 'er'，原来只留词根、把 -er 吞了 → foot+ball。
-       这里把每段 flex 还原掉的变形后缀按顺序补回 suffixes。 */
     const dropped = [];
     for (const r of g.roots) {
       if (r.flex && r.dropped && !dropped.some(x => x.m === r.dropped)) {
@@ -19517,21 +19590,15 @@ function decompose(w, depth = 0) {
     }
     candidates.push({
       prefix: null, roots: g.roots, suffixes: dropped,
-      // 含基本词或变形还原词根的复合候选额外罚分，避免压过"真前缀+真词根"(如 complete 不拆成 come+plete)
       score: rootLen * 2 - (g.roots.length - 1) * SCORE.MORPH - (g.roots.some(r => r.isBase) ? SCORE.BASE : 0)
         - (dropped.length ? 5 : 0)
     });
   }
 
-  /* 3.5 -o 兜底（罗曼语名词词尾，意/西/葡语借词）：commando→command+o、dynamo→dynam+o。
-     必须在"前三条路径一个候选都没有"时才补——commando 就是 decompose 全空才掉进 partial
-     显示 com||??mando 的。若作为普通后缀参与评分，它会顶掉已有的正确拆解（aerophoto 的
-     aero|photo 变 aero|phot-o、albino 的 alb+ino 变 albin-o），所以按兜底层处理、不参与竞争。
-     三道门槛（照 -on/-et 的惯例）：词干能完整拆解、无基本词根、含 ≥4 字符真词根。
-     最后一条是关键：3 字符词根在 -o 前多是巧合（barbaro→bar+bar+o、adesso→ad+ess+o 被拦）。 */
+  /* 3.5 -o 兜底（罗曼语名词词尾，意/西/葡语借词） */
   if (candidates.length === 0 && w.endsWith('o')) {
     const stem = w.slice(0, -1);
-    const st = decompose(stem, depth + 1);
+    const st = decomposeMemo(stem, depth + 1, '', memo, false);
     if (st && !st.roots.some(r => r.isBase) && st.roots.some(r => !r.isBase && r.m.length >= 4)
         && !(st.suffixes || []).some(x => x.m === 'o')) {
       candidates.push({
@@ -19541,8 +19608,7 @@ function decompose(w, depth = 0) {
     }
   }
 
-  /* 误拆防线：按 ROOT_BLOCK 拦截表中该词禁用的词根过滤候选。
-     避免 as-troph-ile、re-trop+tell+ar、do+rough、e-a-vest+rough 这类错误拆法 */
+  /* 误拆防线：按 ROOT_BLOCK 拦截表中该词禁用的词根过滤候选。 */
   const blk = own(ROOT_BLOCK, w) ? ROOT_BLOCK[w] : null;
   if (blk) {
     candidates = candidates.filter(c =>
@@ -19552,76 +19618,58 @@ function decompose(w, depth = 0) {
   }
 
   if (candidates.length === 0) {
-    /* 扁平引擎完全拆不出时，交给词性驱动的分层解析器兜底（只在顶层试，避免递归里反复跑）。 */
     if (!depth) {
       const lay = layeredParse(w, 0, false);
-      if (lay) return lay;
+      if (lay) return wrap(lay);
     }
-    return null;
+    return wrap(null);
   }
 
-  // 去重：同一(前缀, 词根组) 保留后缀最少者；再取最高分
-  const best = new Map();
-  for (const c of candidates) {
-    const key = (c.prefix ? c.prefix.m : '') + '|' + c.roots.map(r => r.m).join('+');
-    const prev = best.get(key);
-    if (!prev || c.suffixes.length < prev.suffixes.length ||
-        (c.suffixes.length === prev.suffixes.length && c.score > prev.score)) {
-      best.set(key, c);
+  const ranked = dedupTopK(candidates, wantTopK ? DECOMPOSE_BEAM : 1);
+  return finish(wantTopK ? ranked : (ranked[0] || null));
+}
+
+function decompose(w, depth = 0) {
+  if (w.length < 2 || depth > 6) return null;
+  const memo = new Map();
+  const ranked = decomposeMemo(w, depth, SUF_CTX, memo, !depth);
+  let winner = !depth ? (ranked[0] || null) : ranked;
+  if (!winner) return null;
+  /* 顶层词性重排：若 Top-1 有后缀间词性冲突，优先从 Top-K Beam 中挑词性合法的近分候选，
+     其次再交由词性驱动的分层解析器接管。 */
+  if (!depth && !winner[EARLY_FIXED] && flatPosConflict(winner)) {
+    const beamAlt = ranked.slice(1).find(c => !flatPosConflict(c) && flatPosValid(c) === true && (winner.score - c.score) <= 12);
+    if (beamAlt) {
+      winner = beamAlt;
+    } else {
+      const lay = layeredParse(w, 0, false);
+      if (lay && lay.roots.length === 1 && (!lay.prefix || lay.prefix.m.indexOf('-') < 0)
+          && flatPosValid(lay) === true) winner = lay;
     }
   }
-  let winner = [...best.values()].sort((a, b) => b.score - a.score)[0];
-  /* 分层解析接管（2026-11-02 B2 第二轮）：只在「后缀与后缀之间」词性冲突时接管
-     （nationalization 的 -al 产出形容词，-ization 却要求动词）。词根→首后缀的冲突
-     不接管，否则 plan→ation、port→ation 这种多义词会被改成更差的读法。
-     还要求分层结果是单词干、没叠前缀、整链词性合法。 */
-  if (winner && !depth && flatPosConflict(winner)) {
-    const lay = layeredParse(w, 0, false);
-    if (lay && lay.roots.length === 1 && (!lay.prefix || lay.prefix.m.indexOf('-') < 0)
-        && flatPosValid(lay) === true) winner = lay;
-  }
-  /* pen 的释义按词形分流（2026-10-13）：三色块直接用词根对象的释义，
-     所以必须在收口处改写，只改演变链不够。**复制对象**再改——词根对象是共享的，
-     原地改会把 penalty 的「惩罚」漏给 peninsula。与 morphSource / homographMateOk 同口径。 */
   if (winner) {
-    winner.roots = winner.roots.map(r => {
-      if (r.m === 'pen') {
-        const sense = PEN_POENA.test(w) ? '惩罚'
-          : (PEN_PENIS.test(w) ? '尾巴' : (PEN_PENNA.test(w) ? '羽毛、笔' : ''));
-        return sense ? { ...r, meaning: sense } : r;
-      }
-      /* pedo 也有同样的问题，而且是**既有 bug**（2026-10-13 加断言时才暴露）：
-         morphSource 与演变链早就按词形分流了，但三色块直接取词根对象的释义，
-         于是 pedophilia 显示「土壤」、pedometer 也显示「土壤」。这里一并修掉。 */
-      if (r.m === 'pedo') {
-        const sense = PEDO_CHILD.test(w) ? '儿童' : (PEDO_FOOT.test(w) ? '脚' : '');
-        return sense ? { ...r, meaning: sense } : r;
-      }
-      return r;
-    });
+    winner = { ...winner, roots: disambiguateRoots(w, winner.roots) };
   }
   return winner;
 }
 
 /* 把一段字母拆成 2~3 个已知词根（支持复合词和连接元音） */
-function splitRoots(seg, depth) {
+function splitRoots(seg, depth, sufCtx = '') {
   const res = [];
-  /* 元音重叠构词：两部分共享中间那个元音字母（bio+opsy→biopsy、necro+opsy→necropsy）。
-     前半取 slice(0,i)、后半从共享字母起 slice(i-1)——这是"从头切/从尾切"表达不了的构词。
-     三道闸：共享字母必须是元音、两侧都得是真词根(非基本词)、后半至少 3 字符。 */
+  /* 元音重叠构词：两部分共享中间那个元音字母（bio+opsy→biopsy、necro+opsy→necropsy）。 */
   for (let i = 3; i < seg.length - 2; i++) {
     if (!/[aeiou]/.test(seg[i - 1])) continue;
-    const oa = rootOf(seg.slice(0, i), depth), oc = rootOf(seg.slice(i - 1), depth);
+    const oa = rootOf(seg.slice(0, i), depth, sufCtx), oc = rootOf(seg.slice(i - 1), depth, sufCtx);
     if (oa && oc && !oa.isBase && !oc.isBase && oc.m.length >= 3) res.push({ roots: [oa, oc] });
   }
   if (!seg || seg.length < 2) return res;
   for (let i = 2; i < seg.length - 2; i++) {
-    const a = rootOf(seg.slice(0, i), depth), b = rootOf(seg.slice(i), depth);
+    const a = rootOf(seg.slice(0, i), depth, sufCtx), b = rootOf(seg.slice(i), depth, sufCtx);
     if (a && b && !a.batch && !b.batch) res.push({ roots: [a, b] });
   }
   for (let i = 2; i < seg.length - 4; i++) {
     for (let k = i + 1; k < seg.length - 2; k++) {
-      const a = rootOf(seg.slice(0, i), depth), b = rootOf(seg.slice(i, k), depth), c = rootOf(seg.slice(k), depth);
+      const a = rootOf(seg.slice(0, i), depth, sufCtx), b = rootOf(seg.slice(i, k), depth, sufCtx), c = rootOf(seg.slice(k), depth, sufCtx);
       if (a && b && c && !a.batch && !b.batch && !c.batch) res.push({ roots: [a, b, c] });
       if (a && c && !a.batch && !c.batch && /^[ioae]$/.test(seg.slice(i, k)) && !PREFIXES[seg.slice(0, k)]) res.push({ roots: [a, c] });
     }
@@ -19981,29 +20029,108 @@ function editDistance(a, b) {
   return prev[n];
 }
 
-/* 词不存在时，在考试词库里找拼写相近的词作为建议。
-   阈值：短词(≤5字母)距离 ≤1，长词 ≤2；
-   首字母不同重罚（避免 finery 顶替 binery→binary）；
-   距离 2 的长词若末尾不同再半罚（排除 meaningless 类）。 */
+/* 带早停的 Damerau-Levenshtein：行最小值超过 maxDist 立即中止，加速词典纠错。 */
+function editDistanceBounded(a, b, maxDist) {
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > maxDist) return maxDist + 1;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev2 = null, prev = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    const cur = new Array(n + 1);
+    cur[0] = i;
+    let rowMin = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let v = prev[j] + 1;
+      const ins = cur[j - 1] + 1;
+      if (ins < v) v = ins;
+      const sub = prev[j - 1] + cost;
+      if (sub < v) v = sub;
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1] && prev2) {
+        const tr = prev2[j - 2] + 1;
+        if (tr < v) v = tr;
+      }
+      cur[j] = v;
+      if (v < rowMin) rowMin = v;
+    }
+    if (rowMin > maxDist) return maxDist + 1;
+    prev2 = prev;
+    prev = cur;
+  }
+  return prev[n];
+}
+
+/* 首字母分桶懒索引（按 key 数变化自动刷新）+ 同音/换位首字母召回 + BNC 词频排序 */
+const _SUGGEST_BUCKETS = new WeakMap();
+const _PHONETIC_INIT = {
+  f: ['p'], p: ['f', 's'], s: ['c', 'p', 'z'], c: ['k', 's', 'q'], k: ['c', 'q'],
+  n: ['k', 'g'], r: ['w'], j: ['g'], g: ['j', 'k'], z: ['s', 'x'], e: ['i'], i: ['e'], a: ['e'], o: ['u']
+};
+const _PHONETIC_PREFIX = [
+  ['f', 'ph'], ['ph', 'f'], ['s', 'ps'], ['n', 'kn'], ['n', 'gn'], ['r', 'wr']
+];
+function _suggestBuckets(db) {
+  const keys = Object.keys(db);
+  const cached = _SUGGEST_BUCKETS.get(db);
+  if (cached && cached.n === keys.length) return cached.map;
+  const map = Object.create(null);
+  for (const k of keys) {
+    if (!k || k.length < 3) continue;
+    const ch = k[0];
+    (map[ch] || (map[ch] = [])).push(k);
+  }
+  _SUGGEST_BUCKETS.set(db, { n: keys.length, map });
+  return map;
+}
+function _bncBonus(w) {
+  if (typeof BNC_LEVEL === 'undefined' || !BNC_LEVEL || !BNC_LEVEL.size) return 0;
+  const lv = Number(BNC_LEVEL.get(w));
+  return (lv >= 1 && lv <= 9) ? (10 - lv) * 0.04 : 0;   // BNC 1k: -0.36 ~ 9k: -0.04
+}
+
+/* 词不存在时，在考试词库/牛津9 里找拼写相近的词作为建议。
+   优化：首字母分桶 + 早停编辑距离 + 同音前缀/换位召回（fobia→phobia / sycology→psychology / nolwedge→knowledge）
+   + BNC 高频词优先排序。 */
 function suggestWord(w) {
   if (w.length < 3 || (!ENHANCED && !OXFORD)) return null;
   const MAX_DIST = w.length <= 5 ? 1 : 2;
-  /* 两级候选：先考试词库(13910)；那里没有可用的再查牛津9(147090)，
-     救回 semitone 这类常见、但不在考试大纲里的词。第一级有结果时不碰第二级，
-     故既有建议完全不变，只新增原本一个都不提示的情况。 */
-  for (const db of [ENHANCED, OXFORD]) {
+  const c0 = w[0], c1 = w[1] || '';
+  const altLetters = new Set();
+  if (c1 && c1 !== c0) altLetters.add(c1);
+  for (const ch of (_PHONETIC_INIT[c0] || [])) if (ch !== c0) altLetters.add(ch);
+  const phoneticForms = [];
+  for (const [from, to] of _PHONETIC_PREFIX) {
+    if (w.startsWith(from)) phoneticForms.push(to + w.slice(from.length));
+  }
+  const dbs = [ENHANCED, OXFORD];
+  for (let di = 0; di < dbs.length; di++) {
+    const db = dbs[di];
     if (!db) continue;
-    let best = null, bestDist = 99;
-    for (const cand of Object.keys(db)) {
-      /* 首字母预过滤：首字母不同的候选被罚 +2，而阈值上限恰是 2，恒选不上，
-         直接跳过省掉大量无用计算（实测 3000 例结果与原写法完全一致）。 */
-      if (!cand || cand[0] !== w[0]) continue;
-      if (Math.abs(cand.length - w.length) > 2) continue;
-      let d = editDistance(w, cand);
-      if (d === 2 && w.length > 5 && w[w.length - 1] !== cand[cand.length - 1]) d += 0.5;
-      if (d < bestDist) { bestDist = d; best = cand; }
+    const buckets = _suggestBuckets(db);
+    let best = null, bestScore = 99;
+    const scan = (query, list, initPenalty, maxD) => {
+      if (!list) return;
+      for (const cand of list) {
+        if (Math.abs(cand.length - query.length) > maxD) continue;
+        const rawD = editDistanceBounded(query, cand, maxD);
+        if (rawD > maxD) continue;
+        let score = rawD + initPenalty;
+        if (rawD === 2 && query.length > 5 && query[query.length - 1] !== cand[cand.length - 1]) score += 0.5;
+        if (score <= MAX_DIST) {
+          const rankScore = score - _bncBonus(cand);
+          if (rankScore < bestScore) { bestScore = rankScore; best = cand; }
+        }
+      }
+    };
+    scan(w, buckets[c0], 0, MAX_DIST);
+    // 同音二合字母/不发音首字母展开（f→ph, s→ps, n→kn/gn, r→wr）与首字母换位（轻罚 +0.65）
+    if (!best || bestScore > 1.0) {
+      for (const pf of phoneticForms) scan(pf, buckets[pf[0]], 0.65, Math.max(1, MAX_DIST - 1));
+      for (const ch of altLetters) scan(w, buckets[ch], 0.65, MAX_DIST);
     }
-    if (best && bestDist <= MAX_DIST) return best;
+    if (best) return best;
   }
   return null;
 }
@@ -20027,36 +20154,48 @@ function oxfordLookup(w) {
   return o ? { o, cur } : null;
 }
 
-/* 词形还原：变形词查不到时，规则还原原形（复数/时态/比较级）。
+/* 词形还原：变形词查不到时，规则还原原形（复数/时态/比较级/派生）。
    只返回能命中词表的原形，否则回退原词——无副作用。 */
 function lemmaOf(w) {
   const cands = [];
+  const pushStem = (d) => {
+    if (!d) return;
+    cands.push(d, d + 'e');
+    if (d.length > 2 && d[d.length - 1] === d[d.length - 2]) cands.push(d.slice(0, -1));
+    if (d.length > 2 && d.endsWith('i')) cands.push(d.slice(0, -1) + 'y');
+  };
   if (w.length > 4 && w.endsWith('ies')) cands.push(w.slice(0, -3) + 'y');          // studies→study
   if (w.endsWith('es') && w.length > 3) cands.push(w.slice(0, -2), w.slice(0, -1)); // boxes→box, buses→bus
   else if (w.endsWith('s') && !w.endsWith('ss')) cands.push(w.slice(0, -1));        // dogs→dog
-  if (w.endsWith('ing')) {                                                          // running→run
-    cands.push(w.slice(0, -3), w.slice(0, -3) + 'e');
-    const d = w.slice(0, -3);
-    if (d.length > 2 && d[d.length - 1] === d[d.length - 2]) cands.push(d.slice(0, -1));
-  }
-  if (w.endsWith('ed')) {                                                           // stopped→stop
-    cands.push(w.slice(0, -2), w.slice(0, -1));
-    const d = w.slice(0, -2);
-    if (d.length > 2 && d[d.length - 1] === d[d.length - 2]) cands.push(d.slice(0, -1));
-  }
-  if (w.endsWith('er') || w.endsWith('est')) cands.push(w.slice(0, -2));            // bigger→bigg→big
-  /* 派生副词/名词/形容词（2026-10-18 用户报"加 ly 查不到"）：原先没有这几条规则，
-     导致 forcefully→forceful 这一步根本不存在，只能整词硬查 → 词表里没有就查不到。 */
+  if (w.endsWith('ing') && w.length > 4) pushStem(w.slice(0, -3));                  // running→run, making→make
+  if (w.endsWith('ed') && w.length > 3) pushStem(w.slice(0, -2));                   // stopped→stop, carried→carry
+  if (w.endsWith('est') && w.length > 4) pushStem(w.slice(0, -3));                  // fastest→fast, biggest→big, happiest→happy, nicest→nice
+  if (w.endsWith('er') && w.length > 3) pushStem(w.slice(0, -2));                   // bigger→big, happier→happy, nicer→nice
+  /* 派生副词/名词/形容词 */
   if (w.length > 4 && w.endsWith('ly')) {                                           // forcefully→forceful
     cands.push(w.slice(0, -2));
     if (w.endsWith('ily')) cands.push(w.slice(0, -3) + 'y');                        // happily→happy
     if (w.endsWith('ally')) cands.push(w.slice(0, -4) + 'al', w.slice(0, -2));      // basically→basic/basical
     if (w.endsWith('fully')) cands.push(w.slice(0, -2));                            // carefully→careful
   }
-  if (w.length > 5 && w.endsWith('ness')) cands.push(w.slice(0, -4));               // happiness→happi
-  if (w.length > 5 && w.endsWith('less')) cands.push(w.slice(0, -4));               // careless→care
-  if (w.length > 5 && w.endsWith('ful')) cands.push(w.slice(0, -3));                // forceful→force
-  for (const c of cands) if (ENHANCED[c] || OXFORD[c] || ECDICT[c]) return c;
+  if (w.length > 5 && w.endsWith('ness')) {                                         // happiness→happy, darkness→dark
+    const d = w.slice(0, -4);
+    cands.push(d);
+    if (d.endsWith('i')) cands.push(d.slice(0, -1) + 'y');
+  }
+  if (w.length > 5 && w.endsWith('less')) {                                         // penniless→penny, careless→care
+    const d = w.slice(0, -4);
+    cands.push(d);
+    if (d.endsWith('i')) cands.push(d.slice(0, -1) + 'y');
+  }
+  if (w.length > 5 && w.endsWith('ful')) {                                          // beautiful→beauty, forceful→force
+    const d = w.slice(0, -3);
+    cands.push(d);
+    if (d.endsWith('i')) cands.push(d.slice(0, -1) + 'y');
+  }
+  for (const c of cands) {
+    if (own(ENHANCED, c) || own(OXFORD, c) || own(ECDICT, c)) return c;
+  }
   return w;
 }
 
@@ -24130,6 +24269,32 @@ function fsrsNextMemory(f, g, elapsed) {
 function fsrsInterval(s) {
   return clampNum(Math.round(s * FSRS_CURVE.modifier), 1, 36500);
 }
+/* Fuzz 负载均衡：对 ≥3 天的间隔在 ±5%（至少 ±1 天、上限 ±7 天）内挑未来到期数最少的那一天，
+   消除同批新词在第 4/11/28 天整批共振堆积的问题。 */
+function fsrsFuzzInterval(ivl, history, now, excludeKey) {
+  if (ivl < 3) return ivl;
+  const delta = Math.max(1, Math.min(7, Math.round(ivl * 0.05)));
+  const lo = Math.max(2, ivl - delta);
+  const hi = Math.min(36500, ivl + delta);
+  const counts = new Map();
+  if (Array.isArray(history)) {
+    for (const x of history) {
+      if (!x || typeof x.d !== 'number') continue;
+      if (excludeKey && (x.k || x.w) === excludeKey) continue;
+      const dayOff = Math.round((x.d - now) / DAY_MS);
+      if (dayOff >= lo && dayOff <= hi) counts.set(dayOff, (counts.get(dayOff) || 0) + 1);
+    }
+  }
+  let bestDay = ivl, bestLoad = Infinity, bestDist = Infinity;
+  for (let d = lo; d <= hi; d++) {
+    const load = counts.get(d) || 0;
+    const dist = Math.abs(d - ivl) + Math.random() * 0.35;
+    if (load < bestLoad || (load === bestLoad && dist < bestDist)) {
+      bestLoad = load; bestDist = dist; bestDay = d;
+    }
+  }
+  return bestDay;
+}
 function bucketOf(ivl) {
   let i = 0;
   for (let k = 0; k < SRS_DAYS.length; k++) if (ivl >= SRS_DAYS[k]) i = k;
@@ -24165,15 +24330,21 @@ function fsrsOf(it) {
   if (typeof f.last !== 'number') f.last = typeof it.t === 'number' ? it.t : Date.now();
   return f;
 }
-function fsrsSchedule(it, rating, now) {
+function fsrsSchedule(it, rating, now, history) {
   const f = fsrsOf(it);
   const isNew = f.state === FSRS_STATE.NEW || !(f.s > 0);
   const elapsed = isNew ? 0 : Math.max(0, (now - f.last) / DAY_MS);
   const mem = fsrsNextMemory(f, rating, elapsed);
   let ivl;
-  if (isNew) ivl = rating === 4 ? 2 : 1;      // 新词第一次统一明天见；Easy 给两天
-  else if (rating === 1) ivl = 1;              // 忘了就明天重来，别让 FSRS 推出 2~3 天
-  else ivl = fsrsInterval(mem.s);
+  if (isNew) {
+    // 新词 Easy 给 3 天并对齐内部稳定度上限，避免外部压短但 f.s=8.3 导致下次 R 虚高、稳定度不涨
+    if (rating === 4) { ivl = 3; mem.s = Math.min(mem.s, 4.5); }
+    else ivl = 1;
+  } else if (rating === 1) {
+    ivl = 1;                                   // 忘了就明天重来，别让 FSRS 推出 2~3 天
+  } else {
+    ivl = fsrsFuzzInterval(fsrsInterval(mem.s), history, now, it.k || it.w);
+  }
   f.s = mem.s;
   f.d = mem.d;
   f.reps += 1;
@@ -24482,14 +24653,18 @@ function pickWeighted(pairs) {
   for (const p of pairs) { x -= p[1]; if (x <= 0) return p[0]; }
   return pairs[pairs.length - 1][0];
 }
-/* 题型选择：新词/低稳定度先「认」，稳定度高了再「写」。
-   混合模式里拼写只在稳定度 ≥ 7 天时多出现；用户也可以在复习头部手动锁题型。 */
+/* 题型选择：新词/低稳定度先「认」，稳定度高了再「写」；
+   顽固词（遗忘 ≥ 4 次的 Leech）在混合模式下自动提高主动拼写/听写权重，逼出深层提取。 */
+const LEECH_LAPSES = 4;
 function pickQuestionType(cur) {
   if (cur.kind === 'ex' || /\s/.test(cur.w)) return 'flash';
   const pref = qModePref();
   if (pref !== 'mix') return pref;      // 用户锁了题型就一直用它，补看也不例外
   if (cur.retry) return cur.lastType === 'listen' ? 'choice' : 'listen';
   const f = fsrsOf(cur);
+  if ((f.lapses || 0) >= LEECH_LAPSES) {
+    return pickWeighted([['spell', 6], ['listen', 2.5], ['choice', 1.5]]);
+  }
   if (!(f.s > 0) || f.state === FSRS_STATE.NEW) {
     return Math.random() < 0.7 ? 'choice' : 'listen';
   }
@@ -24497,6 +24672,37 @@ function pickQuestionType(cur) {
     return pickWeighted([['spell', 4], ['choice', 3], ['listen', 3]]);
   }
   return pickWeighted([['choice', 4], ['listen', 4], ['spell', 2]]);
+}
+/* 同词根分散（Sibling Dispersal）：提取主词根，贪心拉开同词根兄弟词在队列里的间距，
+   避免 subscribe / prescribe 紧挨着出现互相提示或混淆。 */
+function primaryRootKey(w) {
+  if (!w || /\s/.test(w)) return '';
+  const bd = decompose(w.toLowerCase(), 0);
+  if (!bd || !bd.roots || !bd.roots.length) return '';
+  const r = bd.roots.find(x => !x.isBase) || bd.roots[0];
+  return r && r.m ? r.m : '';
+}
+function disperseRootSiblings(list) {
+  if (!Array.isArray(list) || list.length <= 2) return list;
+  const remaining = list.map((item, idx) => ({ item, idx, root: primaryRootKey(item.w) }));
+  const out = [];
+  const lastPos = new Map();
+  while (remaining.length) {
+    let pickIdx = 0, bestScore = -1e9;
+    const pos = out.length;
+    for (let i = 0; i < remaining.length; i++) {
+      const cand = remaining[i];
+      const prev = cand.root ? lastPos.get(cand.root) : undefined;
+      const gap = prev === undefined ? 999 : (pos - prev);
+      // 保留大致原顺序（轻微偏向靠前项），但强烈惩罚同词根近距相邻
+      const score = (gap >= 4 ? 100 : gap * 20) - i * 0.15;
+      if (score > bestScore) { bestScore = score; pickIdx = i; }
+    }
+    const chosen = remaining.splice(pickIdx, 1)[0];
+    if (chosen.root) lastPos.set(chosen.root, out.length);
+    out.push(chosen.item);
+  }
+  return out;
 }
 const TODAY_CFG_KEY = 'wr_today_cfg';
 function todayCfg() {
@@ -24619,9 +24825,9 @@ async function startDaily() {
   const fresh = pickNewWords(Math.max(0, cfg.perDay - td.new));
   if (!due.length && !fresh.length) { alert(T('今天没有到期的词，也没有新词可学。')); return; }
   await ensureDict(fresh.concat(due.map(x => x.w)));
-  const list = due.concat(fresh.map(w => normHistItem({
+  const list = disperseRootSiblings(due.concat(fresh.map(w => normHistItem({
     k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word', fresh: true
-  })));
+  }))));
   reviewState = newReviewState(list, { fromTab: 'query', daily: true });
   input.blur();
   switchTab('query');
@@ -24634,10 +24840,10 @@ async function startReview(all) {
   const h = loadHistory().slice();
   if (!h.length) { renderHistory(); return; }
   let list;
-  if (all) list = shuffled(h);
+  if (all) list = disperseRootSiblings(shuffled(h));
   else {
     const due = dueItems(h).sort((a, b) => (a.d || 0) - (b.d || 0));
-    list = due.length ? due : shuffled(h);
+    list = disperseRootSiblings(due.length ? due : shuffled(h));
   }
   reviewState = newReviewState(list);
   input.blur();
@@ -24759,7 +24965,7 @@ function applyRating(rating, opts) {
     });
     h.unshift(it);
   }
-  const ivl = fsrsSchedule(it, rating, Date.now());
+  const ivl = fsrsSchedule(it, rating, Date.now(), h);
   const auto = !!(s.q && ['choice', 'listen', 'spell'].indexOf(s.q.type) >= 0);
   if (!retry) recordStudy(wasNew && cur.kind !== 'ex', rating > 1, auto);
   s.done += 1;
@@ -24921,9 +25127,12 @@ function qOptionsHTML(q, s) {
 
 function qFeedbackHTML(cur, s, extra) {
   const r = analyze(cur.w);
+  const f = fsrsOf(cur);
+  const leechTag = (f.lapses || 0) >= LEECH_LAPSES
+    ? ' · ' + T('顽固词') + ' (' + f.lapses + ')' : '';
   let h = '<div class="q-feedback ' + (s.result === 'correct' ? 'ok' : 'bad') + '">' +
     (s.result === 'correct' ? '✓ ' + T('答对了') : '✗ ' + T('答错了') + (extra ? ' · ' + extra : '')) +
-    '</div>';
+    leechTag + '</div>';
   h += '<div class="rev-sum">' + escapeHtml(meaningFor(cur)) + '</div>';
   h += reviewMorphHTML(r);
   h += memoBlockHTML(r);
