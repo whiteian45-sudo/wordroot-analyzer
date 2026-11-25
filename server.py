@@ -20,7 +20,7 @@ from urllib.parse import urlsplit, urlparse, parse_qs
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 try:
-    PORT = int(os.environ.get('WR_PORT', '8756'))   # 测试/多实例时可用环境变量换端口
+    PORT = int(os.environ.get('WR_PORT') or os.environ.get('PORT') or '8756')   # 支持云端 PORT 或测试 WR_PORT
 except ValueError:
     PORT = 8756
 TTS_PORT = 8757   # Kokoro TTS 服务端口，与 tts_server.py / tts_start.bat / 前端保持一致
@@ -588,6 +588,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if p == '/study':
             self._send_json(_read_study())
             return
+        if p == '/api/manifest':
+            def _has(rel):
+                return os.path.exists(os.path.join(DIR, rel))
+            self._send_json({
+                'ok': True,
+                'enhanced': _has('enhanced.json'),
+                'oxford': _has('oxford.json'),
+                'etym': _has('etym.json'),
+                'thes': _has('thes.json'),
+                'ex': _has('ex.json'),
+                'morph': _has('morph.json'),
+                'bnc': _has('bnc.json'),
+                'stress': _has('stress.json'),
+                'atlas': _has('atlas.json'),
+                'atlas_media': os.path.isdir(os.path.join(DIR, 'atlas_media')),
+                'dict_db': bool(_dict_db_path()),
+                'dict_shards': _has(os.path.join('dict', 'index.json')),
+                'ecdict': _has('ecdict.json'),
+            })
+            return
         # /lookup?word=xxx：按词从 dict.db（SQLite）取 ecdict/oxford/thes 三个源（2026-10-25 加）
         # 目的：前端不必再把 100MB+ 的大 JSON 整包拉进浏览器内存；按需取一个词即可。
         if p == '/lookup':
@@ -598,7 +618,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             dbp = _dict_db_path()
             if not dbp:
-                self._send_json({'ok': False, 'err': 'dict.db 不存在，请先运行 python build_dict_db.py'}, 500)
+                self._send_json({'ok': False, 'err': 'dict.db 未构建'}, 200)
                 return
             try:
                 out = _lookup_rows(dbp, [w])
@@ -988,8 +1008,8 @@ def main():
         print('  局域网访问: http://' + ip + f':{PORT}/index.html')
         print('  关闭窗口即退出服务')
         print('=' * 50)
-        # 延迟打开浏览器，等服务就绪（测试/后台跑时用 WR_NO_BROWSER=1 关掉）
-        if os.environ.get('WR_NO_BROWSER') != '1':
+        # 延迟打开浏览器，等服务就绪（测试/容器/后台跑时用 WR_NO_BROWSER=1 或 PORT 关掉）
+        if os.environ.get('WR_NO_BROWSER') != '1' and not os.environ.get('PORT'):
             threading.Timer(0.8, lambda: webbrowser.open(url)).start()
         try:
             httpd.serve_forever()
