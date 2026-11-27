@@ -101,6 +101,12 @@ const ok = (name, pass, detail) => {
     ok('启动时没有把全量词典塞进内存', keys < 5000, 'ECDICT=' + keys + ' 条');
   }
 
+  // 等一次性历史清理的按需取词跑完：它会在后台批量 /lookup，
+  // 不排空的话「常用词不发请求」会被这些并发请求误判。
+  for (let i = 0; i < 80; i++) {
+    if (await ev('typeof DICT_PENDING === "undefined" || DICT_PENDING.size === 0')) break;
+    await sleep(250);
+  }
   if (lazy) {
     console.log('=== 查词 ===');
     const c0 = await ev('window.__lookupCalls');

@@ -17,20 +17,40 @@ const DIR = __dirname;
 /* 真实词性来源：直接读 ecdict.json 的 t 字段（懒加载，第一次用到 POS 时才解析）。
    这样 guard/audit 的分层解析读法与浏览器里一致，不再只靠一小张 POS 夹具。 */
 let ECDICT_POS_DICT = null;
+let ATLAS_POS_DICT = null;
 function POS_GET(w) {
   if (!ECDICT_POS_DICT) {
     try { ECDICT_POS_DICT = JSON.parse(fs.readFileSync(DIR + '/ecdict.json', 'utf8')); }
     catch (e) { ECDICT_POS_DICT = {}; }
   }
   const t = (ECDICT_POS_DICT[w] && ECDICT_POS_DICT[w].t) || '';
-  if (!t) return '';
   const out = [];
-  const re = /(?:^|[\n;；])\s*(n|vt|vi|v|a|adj|ad|adv)\./g;
-  let m;
-  while ((m = re.exec(t))) {
-    let p = m[1];
-    p = p === 'adj' ? 'a' : ((p === 'ad' || p === 'adv') ? 'adv' : ((p === 'vt' || p === 'vi') ? 'v' : p));
-    if (/^(n|v|a|adv)$/.test(p) && out.indexOf(p) < 0) out.push(p);
+  if (t) {
+    const re = /(?:^|[\n;；])\s*(n|vt|vi|v|a|adj|ad|adv)\./g;
+    let m;
+    while ((m = re.exec(t))) {
+      let p = m[1];
+      p = p === 'adj' ? 'a' : ((p === 'ad' || p === 'adv') ? 'adv' : ((p === 'vt' || p === 'vi') ? 'v' : p));
+      if (/^(n|v|a|adv)$/.test(p) && out.indexOf(p) < 0) out.push(p);
+    }
+  }
+  if (!out.length) {
+    if (!ATLAS_POS_DICT) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(DIR + '/atlas.json', 'utf8'));
+        ATLAS_POS_DICT = (raw && raw.words) || {};
+      } catch (e) { ATLAS_POS_DICT = {}; }
+    }
+    const ae = ATLAS_POS_DICT[w];
+    if (ae && Array.isArray(ae.senses)) {
+      for (const s of ae.senses) {
+        const toks = String((s && s.pos) || '').toLowerCase().split(/[^a-z]+/).filter(Boolean);
+        for (let p of toks) {
+          p = p === 'adj' ? 'a' : ((p === 'ad' || p === 'adv') ? 'adv' : ((p === 'vt' || p === 'vi') ? 'v' : p));
+          if (/^(n|v|a|adv)$/.test(p) && out.indexOf(p) < 0) out.push(p);
+        }
+      }
+    }
   }
   return out.join('/');
 }
@@ -43,7 +63,8 @@ const UI_SHIM = "var LANG='zh';" +
      affability 这类“词典形容词 + -ity”的规则需要词性才能走通。 */
   "var POS_OF={'affable':'a','compatible':'a','usable':'a','visible':'a'," +
   "'responsible':'a','creative':'a','believable':'a','nationalize':'v','interpret':'v'," +
-  "'limber':'a','premonish':'v','maidenly':'a','blandish':'v','perishable':'a'};\n" +
+  "'limber':'a','premonish':'v','maidenly':'a','blandish':'v','perishable':'a'," +
+  "'impoverish':'v','architect':'n','vehement':'a'};\n" +
   "function EN_MODE(){return false;}" +
   "function gl(m,zh){return zh||'';}" +
   "function langEn(s){return s;}\n";

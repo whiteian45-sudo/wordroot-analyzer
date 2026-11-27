@@ -109,9 +109,28 @@ out.homo = HOMO.map(function (row) {
 out.perf = Date.now() - t0;
 JSON.stringify(out);
 `;
-const dict = JSON.parse(fs.readFileSync(DIR + '/ecdict.json', 'utf8'));
-const words = FULL ? Object.keys(dict).filter(w => /^[a-z]{2,}$/.test(w))
-  : Object.keys(dict).filter(w => /^[a-z]{2,}$/.test(w)).filter((_, i) => i % 37 === 0);
+let wordPool = [];
+if (fs.existsSync(DIR + '/ecdict.json')) {
+  const dict = JSON.parse(fs.readFileSync(DIR + '/ecdict.json', 'utf8'));
+  wordPool = Object.keys(dict).filter(w => /^[a-z]{2,}$/.test(w));
+} else {
+  const poolSet = new Set();
+  if (fs.existsSync(DIR + '/atlas.json')) {
+    const atlas = JSON.parse(fs.readFileSync(DIR + '/atlas.json', 'utf8'));
+    Object.keys((atlas && atlas.words) || {}).forEach(w => { if (/^[a-z]{2,}$/.test(w)) poolSet.add(w); });
+  }
+  if (fs.existsSync(DIR + '/bnc.json')) {
+    const bnc = JSON.parse(fs.readFileSync(DIR + '/bnc.json', 'utf8'));
+    Object.values(bnc || {}).forEach(fam => {
+      if (fam && typeof fam === 'object') {
+        Object.keys(fam).forEach(w => { if (/^[a-z]{2,}$/.test(w)) poolSet.add(w); });
+      }
+    });
+  }
+  wordPool = [...poolSet];
+  say('· 未检测到 ecdict.json，改用内置 atlas.json + bnc.json（' + wordPool.length + ' 词）执行抽样体检');
+}
+const words = FULL ? wordPool : wordPool.filter((_, i) => i % (wordPool.length > 50000 ? 37 : 3) === 0);
 const r = JSON.parse(eval(core + probe.split('__WORDS__').join(JSON.stringify(words))));
 
 if (r.leak.length) { fatal++; console.log('✗ 原型链泄漏（' + r.leak.length + ' 张表）: ' + r.leak.join(' ')); }
