@@ -211,7 +211,7 @@ python -I wr_atlas_build.py <上游>/data/word-atlas.json atlas.json --index <�
 改拆解引擎或词素表后跑一遍回归（Windows 直接双击 `回归.bat`，等价于依次执行下面三条）：
 
 ```bash
-node test_decompose.js --guard         # 守护清单：808 个已验证词的拆解结果不许回退
+node test_decompose.js --guard         # 守护清单：813 个已验证词的拆解结果不许回退
 node test_decompose.js --audit --brief # 词源审计：以 enhanced 自带词源为基准，分层看总量
 node test_health.js                    # 一体化体检：表完整性、原型链、渲染冒烟、覆盖率、性能
 ```
@@ -235,6 +235,8 @@ CI 模板在 `ci/check.yml`（许可审计 → 守护 → 体检 → 审计）�
 | `test_ui.js` | 真机 UI 验证（需主服务在跑 + Chrome） |
 | `test_lazy.js` | 按需词典 / 自动纠错 / 直接输入 的端到端验证（需主服务在跑 + Chrome） |
 | `test_atlas.js` | 词光词库结构、媒体覆盖、与 enhanced 重合度体检 |
+| `wr_enhancements.js` | 浏览器 / Node 共用的纯逻辑：线性 SVG 图标、构成逻辑清洗、学习统计、每日词根、词素提示、词光倒排索引 |
+| `tests/enhancements.test.js` | `wr_enhancements.js` 的单元测试（`node --test tests/`） |
 | `wr_atlas_build.py` | 从上游 `word-atlas.json` 生成 `atlas.json`（含媒体位标记） |
 | `wr_atlas_media.py` | 下载插画 / 英美音 / 例句朗读到 `atlas_media/`，支持断点续跑 |
 | `wr_morph_prepare.py` | 从 enhanced/BNC/atlas + OEWN 原始目录生成 target / OEWN 中间表 |
