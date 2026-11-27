@@ -22403,6 +22403,48 @@ function openMorphPanel(morphKey) {
   updatePanelBack();
   slidePanel(true);
 }
+/* 星图里的古语源词节点（如拉丁语 specere）：列出共享该词源的词根与英语词，
+   把「同源」从一条连线变成可以继续走下去的入口。 */
+function openSourcePanel(node) {
+  if (!node || !node.srcLang || !node.srcWord) return;
+  const key = node.srcLang + '' + node.srcWord;
+  const rootKeys = (buildRootSrcIndex().get(key) || []).filter(k => k !== node.label);
+  const set = SRC_INDEX.get(key);
+  const words = set ? [...set] : [];
+  words.sort((a, b) => {
+    const la = BNC_LEVEL.get(a) || '9', lb = BNC_LEVEL.get(b) || '9';
+    if (la !== lb) return la < lb ? -1 : 1;
+    return a.localeCompare(b);
+  });
+  const body = document.getElementById('panel-body');
+  const title = document.getElementById('panel-title');
+  if (title) title.textContent = (EN_MODE() ? 'Etymon' : '词源') + ' · ' +
+    (langEn(node.srcLang) || node.srcLang) + ' ' + node.srcWord;
+  let h = '<div class="morph-drawer-head">' +
+    '<span class="morph-drawer-title rt">' + escapeHtml(node.srcWord) + '</span>' +
+    '<span class="morph-drawer-mean">' + escapeHtml(langEn(node.srcLang) || node.srcLang) + '</span>' +
+    '</div>';
+  if (rootKeys.length) {
+    h += '<div class="rd-sub">' + (EN_MODE() ? 'Cognate roots' : '同源词根') + '</div><div class="ho-root-words">' +
+      rootKeys.map(rk => {
+        const mean = (ROOTS[rk] && ROOTS[rk][0]) || '';
+        return '<button type="button" class="ho-word-chip" data-root-jump="' + escapeHtml(rk) + '">' +
+          '<b>' + escapeHtml(rk) + '</b>' + (mean ? '<span>' + escapeHtml(gl(rk, mean)) + '</span>' : '') + '</button>';
+      }).join('') + '</div>';
+  }
+  if (words.length) {
+    h += '<div class="rd-sub">' + (EN_MODE() ? 'Source words' : '同源词') +
+      '<span class="rd-n">' + words.length + '</span></div><div class="ho-root-words">' +
+      words.slice(0, 80).map(w => '<button type="button" class="ho-word-chip" data-src-word="' + escapeHtml(w) + '"><b>' + escapeHtml(w) + '</b></button>').join('') +
+      (words.length > 80 ? '<span class="morph-src">' + (EN_MODE() ? 'first 80 shown' : '仅显示前 80 个') + '</span>' : '') +
+      '</div>';
+  }
+  if (!rootKeys.length && !words.length) h += '<div class="miss">' + (EN_MODE() ? 'No family data for this etymon yet.' : '暂无这个词源的词族数据') + '</div>';
+  if (body) { body.innerHTML = h; translateDOM(body); }
+  panelBack = null;
+  updatePanelBack();
+  slidePanel(true);
+}
 /* Tab 切换 */
 function switchTab(name) {
   if (name !== 'query' && reviewState && !reviewState.finished) {
@@ -22579,6 +22621,7 @@ function buildRootGraph(entry) {
   if (src && src.lang && src.word) {
     const sn = {
       id: 'src:' + src.lang + ':' + src.word, label: src.word, kind: 'source',
+      srcLang: src.lang, srcWord: src.word,
       sub: langEn(src.lang), x: -190, y: -150, r: 22, fixed: true
     };
     nodes.push(sn);
@@ -22690,7 +22733,9 @@ function showGraphTip(g, n, x, y) {
   const cefrTag = ae && ae.cefr ? ' <span class="rd-tip-cefr">' + escapeHtml(ae.cefr) + '</span>' : '';
   tip.innerHTML = '<b>' + escapeHtml(n.label) + '</b>' + cefrTag +
     (n.sub ? '<div>' + escapeHtml(n.sub) + '</div>' : '') +
-    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡' : '点击设为中心词根')) + '</div>';
+    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡'
+      : n.kind === 'source' ? '点击查看该词源的词族'
+      : n === g.center ? '当前中心词根' : '点击设为中心词根')) + '</div>';
   tip.style.display = 'block';
   tip.style.left = Math.max(8, Math.min(g.w - 250, x + 14)) + 'px';
   tip.style.top = Math.max(8, y - 10) + 'px';
@@ -22898,6 +22943,8 @@ function bindRootGraph(canvas) {
       if (n) {
         if (n.kind === 'word' && n.word) {
           openPanel(n.word);
+        } else if (n.kind === 'source') {
+          openSourcePanel(n);
         } else if (n.kind === 'root' || n.kind === 'cognate' || n.kind === 'prefix' || n.kind === 'suffix') {
           const inp = document.getElementById('rd-input');
           if (inp) { inp.value = n.label; paintRoots(); }
@@ -25233,6 +25280,18 @@ document.getElementById('panel-body').addEventListener('click', (e) => {
       search();
       return;
     }
+    const rj = e.target.closest('[data-root-jump]');
+    if (rj) {
+      closePanel();
+      rootsMode = 'graph';
+      switchTab('roots');
+      const inp = document.getElementById('rd-input');
+      if (inp) inp.value = rj.dataset.rootJump;
+      paintRoots();
+      return;
+    }
+    const sw = e.target.closest('[data-src-word]');
+    if (sw) { openPanel(sw.dataset.srcWord); return; }
     const cog = e.target.closest('.cog');
     if (cog) { openPanel(cog.dataset.w); return; }
   });
