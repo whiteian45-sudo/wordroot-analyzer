@@ -1271,6 +1271,13 @@ html[data-lang="en"] .ex-zh, html[data-lang="en"] .trans-btn { display: none; }
   transition: opacity var(--dur-std) linear;
 }
 .panel-mask.show { opacity: 1; pointer-events: auto; }
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.panel-actions .h-btn { font-size: 12.5px; }
 .panel {
   position: fixed;
   top: 0;

@@ -22172,7 +22172,9 @@ async function openPanel(word) {
     body.innerHTML = '<div class="card"><div class="miss">词典还在装载（' + loadFrac() +
       '）…<br>「' + escapeHtml(word) + '」暂时查不到，不代表它不存在。</div></div>';
   } else {
-    body.innerHTML = cardHTML(r);
+    body.innerHTML = '<div class="panel-actions"><button type="button" class="h-btn panel-main-btn" data-panel-main="' +
+      escapeHtml(word) + '" title="切回查词主视图，打开这个词的完整卡片">' + uiIcon('book') + '在主视图中打开</button></div>' +
+      cardHTML(r);
     decorateBnc(body, r);
   }
   document.getElementById('panel-title').textContent = word + (EN_MODE() ? ' · details' : ' · 详细');
@@ -22688,7 +22690,7 @@ function showGraphTip(g, n, x, y) {
   const cefrTag = ae && ae.cefr ? ' <span class="rd-tip-cefr">' + escapeHtml(ae.cefr) + '</span>' : '';
   tip.innerHTML = '<b>' + escapeHtml(n.label) + '</b>' + cefrTag +
     (n.sub ? '<div>' + escapeHtml(n.sub) + '</div>' : '') +
-    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡 · 双击跳转主视图' : '点击设为中心词根')) + '</div>';
+    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡' : '点击设为中心词根')) + '</div>';
   tip.style.display = 'block';
   tip.style.left = Math.max(8, Math.min(g.w - 250, x + 14)) + 'px';
   tip.style.top = Math.max(8, y - 10) + 'px';
@@ -25222,6 +25224,15 @@ document.getElementById('side-rel').addEventListener('click', (e) => {
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('panel-mask').addEventListener('click', closePanel);
 document.getElementById('panel-body').addEventListener('click', (e) => {
+    const pm = e.target.closest('[data-panel-main]');
+    if (pm) {
+      const w = pm.dataset.panelMain;
+      closePanel();
+      switchTab('query');
+      input.value = w;
+      search();
+      return;
+    }
     const cog = e.target.closest('.cog');
     if (cog) { openPanel(cog.dataset.w); return; }
   });
