@@ -171,6 +171,7 @@
   <div class="workspace-grid">
     <div class="workspace-main">
       <div class="result" id="result"></div>
+      <section id="home-overview" class="home-overview" aria-label="学习概览与每日词根"></section>
       <div id="history"></div>
     </div>
     <aside id="side-rel" aria-label="相关词汇"></aside>
@@ -224,6 +225,7 @@
   </div>
 </div>
 
+<script src="wr_enhancements.js"></script>
 <script id="core">
 /* 批次 4（2026-10-13）：-e 还原白名单。rootOf 的"去 e 还原"原来只认 BASEWORDS，
    于是 placed / persecuted / stating / derived 这类落不到还原，被读成 plac-ed / per|secut-ed。
@@ -6059,19 +6061,24 @@ function stressLine(w) {
   const lw = String(w).toLowerCase();
   const r = stressRuleOf(w);
   const neutral = STRESS_NEUTRAL.some(s => lw.length > s.length + 2 && lw.endsWith(s) && realStem(lw.slice(0, -s.length)));
+  if (typeof WREnhance !== 'undefined' && WREnhance.formatStressHint) {
+    const info = WREnhance.formatStressHint(ORD_CN, n, r ? r.suf : '', neutral, EN_MODE());
+    if (!info) return '';
+    return '<span class="stress-line"><span class="stress-pos">' + escapeHtml(info.label) + '</span>' +
+      (info.note ? '<span class="stress-note">' + escapeHtml(info.note) + '</span>' : '') + '</span>';
+  }
   if (EN_MODE()) {
     const h = r ? ' — words ending in -' + r.suf + ' always carry the stress here'
       : neutral ? ' — neutral suffix: the stress stays where the base word has it' : '';
     const ord = ['', '', 'second', 'third', 'fourth', 'fifth', 'sixth'][n];
     const pos = n === 1 ? 'the last syllable'
       : (ord ? 'the ' + ord + ' syllable from the end' : 'the ' + n + 'th syllable from the end');
-    return 'stress on ' + pos + '<span style="color:var(--sub);font-size:13px">' + h + '</span>';
+    return 'stress on ' + pos + '<span class="stress-note">' + h + '</span>';
   }
   let hint = '';
   if (r) hint = '　-' + r.suf + ' 类后缀固定把重音放在这里';
   else if (neutral) hint = '　中性后缀，重音跟着原词走';
-  return '倒数第 ' + (ORD_CN[n] || n) +
-    ' 个音节<span style="color:var(--sub);font-size:13px">' + hint + '</span>';
+  return '主重音 · 倒数第 ' + n + ' 音节<span class="stress-note">' + hint + '</span>';
 }
 /* 音标块（三个卡片分支共用）：pronInner 是音标那行的 HTML（可空）。
    只有重音、没有音标的词（字典缺音标）才单独起一个「重音」块。 */
@@ -6079,7 +6086,7 @@ function pronBlockHTML(pronInner, w) {
   const st = stressLine(w);
   if (!pronInner && !st) return '';
   if (!pronInner) return `<div class="meaning"><div class="label">重音</div>${st}</div>`;
-  return `<div class="meaning"><div class="label">音标</div>${pronInner}${st ? '<br>' + st : ''}</div>`;
+  return `<div class="meaning"><div class="label">音标</div><div class="pron-row"><span class="pron-ipa">${pronInner}</span>${st}</div></div>`;
 }
 const SUFFIX_KEYS = new Set(Object.keys(SUFFIXES));
 function buildIndex() {
@@ -18791,6 +18798,12 @@ function layeredKnown(w, allowLexicon) {
     if (typeof ENHANCED !== 'undefined' && own(ENHANCED, w) && ENHANCED[w]) {
       return { m: w, meaning: ENHANCED[w].meaning || '', cognates: [], isBase: true, pos: posOfWord(w) };
     }
+    if (typeof ATLAS !== 'undefined' && ATLAS && ATLAS.words && own(ATLAS.words, w) && ATLAS.words[w]) {
+      const ae = ATLAS.words[w];
+      const ap = (typeof WREnhance !== 'undefined' && WREnhance.extractAtlasPos) ? WREnhance.extractAtlasPos(ae) : '';
+      const am = (ae.senses && ae.senses[0] && ae.senses[0].zh) || '';
+      return { m: w, meaning: am, cognates: [], isBase: true, pos: ap || posOfWord(w) };
+    }
     /* 测试/离线环境没有 ECDICT 时，注入的 POS_GET / POS_OF 也当作“已知词”的证据。 */
     if (typeof POS_GET === 'function') {
       const p = POS_GET(w);
@@ -19264,7 +19277,11 @@ function morphChunksHTML(chunks) {
     const kin = pass
       ? `<br><span class="grimm" data-w="${g[0]}" title="格林法则 ${g[1]}：这个词素与英语 ${g[0]} 同源，是同一个印欧词根的两支后代">⚡${g[0]}</span>`
       : '';
-    h += `<span class="morph ${c.cls}"><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}${kin}</span></span>`;
+    const clickable = gk && c.cls !== 'unk' && (own(ROOTS, gk) || own(PREFIXES, gk) || own(SUFFIXES, gk));
+    const attr = clickable
+      ? ` role="button" tabindex="0" data-morph-key="${gk}" title="点击查看 ${c.m} 词素族谱与同根词"`
+      : '';
+    h += `<span class="morph ${c.cls}${clickable ? ' morph-click' : ''}"${attr}><b>${c.m}</b><span class="m">${c.label}<br>${c.mtext}${kin}</span></span>`;
   });
   return h + `</div></div>`;
 }
@@ -20681,13 +20698,13 @@ function examplesBlock(word, primary) {
   (own(EX, word) ? EX[word] : []).slice(0, 6).forEach(x => exs.push({ en: x.en || '', zh: x.zh || '', src: x.s }));
   // 例子为空的词也留个入口，方便去看别的来源里有没有它的句子
   let h = `<div class="meaning"><div class="label">例句</div>`;
-  h += `<div class="ex-more-link"><button class="h-btn" data-seewords="${escapeHtml(JSON.stringify([word]))}" data-seetitle="${escapeHtml(word)}">📖 看它的全部例句</button></div>`;
+  h += `<div class="ex-more-link"><button class="h-btn" data-seewords="${escapeHtml(JSON.stringify([word]))}" data-seetitle="${escapeHtml(word)}">${uiIcon('book')}看它的全部例句</button></div>`;
   if (!exs.length) return h + `</div>`;
   exs.forEach(x => {
     h += `<div class="ex"><div class="ex-en">`;
     if (x.src) h += `<span class="ex-src">${x.src === 'ldoce' ? '朗文' : '柯林斯'}</span>`;
     if (x.en) h += `<span class="ex-en-txt">${hlWord(word, x.en)}</span>` +
-      `<button class="tts-btn ex-tts" data-text="${escapeHtml(x.en).replace(/"/g, '&quot;')}" title="朗读英文例句">🔊</button>`;
+      `<button class="tts-btn ex-tts" data-text="${escapeHtml(x.en).replace(/"/g, '&quot;')}" title="朗读英文例句" aria-label="朗读英文例句">${uiIcon('speaker')}</button>`;
     h += `</div>`;
     if (x.zh) h += `<div class="ex-zh">${escapeHtml(x.zh)}</div>`;
     h += `</div>`;
@@ -20894,6 +20911,10 @@ function memoTextHTML(text, lang) {
   }).join('');
 }
 
+function uiIcon(name) {
+  return (typeof WREnhance !== 'undefined' && WREnhance.SVG && WREnhance.SVG[name]) || '';
+}
+
 function memoBlockHTML(r) {
   if (r.reason) return '';                    // 「查不到」的卡片不挂助记
   const src = memoSource(r);
@@ -20906,7 +20927,7 @@ function memoBlockHTML(r) {
   return `<div class="meaning memo-wrap"><button class="memo-btn" data-memo="${q(r.word)}"` +
     ` data-morph="${q(src.text)}" data-kind="${src.kind}" data-meaning="${q(meaning)}"` +
     ` title="按词根/词源编一句话助记（中文界面出英文、英文界面出中文）">` +
-    (cached ? '💡 重新生成' : '💡 AI 助记') + `</button>` +
+    uiIcon('spark') + (cached ? '重新生成' : 'AI 助记') + `</button>` +
     `<div class="memo-box"${cached ? '' : ' hidden'}>${cached ? memoTextHTML(cached.t, cached.l) : ''}</div></div>`;
 }
 
@@ -21057,7 +21078,7 @@ function explainButtonHTML(r) {
   return `<button class="memo-btn explain-btn" data-explain="${q(r.word)}"` +
     ` data-mat="${q(JSON.stringify(mat))}"` +
     ` title="在右侧面板生成一份深度讲解：本地真实素材打底，约 10~25 秒">` +
-    (cached ? '📖 重新讲解' : '📖 深度讲解') + `</button>`;
+    uiIcon('book') + (cached ? '重新讲解' : '深度讲解') + `</button>`;
 }
 
 /* 把讲解送进右侧抽屉：标题、复制、重新生成、流式输出都在这里。 */
@@ -21208,6 +21229,45 @@ function atlasSummary(a) {
   const x = a && a.senses && a.senses[0];
   return x ? ((x.pos || '') + ' ' + (x.zh || '')).trim() : '';
 }
+let ATLAS_INDEXED = false;
+function scheduleAtlasMorphIndex() {
+  if (ATLAS_INDEXED || !ATLAS || !ATLAS.words || typeof WREnhance === 'undefined' || !WREnhance.indexAtlasWordsBatch) return;
+  ATLAS_INDEXED = true;
+  const words = Object.keys(ATLAS.words);
+  let idx = 0;
+  /* 空闲时段小批建索引：一次 24 词（约 15ms），避免启动后连续 110ms/批
+     的主线程占用把查词、打字和复习卡顿住。没有 requestIdleCallback 的
+     环境退回 setTimeout；timeout 兜底保证后台标签页也能跑完。 */
+  const ric = typeof window.requestIdleCallback === 'function'
+    ? fn => window.requestIdleCallback(fn, { timeout: 1200 })
+    : fn => setTimeout(() => fn({ timeRemaining: () => 6, didTimeout: true }), 16);
+  const finish = () => {
+    // Refresh sidebar / root graph / home spotlight with enriched Atlas cognates
+    if (typeof renderHomeOverview === 'function') renderHomeOverview();
+    const curWord = input && input.value ? input.value.trim().toLowerCase() : '';
+    if (curWord && document.getElementById('result').classList.contains('show') && !(reviewState && !reviewState.finished)) {
+      const side = document.getElementById('side-rel');
+      if (side) {
+        const updated = relBlock(curWord, findCognates(curWord));
+        if (updated) { side.innerHTML = updated; translateDOM(side); }
+      }
+    }
+    if (document.getElementById('rootsview').style.display === 'block') paintRoots();
+  };
+  const step = (deadline) => {
+    let guard = 0;
+    while (idx < words.length && guard < 4) {
+      const left = deadline && typeof deadline.timeRemaining === 'function' ? deadline.timeRemaining() : 6;
+      if (left < 3 && !(deadline && deadline.didTimeout)) break;
+      const res = WREnhance.indexAtlasWordsBatch(words, idx, 24, decompose, MORPH_INDEX, SRC_INDEX, ROOTS, baseSrc);
+      idx = res.nextIdx;
+      guard++;
+      if (res.done) break;
+    }
+    if (idx < words.length) ric(step); else finish();
+  };
+  ric(step);
+}
 async function loadAtlas() {
   if (ATLAS_STATE === 1 || ATLAS_STATE === 2) return;
   ATLAS_STATE = 1;
@@ -21219,6 +21279,7 @@ async function loadAtlas() {
     console.info('词光词库已装载：' + ATLAS.count + ' 词');
     buildSuggest(); SUGGEST_READY = true;
     buildExamples(); EXAMPLES_READY = true;
+    scheduleAtlasMorphIndex();
     rerenderAll();
   } catch (e) {
     ATLAS_STATE = -1;
@@ -21260,7 +21321,7 @@ function atlasAudioBtn(a, kind, label, text) {
   if (!HAS_ATLAS_MEDIA || !a || !(a.m & bit)) return '';
   const id = a.id || a.w;
   return '<button class="h-btn atlas-audio" data-atlas-audio="' + kind + '" data-atlas-id="' + escapeHtml(id) +
-    '" data-text="' + escapeHtml(text || '') + '">🔊 ' + label + '</button>';
+    '" data-text="' + escapeHtml(text || '') + '">' + uiIcon('speaker') + label + '</button>';
 }
 function atlasBlockHTML(a, word) {
   if (!a) return '';
@@ -21321,8 +21382,8 @@ function cardHTMLRaw(r) {
     html += `<div class="card">
       <div class="word-line">
         <span class="word">${r.word}</span>${viaRedir ? `<span class="badge redir">← ${escapeHtml(r.query)}</span>` : ''}<span class="badge enhanced">增强词表</span>
-        <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
+        <button class="tts-btn" data-w="${r.word}" title="发音" aria-label="发音">${uiIcon('speaker')}</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏'}</button>
       </div>`;
     // 音标 + 重音合成一块（重音是读法的一部分，见 pronBlockHTML）
     html += pronBlockHTML(e.pron ? ipaNorm(e.pron) : '', r.word);
@@ -21404,8 +21465,8 @@ function cardHTMLRaw(r) {
     html += `<div class="card">
       <div class="word-line">
         <span class="word">${escapeHtml(hw)}</span>${viaRedir ? `<span class="badge redir">← ${escapeHtml(redirSrc)}</span>` : ''}<span class="badge">牛津9</span>
-        <button class="tts-btn" data-w="${escapeHtml(hw)}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
+        <button class="tts-btn" data-w="${escapeHtml(hw)}" title="发音" aria-label="发音">${uiIcon('speaker')}</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏'}</button>
       </div>`;
     const prons = [];
     if (o.bre) prons.push(`BrE /${fixIpaSeg(o.bre)}/`);
@@ -21451,8 +21512,8 @@ function cardHTMLRaw(r) {
       <div class="word-line">
         <span class="word">${r.word}</span>
         <span class="badge">全量词典</span>
-        <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
+        <button class="tts-btn" data-w="${r.word}" title="发音" aria-label="发音">${uiIcon('speaker')}</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏'}</button>
       </div>`;
     html += pronBlockHTML(d.p ? ipa(d.p) : '', r.word);
     html += normanBlock(r.word);
@@ -21488,8 +21549,8 @@ function cardHTMLRaw(r) {
       <div class="word-line">
         <span class="word">${r.word}</span>
         <span class="badge">词根拆解</span>
-        <button class="tts-btn" data-w="${r.word}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
+        <button class="tts-btn" data-w="${r.word}" title="发音" aria-label="发音">${uiIcon('speaker')}</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${r.word}">${isFav(r.word) ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏'}</button>
       </div>`;
     html += pronBlockHTML(atlasIpa(_ae), r.word);
     if (r.suggestion && r.suggestion !== r.word) {
@@ -21499,16 +21560,25 @@ function cardHTMLRaw(r) {
     html += layerTreeHTML(b, r.word);
     if (b.dataSource) html += `<div class="morph-src">${EN_MODE() ? 'Etymology data' : '词源数据'} · ${Math.round((b.confidence || 0.9) * 100)}%</div>`;
 
-    // 构成逻辑
-    const eq = [];
-    if (b.prefix) eq.push(b.prefix.m + '(' + prefMeaning(b.prefix, b.roots[0] && b.roots[0].m).split(';').join('/') + ')');
-    b.roots.forEach(r => eq.push(r.m + '(' + gl(r.m, r.meaning) + ')'));
-    if (b.suffixes) b.suffixes.forEach(s => eq.push(s.m + '(' + gl(s.m, s.meaning) + ')'));
-    if (b.unknown) eq.push(b.unknown + '(未识别)');
-    if (eq.length > 1) {
-      html += `<div class="meaning"><div class="label">构成逻辑</div>
-        <span class="eq">${eq.join(' + ')}</span>
-        <br>合起来大致是「${compose(b)}」——结合此含义理解单词的完整词义。</div>`;
+    // 构成逻辑（采用清洗后的自然语义推演）
+    if (typeof WREnhance !== 'undefined' && WREnhance.composeNatural) {
+      const nat = WREnhance.composeNatural(b, prefMeaning, gl, EN_MODE());
+      if (nat.equation && (b.prefix || (b.roots && b.roots.length > 1) || (b.suffixes && b.suffixes.length))) {
+        html += `<div class="meaning"><div class="label">构成逻辑</div>
+          <div class="eq">${escapeHtml(nat.equation)}</div>
+          <div class="eq-sum">${escapeHtml(nat.summary)}</div></div>`;
+      }
+    } else {
+      const eq = [];
+      if (b.prefix) eq.push(b.prefix.m + '(' + prefMeaning(b.prefix, b.roots[0] && b.roots[0].m).split(';').join('/') + ')');
+      b.roots.forEach(r => eq.push(r.m + '(' + gl(r.m, r.meaning) + ')'));
+      if (b.suffixes) b.suffixes.forEach(s => eq.push(s.m + '(' + gl(s.m, s.meaning) + ')'));
+      if (b.unknown) eq.push(b.unknown + '(未识别)');
+      if (eq.length > 1) {
+        html += `<div class="meaning"><div class="label">构成逻辑</div>
+          <span class="eq">${eq.join(' + ')}</span>
+          <br>合起来大致是「${compose(b)}」——结合此含义理解单词的完整词义。</div>`;
+      }
     }
 
     // 同根词：查 MORPH_INDEX（可点击跳转），无结果时回退词根表例词
@@ -21526,8 +21596,8 @@ function cardHTMLRaw(r) {
       <div class="word-line">
         <span class="word">${escapeHtml(r.word)}</span>
         <span class="badge">自由词素</span>
-        <button class="tts-btn" data-w="${escapeHtml(r.word)}" title="发音">🔊</button>
-        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${escapeHtml(r.word)}">${isFav(r.word) ? '★ 已收藏' : '☆ 收藏'}</button>
+        <button class="tts-btn" data-w="${escapeHtml(r.word)}" title="发音" aria-label="发音">${uiIcon('speaker')}</button>
+        <button class="fav-btn${isFav(r.word) ? ' on' : ''}" data-fav="${escapeHtml(r.word)}">${isFav(r.word) ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏'}</button>
       </div>`;
     html += pronBlockHTML(atlasIpa(_ae), r.word);
     html += `</div>`;
@@ -21695,6 +21765,10 @@ function injectCardNav(scope) {
 }
 
 function render(r, bannerHTML) {
+  if (reviewState && !reviewState.finished) {
+    reviewState = null;
+    document.body.classList.remove('in-review');
+  }
   result.innerHTML = (bannerHTML || '') + cardHTML(r);
   decorateBnc(result, r);
   result.classList.add('show');
@@ -21741,8 +21815,10 @@ function buildSuggest() {
   SUGGEST.push(...[...s].sort());
 }
 let sgIndex = -1;
+let sgTimer = null;
 function showSuggest(q) {
   const el = document.getElementById('suggest');
+  if (document.activeElement !== input) { hideSuggest(); return; }
   const key = (q || '').toLowerCase().replace(/[^a-z]/g, '');
   if (!key || key.length < 2) { hideSuggest(); return; }
   const hits = [];
@@ -21753,6 +21829,8 @@ function showSuggest(q) {
   el.style.display = 'block';
 }
 function hideSuggest() {
+  clearTimeout(sgTimer);
+  sgTimer = null;
   const el = document.getElementById('suggest');
   if (el) { el.style.display = 'none'; el.innerHTML = ''; }
   sgIndex = -1;
@@ -22258,24 +22336,76 @@ function renderFavs() {
   const f = loadFavs();
   syncNavCounts();
   if (!f.length) {
-    el.innerHTML = '<div class="card"><div class="miss">还没有收藏的单词。查询一个词，点右上角「☆ 收藏」即可加入。</div></div>';
+    el.innerHTML = '<div class="card"><div class="miss">还没有收藏的单词。查询一个词，点右上角「收藏」即可加入。</div></div>';
     translateDOM(el);   // 空态也要过翻译层：启动时就渲染，否则英文模式下一直挂中文
     return;
   }
-  let h = '<div class="h-head">收藏（' + f.length + '）';
-  h += '<button class="h-btn" id="fav-clear">清空收藏</button></div>';
+  const histMap = new Map(loadHistory().map(x => [x.w, x]));
+  const now = Date.now();
+  const favDue = f.filter(w => { const it = histMap.get(w); return it && typeof it.d === 'number' && it.d <= now; }).length;
+  let h = '<div class="h-head"><span class="h-head-meta">收藏<span class="h-n">' + f.length + '</span>' +
+    (favDue ? '<span class="h-n due">待复习 ' + favDue + '</span>' : '') + '</span>' +
+    '<span class="h-head-acts">' +
+    '<button class="h-btn" id="fav-review">' + uiIcon('shuffle') + '复习收藏</button>' +
+    '<button class="h-btn" id="fav-clear">清空收藏</button></span></div>';
   f.forEach(w => {
+    const it = histMap.get(w);
+    const isDue = it && typeof it.d === 'number' && it.d <= now;
     h += '<div class="h-item" data-word="' + escapeHtml(w) + '">' +
-      '<span class="h-w">' + escapeHtml(w) + '</span>' +
+      '<span class="h-w">' + escapeHtml(w) + (isDue ? '<span class="h-kind due-tag">待复习</span>' : '') + '</span>' +
       '<span class="h-s">' + escapeHtml(summaryFor(w)) + '</span>' +   // 词典释义里有 <英> 这类标记，不转义会被当标签吞掉
-      '<span class="fav-rm" data-del="' + escapeHtml(w) + '">✕</span>' +
+      '<button type="button" class="fav-rm" data-del="' + escapeHtml(w) + '" aria-label="移除 ' + escapeHtml(w) + '">✕</button>' +
       '</div>';
   });
   el.innerHTML = h;
   translateDOM(el);
 }
+/* 复习收藏列表：复用 FSRS-6 题型与排程 */
+async function startFavReview() {
+  const f = loadFavs();
+  if (!f.length) return;
+  await ensureDict(f);
+  const histMap = new Map(loadHistory().map(x => [x.w, x]));
+  const list = disperseRootSiblings(f.map(w => histMap.get(w) || normHistItem({
+    k: w, w: w, s: summaryFor(w), t: Date.now(), kind: 'word'
+  })));
+  reviewState = newReviewState(list, { fromTab: 'fav' });
+  input.blur();
+  switchTab('query');
+  document.body.classList.add('in-review');
+  renderReview();
+}
+/* 词素详情抽屉：点击词卡里的任意词素块直接展开词根/词缀族谱 */
+function openMorphPanel(morphKey) {
+  buildRoots();
+  const entry = ROOT_ENTRIES.find(e => e.m === morphKey);
+  if (!entry) return;
+  const body = document.getElementById('panel-body');
+  const title = document.getElementById('panel-title');
+  const kindLabel = entry.kind === 'prefix' ? T('前缀') : entry.kind === 'suffix' ? T('后缀') : T('词根');
+  const disp = entry.kind === 'prefix' ? entry.m + '-' : entry.kind === 'suffix' ? '-' + entry.m : entry.m;
+  if (title) title.textContent = kindLabel + ' · ' + disp;
+  if (body) {
+    body.innerHTML =
+      '<div class="morph-drawer-head">' +
+        '<span class="morph-drawer-title ' + (entry.kind === 'prefix' ? 'pf' : entry.kind === 'suffix' ? 'sf' : 'rt') + '">' + escapeHtml(disp) + '</span>' +
+        '<span class="morph-drawer-mean">' + escapeHtml(gl(entry.m, entry.meaning)) + '</span>' +
+      '</div>' +
+      '<div class="morph-drawer-acts">' +
+        '<button type="button" class="h-btn" data-open-graph="' + escapeHtml(entry.m) + '">' + uiIcon('graph') + T('在词根星图中探索') + '</button>' +
+      '</div>' +
+      '<div class="morph-drawer-body">' + rootDetailHTML(entry) + '</div>';
+    translateDOM(body);
+  }
+  panelBack = null;
+  updatePanelBack();
+  slidePanel(true);
+}
 /* Tab 切换 */
 function switchTab(name) {
+  if (name !== 'query' && reviewState && !reviewState.finished) {
+    document.body.classList.remove('in-review');
+  }
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   const showFav = name === 'fav';
   const showEx = name === 'ex';
@@ -22287,6 +22417,8 @@ function switchTab(name) {
   document.getElementById('freqview').style.display = showFreq ? 'block' : 'none';
   document.getElementById('result').style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
   document.getElementById('history').style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
+  const ho = document.getElementById('home-overview');
+  if (ho) ho.style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
   const ss = document.getElementById('search-stage');
   if (ss) ss.style.display = (showFav || showEx || showRoots || showFreq) ? 'none' : '';
   const side = document.getElementById('side-rel');
@@ -22392,7 +22524,7 @@ function rootDetailHTML(e) {
   if (all.length) {
     h += '<div class="rd-more" style="text-align:left"><button class="h-btn" data-seewords="' +
       escapeHtml(JSON.stringify(all.slice(0, 60))) + '" data-seetitle="' + escapeHtml('词根 ' + e.m) +
-      '">📖 看这个词根下的例句</button></div>';
+      '">' + uiIcon('book') + '看这个词根下的例句</button></div>';
   }
   return h;
 }
@@ -22525,13 +22657,16 @@ function graphColors() {
   const cs = getComputedStyle(document.documentElement);
   const get = (k, d) => (cs.getPropertyValue(k) || '').trim() || d;
   return {
-    bg: get('--glass-bg', '#0a0d1e'),
-    text: get('--text', '#f4f6ff'),
-    sub: get('--sub', 'rgba(244,246,255,.6)'),
-    accent: get('--accent', '#6ea8ff'),
-    gold: get('--gold', '#ffd479'),
-    ok: get('--ok', '#7ee2a8'),
-    pf: get('--pf-c', '#a99bff')
+    bg: get('--surface', '#FFFFFF'),
+    canvasBg: get('--glass-bg', '#F6F4EE'),
+    line: get('--line-2', '#E2DDD3'),
+    text: get('--text', '#1B1917'),
+    sub: get('--sub', '#666057'),
+    accent: get('--accent', '#1D4E89'),
+    rt: get('--rt-c', '#964B14'),
+    ok: get('--sf-c', '#15684E'),
+    pf: get('--pf-c', '#4F3B8F'),
+    gold: get('--gold', '#8E5B08')
   };
 }
 function graphNodeAt(g, x, y) {
@@ -22540,7 +22675,7 @@ function graphNodeAt(g, x, y) {
     const n = g.nodes[i];
     const nx = n.x * t.scale + t.tx;
     const ny = n.y * t.scale + t.ty;
-    const r = Math.max(8, n.r * t.scale + 6);
+    const r = Math.max(10, n.r * t.scale + 7);
     if ((x - nx) * (x - nx) + (y - ny) * (y - ny) <= r * r) return n;
   }
   return null;
@@ -22549,85 +22684,150 @@ function showGraphTip(g, n, x, y) {
   const tip = document.getElementById('rd-graph-tip');
   if (!tip) return;
   if (!g || !n) { tip.style.display = 'none'; return; }
-  tip.innerHTML = '<b>' + escapeHtml(n.label) + '</b>' +
+  const ae = n.word ? atlasFor(n.word) : null;
+  const cefrTag = ae && ae.cefr ? ' <span class="rd-tip-cefr">' + escapeHtml(ae.cefr) + '</span>' : '';
+  tip.innerHTML = '<b>' + escapeHtml(n.label) + '</b>' + cefrTag +
     (n.sub ? '<div>' + escapeHtml(n.sub) + '</div>' : '') +
-    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡' : '点击切换中心')) + '</div>';
+    '<div class="rd-graph-hint">' + escapeHtml(T(n.kind === 'word' ? '点击看词卡 · 双击跳转主视图' : '点击设为中心词根')) + '</div>';
   tip.style.display = 'block';
-  tip.style.left = Math.max(8, Math.min(g.w - 240, x + 14)) + 'px';
+  tip.style.left = Math.max(8, Math.min(g.w - 250, x + 14)) + 'px';
   tip.style.top = Math.max(8, y - 10) + 'px';
 }
 function drawRootGraph(g) {
   const ctx = g.ctx;
   const w = g.w, h = g.h, t = g.view, c = g.colors;
+  const isDark = document.documentElement.dataset.theme === 'dark';
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = c.bg;
   ctx.fillRect(0, 0, w, h);
   const X = n => n.x * t.scale + t.tx;
   const Y = n => n.y * t.scale + t.ty;
+  const cx = X(g.center), cy = Y(g.center);
+
+  // Archival radial guide rings centered on the focal root
+  ctx.save();
+  ctx.strokeStyle = c.line;
+  ctx.lineWidth = 1;
+  [120, 215, 300].forEach((rad, ri) => {
+    ctx.beginPath();
+    ctx.setLineDash(ri === 1 ? [3, 5] : []);
+    ctx.globalAlpha = ri === 1 ? 0.65 : 0.35;
+    ctx.arc(cx, cy, rad * t.scale, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // Crisp vector links (no heavy blur)
   g.links.forEach(l => {
+    const isHoverLink = g.hover && (l.a === g.hover || l.b === g.hover);
+    ctx.save();
     ctx.beginPath();
     ctx.moveTo(X(l.a), Y(l.a));
     ctx.lineTo(X(l.b), Y(l.b));
-    ctx.setLineDash(l.kind === 'word' ? [] : l.kind === 'src' ? [5, 5] : [3, 4]);
-    ctx.strokeStyle = l.kind === 'word' ? 'rgba(110,168,255,0.18)'
-      : l.kind === 'src' ? 'rgba(255,212,121,0.45)' : 'rgba(126,226,168,0.35)';
-    ctx.lineWidth = l.kind === 'src' ? 1.4 : 1;
+    ctx.setLineDash(l.kind === 'word' ? [] : l.kind === 'src' ? [5, 4] : [3, 3]);
+    ctx.strokeStyle = l.kind === 'src' ? c.pf
+      : l.kind === 'cognate' ? c.ok
+      : (isHoverLink ? c.accent : c.line);
+    ctx.globalAlpha = isHoverLink ? 0.9 : (l.kind === 'word' ? 0.7 : 0.55);
+    ctx.lineWidth = isHoverLink ? 1.8 : (l.kind === 'src' ? 1.4 : 1);
     ctx.stroke();
+    ctx.restore();
   });
   ctx.setLineDash([]);
+
+  // Archival crisp ink nodes & typography
   g.nodes.forEach(n => {
-    const x = X(n), y = Y(n), r = Math.max(5, n.r * t.scale);
+    const x = X(n), y = Y(n);
+    const isHover = g.hover === n;
+    const baseR = n === g.center ? 32 : (n.kind === 'source' ? 20 : n.kind === 'cognate' ? 14 : 7.5);
+    const r = Math.max(5.5, baseR * Math.min(1.35, Math.max(0.7, t.scale)));
     let fill = c.accent;
-    if (n.kind === 'root') fill = c.gold;
+    if (n.kind === 'root') fill = c.rt;
     else if (n.kind === 'prefix') fill = c.pf;
     else if (n.kind === 'suffix') fill = c.ok;
-    else if (n.kind === 'source') fill = '#b58cff';
+    else if (n.kind === 'source') fill = c.pf;
     else if (n.kind === 'cognate') fill = c.ok;
+
     ctx.save();
-    ctx.shadowColor = fill;
-    ctx.shadowBlur = n.kind === 'word' ? 8 : 18;
-    ctx.globalAlpha = n.kind === 'word' ? 0.9 : 1;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = fill;
-    ctx.fill();
-    ctx.restore();
-    if (n.kind !== 'word') {
-      ctx.beginPath();
-      ctx.arc(x, y, r + 4, 0, Math.PI * 2);
-      ctx.strokeStyle = fill;
-      ctx.globalAlpha = 0.35;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
     if (n === g.center) {
-      ctx.fillStyle = '#141414';
-      ctx.font = '700 13px -apple-system, "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(n.label, x, y);
-    } else {
-      const ang = Math.atan2(n.y, n.x);
-      const off = r + 8;
-      ctx.font = '11px -apple-system, "Segoe UI", sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = Math.cos(ang) >= 0 ? 'left' : 'right';
-      ctx.fillStyle = c.text;
-      ctx.globalAlpha = n.kind === 'word' ? 0.82 : 0.95;
-      const label = n.label.length > 18 ? n.label.slice(0, 17) + '…' : n.label;
-      ctx.fillText(label, x + Math.cos(ang) * off, y + Math.sin(ang) * off);
-      ctx.globalAlpha = 1;
-    }
-    if (g.hover === n) {
       ctx.beginPath();
-      ctx.arc(x, y, r + 6, 0, Math.PI * 2);
-      ctx.strokeStyle = c.text;
-      ctx.globalAlpha = 0.75;
+      ctx.arc(x, y, r + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = fill;
+      ctx.globalAlpha = 0.28;
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.fillStyle = isDark ? '#121110' : '#FFFFFF';
+      ctx.font = '700 14px "Fraunces", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, x, y);
+    } else if (n.kind === 'word') {
+      ctx.beginPath();
+      ctx.arc(x, y, isHover ? r + 2 : r, 0, Math.PI * 2);
+      ctx.fillStyle = isHover ? c.accent : c.bg;
+      ctx.fill();
+      ctx.lineWidth = isHover ? 2 : 1.8;
+      ctx.strokeStyle = fill;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(x, y, r + 3.5, 0, Math.PI * 2);
+      ctx.strokeStyle = fill;
+      ctx.globalAlpha = 0.24;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    ctx.restore();
+
+    if (n !== g.center) {
+      const ang = Math.atan2(n.y, n.x);
+      const off = r + 8;
+      ctx.save();
+      ctx.font = (n.kind === 'word' ? (isHover ? '600 12.5px' : '500 11.5px') : '600 12px') +
+        ' "Plus Jakarta Sans", -apple-system, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = Math.cos(ang) >= 0 ? 'left' : 'right';
+      ctx.fillStyle = isHover ? c.accent : c.text;
+      ctx.globalAlpha = isHover ? 1 : (n.kind === 'word' ? 0.88 : 0.96);
+      const label = n.label.length > 18 ? n.label.slice(0, 17) + '…' : n.label;
+      ctx.fillText(label, x + Math.cos(ang) * off, y + Math.sin(ang) * off);
+      ctx.restore();
     }
   });
+
+  // Clean archival corner legend
+  ctx.save();
+  const lx = 16, ly = h - 18;
+  ctx.font = '11px "Plus Jakarta Sans", -apple-system, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  const items = [
+    { col: c.rt, txt: EN_MODE() ? 'Root' : '中心词根', solid: true },
+    { col: c.pf, txt: EN_MODE() ? 'Etymon' : '古语源词', solid: true },
+    { col: c.ok, txt: EN_MODE() ? 'Cognate root' : '同源词根', solid: true },
+    { col: c.accent, txt: EN_MODE() ? 'Derivative (' + g.total + ')' : '派生词（共 ' + g.total + '）', solid: false }
+  ];
+  let curX = lx;
+  items.forEach(it => {
+    ctx.beginPath();
+    ctx.arc(curX + 4, ly, 4, 0, Math.PI * 2);
+    if (it.solid) { ctx.fillStyle = it.col; ctx.fill(); }
+    else { ctx.fillStyle = c.bg; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = it.col; ctx.stroke(); }
+    ctx.fillStyle = c.sub;
+    ctx.fillText(it.txt, curX + 13, ly);
+    curX += ctx.measureText(it.txt).width + 28;
+  });
+  ctx.restore();
 }
 function paintRootGraph(entry) {
   const box = document.getElementById('rd-graph');
@@ -22777,7 +22977,14 @@ function paintRoots() {
         hits.find(e => e.kind === 'root' && ((MORPH_INDEX.get(e.m) || { size: 0 }).size || (e.examples || []).length)) ||
         hits[0];
     } else {
-      center = hits.find(e => e.kind === 'root' && ((MORPH_INDEX.get(e.m) || { size: 0 }).size || (e.examples || []).length)) || hits[0];
+      const qClean = q.replace(/^-|-$/g, '');
+      const hasDerivs = (e) => ((MORPH_INDEX.get(e.m) || { size: 0 }).size || (e.examples || []).length);
+      center =
+        hits.find(e => e.m === qClean && e.kind === 'root') ||
+        hits.find(e => e.m === qClean) ||
+        hits.find(e => e.kind === 'root' && e.m.startsWith(qClean) && hasDerivs(e)) ||
+        hits.find(e => e.kind === 'root' && hasDerivs(e)) ||
+        hits[0];
     }
     chips.innerHTML = modeRow + kindChips +
       (center ? '<span class="rd-n" style="margin-left:auto">' + T('中心词根') + '：' + escapeHtml(center.m) + '</span>' : '') +
@@ -22873,7 +23080,7 @@ function paintFreq() {
           (t ? atlasTopicLabel(t) : T('全部')) + '</option>').join('') +
       '</select>' +
       '<span class="rd-n" style="margin-left:auto">共 ' + all.length + ' 个</span>' +
-      '<button class="h-btn" id="fq-test" style="margin-left:12px" title="从当前分级/话题里随机抽 20 个词自测">🎯 测这一级</button>';
+      '<button class="h-btn" id="fq-test" style="margin-left:12px" title="从当前分级/话题里随机抽 20 个词自测">' + uiIcon('target') + '测这一级</button>';
     const shown = all.slice(0, fqLimit);
     let h = '';
     for (const a of shown) {
@@ -22902,7 +23109,7 @@ function paintFreq() {
     '<button class="rd-chip' + (fqLevel === lv ? ' on' : '') + '" data-fqlv="' + lv + '">' + lv + 'k</button>').join('') +
     '<span class="rd-n" style="margin-left:auto">第 ' + fqLevel + ' 个千词族 · 共 ' +
     Object.keys(BNC_FAMILIES[fqLevel]).length + ' 个</span>' +
-    '<button class="h-btn" id="fq-test" style="margin-left:12px" title="从这一级随机抽 20 个词族，按闪卡的方式自测（空格揭晓、1 忘了 / 2 记住了）">🎯 测这一级</button>';
+    '<button class="h-btn" id="fq-test" style="margin-left:12px" title="从这一级随机抽 20 个词族，按闪卡的方式自测（空格揭晓、1 忘了 / 2 记住了）">' + uiIcon('target') + '测这一级</button>';
   const fams = Object.keys(BNC_FAMILIES[fqLevel]).sort();
   const shown = fams.slice(0, fqLimit);
   let h = '';
@@ -22936,7 +23143,9 @@ async function startFreqTestAtlas(n) {
   reviewState = newReviewState(list, { fromTab: 'freq' });
   input.blur();
   switchTab('query');
+  document.body.classList.add('in-review');
   renderReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 document.getElementById('freqview').addEventListener('click', (e) => {
@@ -23133,9 +23342,9 @@ function renderExList() {
       (x.src ? '<span class="ex-src">' + (EX_SRC_LABEL[x.src] || '') + '</span>' : '') +
       '<span class="cog" data-w="' + escapeHtml(x.w) + '" style="margin-right:6px">' + escapeHtml(x.w) + '</span>' +
       '<span class="ex-en-txt">' + hlWord(exFocus(x), x.en) + '</span>' +
-      '<button class="tts-btn ex-tts" data-text="' + escapeHtml(x.en).replace(/"/g, '&quot;') + '" title="朗读英文例句">🔊</button>' +
+      '<button class="tts-btn ex-tts" data-text="' + escapeHtml(x.en).replace(/"/g, '&quot;') + '" title="朗读英文例句" aria-label="朗读英文例句">' + uiIcon('speaker') + '</button>' +
       '<button class="ex-practice" data-exi="' + i + '"' +
-        (can ? ' title="挖空这句来练"' : ' disabled title="句中找不到目标词形，不能挖空"') + '>✏️</button>' +
+        (can ? ' title="挖空这句来练" aria-label="挖空这句来练"' : ' disabled title="句中找不到目标词形，不能挖空" aria-label="无法挖空"') + '>' + uiIcon('edit') + '</button>' +
       '</div>' +
       (x.zh ? '<div class="ex-zh">' + escapeHtml(x.zh) + '</div>' : '') + '</div>';
   });
@@ -23144,7 +23353,7 @@ function renderExList() {
     h += '<div class="rd-more"><button class="h-btn" id="ex-more">加载更多（还有 ' +
       (exHits.length - shown) + ' 条）</button></div>';
   }
-  h += '<div class="rd-more"><button class="h-btn" id="ex-practice-all">✏️ 把这批做成练习（' +
+  h += '<div class="rd-more"><button class="h-btn" id="ex-practice-all">' + uiIcon('edit') + '把这批做成练习（' +
     exHits.filter(x => exFindTarget(x, exFocus(x))).length + ' 句可挖空）</button></div>';
   el.innerHTML = h;
   translateDOM(el);
@@ -23938,9 +24147,9 @@ async function startDaily() {
   reviewState = newReviewState(list, { fromTab: 'query', daily: true });
   input.blur();
   switchTab('query');
+  document.body.classList.add('in-review');
   renderReview();
-  const histEl = document.getElementById('history');
-  if (histEl) histEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 }
 
 /* 复习入口。all=true 洗牌全部；默认只复习到期的词、按到期先后排。
@@ -23957,9 +24166,9 @@ async function startReview(all) {
   reviewState = newReviewState(list);
   input.blur();
   await ensureDict(list.map(x => x.w));
+  document.body.classList.add('in-review');
   renderReview();
-  const histEl = document.getElementById('history');
-  if (histEl) histEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 }
 
 /* 按词频级别抽一批测一测：复用同一套题型与 FSRS 评分。 */
@@ -23971,7 +24180,9 @@ async function startFreqTest(level, n) {
   reviewState = newReviewState(list, { fromTab: 'freq' });
   input.blur();
   switchTab('query');
+  document.body.classList.add('in-review');
   renderReview();
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 }
 
 /* 每张卡第一次渲染时定题型和选项，之后重画（揭晓/提示/答错反馈）都复用。 */
@@ -23986,6 +24197,7 @@ function ensureQuestion(cur) {
   s.rating = 0;
   s.chosen = -1;
   s.spellVal = '';
+  s.morphHint = false;
   s.qStarted = Date.now();
   s.qPlayed = false;
   return s.q;
@@ -24010,6 +24222,17 @@ function distractorPool(exclude, n) {
     const w = keys[Math.floor(Math.random() * keys.length)];
     if (!w || seen.has(w) || !/^[a-z]{3,}$/.test(w)) continue;
     const s2 = summaryFor(w);
+    if (!s2) continue;
+    pool.push({ w: w, s: s2 });
+    seen.add(w);
+  }
+  const aKeys = (ATLAS && ATLAS.words) ? Object.keys(ATLAS.words) : [];
+  let aGuard = 0;
+  while (pool.length < n + 6 && aGuard < 500 && aKeys.length) {
+    aGuard++;
+    const w = aKeys[Math.floor(Math.random() * aKeys.length)];
+    if (!w || seen.has(w) || !/^[a-z]{3,}$/.test(w)) continue;
+    const s2 = summaryFor(w) || atlasSummary(ATLAS.words[w]);
     if (!s2) continue;
     pool.push({ w: w, s: s2 });
     seen.add(w);
@@ -24160,13 +24383,15 @@ function finishReview() {
   const el = document.getElementById('history');
   const dues = loadHistory().map(x => x.d).filter(d => typeof d === 'number').sort((a, b) => a - b);
   const nextTxt = dues.length ? new Date(dues[0]).toLocaleDateString('zh-CN') : '—';
-  el.innerHTML = '<div class="rev-head">本轮完成<button class="h-btn" data-rev="quit">返回</button></div>' +
-    '<div class="review"><div class="rev-word">🎉</div>' +
+  el.innerHTML = '<div class="rev-head"><span>本轮完成</span><button class="h-btn" data-rev="quit">返回</button></div>' +
+    '<div class="review"><div class="rev-done-mark">' + uiIcon('check') + '</div>' +
+    '<div class="rev-done-title">本轮复习已完成</div>' +
     '<div class="rev-sum">复习 ' + s.done + ' 张' + (s.requeued ? '（其中补看 ' + s.requeued + ' 张）' : '') + '<br>' +
     '记住/轻松 ' + s.ok + ' · 忘了 ' + s.bad + '</div>' +
     '<div class="rev-date">' + escapeHtml(studyText(studyToday())) + '</div>' +
     '<div class="rev-date">下次到期：' + nextTxt + '</div>' +
-    '<div style="margin-top:18px"><button class="rev-btn" data-rev="all">🔀 再复习一轮（全部）</button></div></div>';
+    '<div class="rev-nav" style="margin-top:18px"><button class="rev-btn primary" data-rev="all">' + uiIcon('shuffle') + '再复习一轮（全部）</button>' +
+    '<button class="rev-btn" data-rev="quit">返回工作台</button></div></div>';
   el.classList.add('show');
   translateDOM(el);
   s.finished = true;
@@ -24213,9 +24438,9 @@ function startExamplePractice(only) {
     done: 0, ok: 0, bad: 0, requeued: 0, finished: false, mode: 'ex'
   };
   switchTab('query');    // 复习卡渲染在 #history，只有查询 tab 显示它
+  document.body.classList.add('in-review');
   renderReview();
-  const histEl = document.getElementById('history');
-  if (histEl) histEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 }
 
 // 主动回忆：闪卡 / 选义 / 听音 / 拼写四种题型共用同一套 FSRS 评分。
@@ -24253,10 +24478,31 @@ function qFeedbackHTML(cur, s, extra) {
   return h;
 }
 
+function reviewMorphHintHTML(word, shown) {
+  if (typeof WREnhance === 'undefined' || !WREnhance.buildMorphemeHint) return '';
+  const bd = decompose(word, 0) || partialDecompose(word);
+  if (!bd) return '';
+  const chips = WREnhance.buildMorphemeHint(bd, prefMeaning, gl);
+  if (chips.length < 2) return '';
+  if (!shown) {
+    return '<button type="button" class="rev-btn rev-morph-hint-btn" data-rev="morph-hint">' +
+      uiIcon('hint') + T('词根提示') + '</button>';
+  }
+  return '<div class="rev-morph-hint">' +
+    chips.map(c => '<span class="rmh-chip ' + c.cls + '"><b>' + escapeHtml(c.m) + '</b>' +
+      (c.meaning ? '<span>' + escapeHtml(c.meaning) + '</span>' : '') + '</span>').join('<span class="rmh-plus">+</span>') +
+    '</div>';
+}
+
 function renderReview() {
   const el = document.getElementById('history');
   const s = reviewState;
-  if (!s || s.finished || !s.list.length) { renderHistory(); return; }
+  if (!s || s.finished || !s.list.length) {
+    document.body.classList.remove('in-review');
+    renderHistory();
+    return;
+  }
+  document.body.classList.add('in-review');
   const cur = s.list[s.i];
   const q = ensureQuestion(cur);
   const now = Date.now();
@@ -24267,10 +24513,10 @@ function renderReview() {
     ' <select id="qmode">' + QMODES.map(m => '<option value="' + m + '"' +
       (qModePref() === m ? ' selected' : '') + '>' + T(modeNames[m]) + '</option>').join('') +
     '</select></label>';
-  const head = '<div class="rev-head">已评 ' + s.done + ' / 共 ' + s.total +
-    (s.requeued ? '　补看 ' + s.requeued : '') +
+  const head = '<div class="rev-head"><span class="rev-progress-txt">已评 <b>' + s.done + '</b> / 共 ' + s.total +
+    (s.requeued ? ' · 补看 ' + s.requeued : '') + '</span>' +
     '<span class="q-tools">' + modeSel +
-    '<button class="h-btn" data-rev="all" title="' + escapeHtml(T('不看排程，洗牌复习全部')) + '">🔀 ' + T('全部') + '</button>' +
+    '<button class="h-btn" data-rev="all" title="' + escapeHtml(T('不看排程，洗牌复习全部')) + '">' + uiIcon('shuffle') + T('全部') + '</button>' +
     '<button class="h-btn" data-rev="quit">' + T('退出') + '</button></span></div>';
   const prog = Math.min(1, s.done / Math.max(1, s.total + (s.requeued || 0)));
   const progBar = '<div class="rev-prog" aria-hidden="true"><div class="rev-prog-fill" style="transform:scaleX(' + prog.toFixed(4) + ')"></div></div>';
@@ -24280,13 +24526,13 @@ function renderReview() {
   const grades =
     '<div class="rev-nav">' +
     '<button class="rev-btn grade-btn bad" data-rev="bad" title="' + escapeHtml(T('忘了：明天重来，本轮稍后再考一次（快捷键 1）')) + '">' +
-      '<span class="rev-btn-top"><span class="q-key">1</span>😰 ' + T('忘了') + '</span>' +
+      '<span class="rev-btn-top"><span class="q-key">1</span>' + T('忘了') + '</span>' +
       '<span class="rev-ivl">' + escapeHtml(ivlBad) + '</span></button>' +
     '<button class="rev-btn grade-btn ok" data-rev="ok" title="' + escapeHtml(T('还行：按 FSRS 排期（快捷键 2）')) + '">' +
-      '<span class="rev-btn-top"><span class="q-key">2</span>😊 ' + T('还行') + '</span>' +
+      '<span class="rev-btn-top"><span class="q-key">2</span>' + T('还行') + '</span>' +
       '<span class="rev-ivl">' + escapeHtml(ivlOk) + '</span></button>' +
     '<button class="rev-btn grade-btn great" data-rev="great" title="' + escapeHtml(T('轻松：间隔拉长（快捷键 3）')) + '">' +
-      '<span class="rev-btn-top"><span class="q-key">3</span>😎 ' + T('轻松') + '</span>' +
+      '<span class="rev-btn-top"><span class="q-key">3</span>' + T('轻松') + '</span>' +
       '<span class="rev-ivl">' + escapeHtml(ivlGreat) + '</span></button>' +
     '</div>';
   let h = head + progBar + '<div class="review">';
@@ -24303,7 +24549,7 @@ function renderReview() {
         escapeHtml(decodeEntities(cur.en.slice(m.index + m[0].length)));
     }
     h += '<div class="rev-ex">' + sentence + '</div>';
-    h += '<div class="rev-date">' + ts + ' · ' + fsrsStatusHTML(cur) + '　例句挖空</div>';
+    h += '<div class="rev-date">' + ts + ' · ' + fsrsStatusHTML(cur) + ' · 例句挖空</div>';
     if (s.shown) {
       h += '<div class="rev-sum"><b>' + escapeHtml(decodeEntities(cur.w)) + '</b>　' +
         escapeHtml(decodeEntities(EN_MODE() ? (summaryFor(cur.w) || cur.zh || '') : (cur.zh || '(暂无中文)'))) + '</div>';
@@ -24311,7 +24557,7 @@ function renderReview() {
       h += '<button class="rev-btn" data-rev="full">' + T('查这个词的卡片') + '</button>';
     } else {
       h += '<div class="rev-hint">' + T('句中缺的是哪个词？想好了再点下方揭晓') + '</div>';
-      h += '<button class="rev-btn primary" data-rev="show" title="' + escapeHtml(T('快捷键：空格')) + '">👁 ' + T('显示答案') + '</button>';
+      h += '<button class="rev-btn primary" data-rev="show" title="' + escapeHtml(T('快捷键：空格')) + '">' + uiIcon('eye') + T('显示答案') + '</button>';
     }
     h += '</div>';
     el.innerHTML = h;
@@ -24323,18 +24569,22 @@ function renderReview() {
 
   if (q.type === 'choice') {
     h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
-      '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
+      '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '" aria-label="' + escapeHtml(T('发音')) + '">' + uiIcon('speaker') + '</button></div>';
     h += '<div class="rev-date">' + ts + ' · ' + T('选义') + ' · ' + fsrsStatusHTML(cur) + '</div>';
-    if (!s.answered) h += '<div class="rev-hint">' + T('选一个意思') + '</div>';
+    if (!s.answered) {
+      h += '<div class="rev-hint">' + T('选一个意思') + '</div>';
+      if (s.morphHint) h += reviewMorphHintHTML(cur.w, true);
+    }
     h += qOptionsHTML(q, s);
+    if (!s.answered && !s.morphHint) h += '<div class="rev-hint-row">' + reviewMorphHintHTML(cur.w, false) + '</div>';
     if (s.answered) h += qFeedbackHTML(cur, s, s.result === 'wrong' ? T('正确答案') + ': ' + cur.w : '');
     h += '</div>';
   } else if (q.type === 'listen') {
     if (s.answered) {
       h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
-        '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
+        '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '" aria-label="' + escapeHtml(T('发音')) + '">' + uiIcon('speaker') + '</button></div>';
     } else {
-      h += '<div class="q-audio"><button class="rev-btn primary" data-rev="replay">🔊 ' + T('播放发音') + '</button></div>';
+      h += '<div class="q-audio"><button class="rev-btn primary" data-rev="replay">' + uiIcon('speaker') + T('播放发音') + '</button></div>';
       h += '<div class="rev-hint">' + T('听发音，选出这个词') + '</div>';
     }
     h += '<div class="rev-date">' + ts + ' · ' + T('听音') + ' · ' + fsrsStatusHTML(cur) + '</div>';
@@ -24343,7 +24593,7 @@ function renderReview() {
     h += '</div>';
   } else if (q.type === 'spell') {
     h += '<div class="q-prompt">' + escapeHtml(meaningFor(cur)) + '</div>';
-    h += '<div class="q-audio"><button class="rev-btn" data-rev="replay">🔊 ' + T('播放发音') + '</button></div>';
+    h += '<div class="q-audio"><button class="rev-btn" data-rev="replay">' + uiIcon('speaker') + T('播放发音') + '</button></div>';
     h += '<div class="rev-date">' + ts + ' · ' + T('拼写') + ' · ' + fsrsStatusHTML(cur) + '</div>';
     if (s.answered) {
       h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span></div>';
@@ -24358,13 +24608,13 @@ function renderReview() {
       }
       h += '<div class="q-spell"><input id="spell-in" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + escapeHtml(s.spellVal || '') + '" placeholder="' + escapeHtml(T('拼写这个词')) + '">' +
         '<button class="rev-btn primary" data-rev="check">' + T('检查') + '</button></div>';
-      h += '<button class="rev-btn" data-rev="hint">' + T('显示提示') + '</button>';
+      h += '<button class="rev-btn" data-rev="hint">' + uiIcon('hint') + T('显示提示') + '</button>';
     }
     h += '</div>';
   } else {
-    // 闪卡：保持原来的「先看词 → 揭晓 → 三档自评」
+    // 闪卡：先看词（可点词根提示助推回忆）→ 揭晓 → 三档自评
     h += '<div class="rev-word"><span>' + escapeHtml(cur.w) + '</span>' +
-      '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '">🔊</button></div>';
+      '<button class="tts-btn" data-text="' + escapeHtml(cur.w) + '" title="' + escapeHtml(T('发音')) + '" aria-label="' + escapeHtml(T('发音')) + '">' + uiIcon('speaker') + '</button></div>';
     h += '<div class="rev-date">' + ts + ' · ' + fsrsStatusHTML(cur) + '</div>';
     if (s.shown) {
       h += '<div class="rev-sum">' + escapeHtml(meaningFor(cur) || (EN_MODE() ? '(no definition)' : '(暂无释义)')) + '</div>';
@@ -24375,7 +24625,11 @@ function renderReview() {
       h += '<button class="rev-btn" data-rev="full">' + T('查看完整卡片') + '</button>';
     } else {
       h += '<div class="rev-hint">' + T('先回忆这个词的意思，再点下方显示释义') + '</div>';
-      h += '<button class="rev-btn primary" data-rev="show" title="' + escapeHtml(T('快捷键：空格')) + '">👁 ' + T('显示释义') + '</button>';
+      if (s.morphHint) h += reviewMorphHintHTML(cur.w, true);
+      h += '<div class="rev-actions-row">' +
+        (!s.morphHint ? reviewMorphHintHTML(cur.w, false) : '') +
+        '<button class="rev-btn primary" data-rev="show" title="' + escapeHtml(T('快捷键：空格')) + '">' + uiIcon('eye') + T('显示释义') + '</button>' +
+        '</div>';
     }
     h += '</div>';
   }
@@ -24392,6 +24646,79 @@ function renderReview() {
   }
 }
 
+function renderHomeOverview() {
+  const box = document.getElementById('home-overview');
+  if (!box || typeof WREnhance === 'undefined') return;
+  const h = loadHistory();
+  const st = WREnhance.computeLearningStats(h, loadStudy(), Date.now());
+  const daily = WREnhance.pickDailyRoot(ROOTS, MORPH_INDEX, ATLAS && ATLAS.words, studyDayKey());
+  const total = Math.max(1, st.totalWords);
+  const pctNew = Math.round(st.newCount * 100 / total);
+  const pctLearn = Math.round(st.learningCount * 100 / total);
+  const pctMaster = Math.max(0, 100 - pctNew - pctLearn);
+  const maxDay = Math.max(1, ...st.days7.map(d => d.total));
+
+  const masteryBar = st.totalWords > 0
+    ? '<div class="ho-bar" aria-label="记忆巩固分布">' +
+        (st.masteredCount ? '<span class="ho-seg master" style="width:' + pctMaster + '%"></span>' : '') +
+        (st.learningCount ? '<span class="ho-seg learn" style="width:' + pctLearn + '%"></span>' : '') +
+        (st.newCount ? '<span class="ho-seg fresh" style="width:' + pctNew + '%"></span>' : '') +
+      '</div>' +
+      '<div class="ho-legend">' +
+        '<span><i class="ho-dot master"></i>已掌握 ' + st.masteredCount + '</span>' +
+        '<span><i class="ho-dot learn"></i>巩固中 ' + st.learningCount + '</span>' +
+        '<span><i class="ho-dot fresh"></i>初识 ' + st.newCount + '</span>' +
+      '</div>'
+    : '<div class="ho-empty-note">查词或开始「今日学习」后，这里会自动追踪 FSRS-6 记忆稳定度与连续学习节奏。</div>';
+
+  const daysHtml = st.days7.map(d => {
+    const lv = d.total === 0 ? 0 : d.total / maxDay >= 0.7 ? 3 : d.total / maxDay >= 0.35 ? 2 : 1;
+    return '<span class="ho-day lv-' + lv + '" title="' + escapeHtml(d.key + ' · 新词 ' + d.newN + ' / 复习 ' + d.reviewN) + '">' +
+      '<i class="ho-day-bar"></i><span>' + escapeHtml(d.label.slice(3)) + '</span></span>';
+  }).join('');
+
+  let dailyHtml = '';
+  if (daily) {
+    const srcText = daily.src && daily.src.lang && daily.src.word
+      ? (langEn(daily.src.lang) + ' ' + daily.src.word) : '';
+    dailyHtml =
+      '<div class="ho-card ho-daily">' +
+        '<div class="ho-kicker">今日推荐词根' + (srcText ? ' · ' + escapeHtml(srcText) : '') + '</div>' +
+        '<div class="ho-root-head">' +
+          '<button type="button" class="ho-root-title" data-morph-key="' + escapeHtml(daily.root) + '">' + escapeHtml(daily.root) + '</button>' +
+          '<span class="ho-root-mean">' + escapeHtml(gl(daily.root, daily.meaning)) + '</span>' +
+          '<button type="button" class="h-btn ho-graph-btn" data-open-graph="' + escapeHtml(daily.root) + '">' + uiIcon('graph') + '星图</button>' +
+        '</div>' +
+        '<div class="ho-root-words">' +
+          daily.words.map(w => {
+            const ae = atlasFor(w);
+            return '<button type="button" class="ho-word-chip" data-sample="' + escapeHtml(w) + '">' +
+              '<b>' + escapeHtml(w) + '</b>' +
+              (ae && ae.cefr ? '<span>' + escapeHtml(ae.cefr) + '</span>' : '') +
+            '</button>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+  }
+
+  box.innerHTML =
+    '<div class="ho-grid">' +
+      '<div class="ho-card ho-metrics">' +
+        '<div class="ho-kicker">学习脉搏 · FSRS-6 间隔重复</div>' +
+        '<div class="ho-stat-row">' +
+          '<div class="ho-stat"><strong>' + st.streakDays + '</strong><span>连续天数</span></div>' +
+          '<div class="ho-stat"><strong>' + st.dueCount + '</strong><span>待复习</span></div>' +
+          '<div class="ho-stat"><strong>' + (st.todayNew + st.todayReview) + '</strong><span>今日完成</span></div>' +
+          '<div class="ho-stat"><strong>' + (st.todayAcc === null ? '—' : st.todayAcc + '%') + '</strong><span>首次正确率</span></div>' +
+        '</div>' +
+        masteryBar +
+        '<div class="ho-week"><span class="ho-week-lbl">近 7 日</span><div class="ho-days">' + daysHtml + '</div></div>' +
+      '</div>' +
+      dailyHtml +
+    '</div>';
+  translateDOM(box);
+}
+
 function renderHistory() {
   const el = document.getElementById('history');
   let h = loadHistory();
@@ -24399,26 +24726,27 @@ function renderHistory() {
   const todayTitle = '到期词（最多 ' + (hc.dueCap >= 9999 ? '全部' : hc.dueCap + ' 张') +
     '）+ 今日新词（' + hc.perDay + ' 个）';
   syncNavCounts();
+  renderHomeOverview();
   const moreMenu = (hasItems) =>
     '<div class="h-more-wrap">' +
       '<button class="h-btn" id="h-more-btn" aria-expanded="false" aria-controls="h-more-menu" title="' + escapeHtml(T('更多操作')) + '">···</button>' +
       '<div class="h-more-menu" id="h-more-menu" hidden>' +
-        '<button class="h-menu-item" id="h-today-cfg">⚙ ' + escapeHtml(T('学习计划设置')) + '</button>' +
-        (hasItems ? '<button class="h-menu-item" id="h-export">↗ ' + escapeHtml(T('导出记录')) + '</button>' : '') +
-        '<button class="h-menu-item" id="h-import">↙ ' + escapeHtml(T('导入备份')) + '</button>' +
-        (hasItems ? '<div class="h-menu-sep"></div><button class="h-menu-item danger" id="h-clear">✕ ' + escapeHtml(T('清空全部记录')) + '</button>' : '') +
+        '<button class="h-menu-item" id="h-today-cfg">' + uiIcon('settings') + escapeHtml(T('学习计划设置')) + '</button>' +
+        (hasItems ? '<button class="h-menu-item" id="h-export">' + uiIcon('exportIco') + escapeHtml(T('导出记录')) + '</button>' : '') +
+        '<button class="h-menu-item" id="h-import">' + uiIcon('importIco') + escapeHtml(T('导入备份')) + '</button>' +
+        (hasItems ? '<div class="h-menu-sep"></div><button class="h-menu-item danger" id="h-clear">' + uiIcon('trash') + escapeHtml(T('清空全部记录')) + '</button>' : '') +
       '</div>' +
     '</div>';
   if (!h.length) {
     el.innerHTML = '<div class="h-head">' +
       '<span class="h-head-meta">查词记录<span class="h-n">0</span></span>' +
       '<span class="h-head-acts">' +
-        '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
+        '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">' + uiIcon('calendar') + '今日</button>' +
         moreMenu(false) +
       '</span>' +
       '<div class="h-study-line" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</div>' +
       '</div>' +
-      '<div class="miss" style="opacity:.55;font-size:12.5px;padding:4px 2px">查询过的词会累积到这里</div>';
+      '<div class="miss" style="opacity:.6;font-size:12.5px;padding:6px 2px">查询过的词会自动沉淀到这里，并进入间隔重复复习队列。</div>';
     el.classList.add('show');
     translateDOM(el);
     return;
@@ -24456,8 +24784,8 @@ function renderHistory() {
       (dueN ? '<span class="h-n due" title="按间隔重复排到的词">待复习 ' + dueN + '</span>' : '') +
     '</span>' +
     '<span class="h-head-acts">' +
-      '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">📅 今日</button>' +
-      '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">🎲 复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
+      '<button class="h-btn" id="h-daily" title="' + escapeHtml(todayTitle) + '">' + uiIcon('calendar') + '今日</button>' +
+      '<button class="h-btn" id="h-shuffle" title="间隔重复：只复习到期的词；没有到期的就洗牌全部">' + uiIcon('shuffle') + '复习' + (dueN ? ' (' + dueN + ')' : '') + '</button>' +
       moreMenu(true) +
     '</span>' +
     '<div class="h-study-line" title="只统计第一次作答；重试不重复计分">' + escapeHtml(studyText(studyToday())) + '</div>' +
@@ -24484,6 +24812,7 @@ document.getElementById('history').addEventListener('click', (e) => {
       // 查词记录列表上，还以为自己点错了（fqLevel/fqLimit 都还在，就是位置丢了）
       const back = reviewState && reviewState.fromTab;
       reviewState = null;
+      document.body.classList.remove('in-review');
       if (back) switchTab(back); else renderHistory();
       return;
     }
@@ -24495,13 +24824,21 @@ document.getElementById('history').addEventListener('click', (e) => {
       return;
     }
     if (a === 'hint') { useSpellHint(); return; }
+    if (a === 'morph-hint') { if (reviewState) { reviewState.morphHint = true; renderReview(); } return; }
     if (a === 'check') { checkSpelling(); return; }
     if (!reviewState || reviewState.finished) return;
     if (a === 'show') { reviewState.shown = true; renderReview(); }
     else if (a === 'ok') gradeCurrent('ok');
     else if (a === 'bad') gradeCurrent('bad');
     else if (a === 'great') gradeCurrent('great');
-    else if (a === 'full') { const w = reviewState.list[reviewState.i].w; switchTab('query'); input.value = w; search(); }
+    else if (a === 'full') {
+      const w = reviewState.list[reviewState.i].w;
+      reviewState = null;
+      document.body.classList.remove('in-review');
+      switchTab('query');
+      input.value = w;
+      search();
+    }
     return;
   }
   // 历史分页：上一页/下一页（范围在 renderHistory 内自动钳制）
@@ -24713,23 +25050,18 @@ applyTtsEngine();
 const brandHome = document.getElementById('brand-home');
 if (brandHome) {
   brandHome.addEventListener('click', () => {
+    reviewState = null;
+    document.body.classList.remove('in-review');
+    hideSuggest();
     switchTab('query');
     input.value = '';
     result.classList.remove('show');
     result.innerHTML = '';
     clearSideRel();
     document.body.classList.remove('has-result');
+    renderHomeOverview();
+    renderHistory();
     input.focus();
-  });
-}
-const sampleRow = document.getElementById('sample-row');
-if (sampleRow) {
-  sampleRow.addEventListener('click', (e) => {
-    const sw = e.target.closest('[data-sample]');
-    if (!sw) return;
-    switchTab('query');
-    input.value = sw.dataset.sample;
-    search();
   });
 }
 /* 偏好弹层（2026-11-16）：顶栏只留发音引擎，其余偏好收进 ⚙。
@@ -24946,7 +25278,8 @@ function rerenderAll() {
   if (v) search();
   renderFavs();
   // 复习进行中就别用查词记录列表把它顶掉（会把闪卡顶没、进度看不见）
-  if (reviewState && !reviewState.finished) renderReview(); else renderHistory();
+  if (reviewState && !reviewState.finished) renderReview();
+  else { renderHomeOverview(); renderHistory(); }
   if (document.getElementById('rootsview').style.display === 'block') paintRoots();
   if (document.getElementById('freqview').style.display === 'block') paintFreq();
   // 例句列表不用重搜（数据没变，重搜会连筛选和翻页一起复位）；计数行「词根 port：共 12 条」
@@ -24981,8 +25314,33 @@ document.addEventListener('click', (e) => {
   if (fb) {
     const on = toggleFav(fb.dataset.fav);
     fb.classList.toggle('on', on);
-    fb.textContent = on ? '★ 已收藏' : '☆ 收藏';
+    fb.innerHTML = on ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏';
     syncNavCounts();
+    return;
+  }
+  const fr = e.target.closest('#fav-review');
+  if (fr) { startFavReview(); return; }
+  const og = e.target.closest('[data-open-graph]');
+  if (og) {
+    const mk = og.dataset.openGraph;
+    closePanel();
+    rootsMode = 'graph';
+    switchTab('roots');
+    const inp = document.getElementById('rd-input');
+    if (inp) inp.value = mk;
+    paintRoots();
+    return;
+  }
+  const sw = e.target.closest('[data-sample]');
+  if (sw) {
+    switchTab('query');
+    input.value = sw.dataset.sample;
+    search();
+    return;
+  }
+  const mt = e.target.closest('[data-morph-key]');
+  if (mt && !e.target.closest('.grimm')) {
+    openMorphPanel(mt.dataset.morphKey);
     return;
   }
   const dl = e.target.closest('.fav-rm');
@@ -25006,9 +25364,16 @@ document.addEventListener('click', (e) => {
     });
   }
 });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const mt = e.target && e.target.closest && e.target.closest('.morph[data-morph-key]');
+  if (mt) {
+    e.preventDefault();
+    openMorphPanel(mt.dataset.morphKey);
+  }
+});
 btn.addEventListener('click', search);
 /* 搜索联想：输入防抖 + ↑↓导航 + Enter选中 + 点击 */
-let sgTimer = null;
 input.addEventListener('input', (e) => { clearTimeout(sgTimer); sgTimer = setTimeout(() => showSuggest(e.target.value), 180); });
 input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
