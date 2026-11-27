@@ -21093,7 +21093,7 @@ function openExplainPanel(word, mat) {
   const cached = loadExplains()[explainCacheKey(word, lang)];
   const q = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  document.getElementById('panel-title').textContent = '📖 ' + word + (EN_MODE() ? ' · deep dive' : ' · 深度讲解');
+  document.getElementById('panel-title').textContent = word + (EN_MODE() ? ' · deep dive' : ' · 深度讲解');
   body.innerHTML = '<div class="card"><div class="ex-head">' +
     '<span class="ex-word">' + escapeHtml(word) + '</span>' +
     '<button class="explain-copy" data-explain-copy="' + q(word) + '"' + (cached ? '' : ' hidden') + '>📋 复制</button>' +
@@ -21499,7 +21499,7 @@ function cardHTMLRaw(r) {
     if (o.xr) html += xrBlock(o.xr);
     if (o.def_en) {
       html += `<div class="meaning"><div class="label">英文释义</div><div class="ex-en def-line"><span class="ex-en-txt">${escapeHtml(o.def_en)}</span>` +
-        `<button class="tts-btn ex-tts" data-text="${escapeHtml(o.def_en).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div></div>`;
+        `<button class="tts-btn ex-tts" data-text="${escapeHtml(o.def_en).replace(/"/g, '&quot;')}" title="朗读这条释义" aria-label="朗读这条释义">${uiIcon('speaker')}</button></div></div>`;
     }
     html += morphBlockHTML(hw, decompose(hw, 0) || partialDecompose(hw));
     if (ETYM[r.word]) html += `<div class="meaning"><div class="label" title="${ATTEST_TITLE}">词源(Etymonline)${attestLabel(r.word)}</div><div class="etym">${foldableHTML(etymTextHTML(ETYM[r.word]), String(ETYM[r.word]).length)}</div></div>`;
@@ -21529,7 +21529,7 @@ function cardHTMLRaw(r) {
     if (d.d) {
       const dls = nl(d.d).split('\n').map(s => s.trim()).filter(Boolean);
       const dline = ln => `<div class="ex-en def-line"><span class="ex-en-txt">${ln}</span>` +
-        `<button class="tts-btn ex-tts" data-text="${escapeHtml(ln).replace(/"/g, '&quot;')}" title="朗读这条释义">🔊</button></div>`;
+        `<button class="tts-btn ex-tts" data-text="${escapeHtml(ln).replace(/"/g, '&quot;')}" title="朗读这条释义" aria-label="朗读这条释义">${uiIcon('speaker')}</button></div>`;
       html += `<div class="meaning"><div class="label">英文释义</div>`
         + foldableHTML(dls.map(dline).join(''), dls.join(' ').length) + `</div>`;
     }
@@ -21903,8 +21903,8 @@ function renderPhrase(phr, rec, raw) {
   html += '<div class="word-line">'
     + '<span class="word">' + escapeHtml(phr) + '</span>'
     + '<span class="badge">短语</span>'
-    + '<button class="tts-btn" data-text="' + escapeHtml(phr) + '" title="朗读">🔊</button>'
-    + '<button class="fav-btn' + (fav ? ' on' : '') + '" data-fav="' + escapeHtml(phr) + '">' + (fav ? '★ 已收藏' : '☆ 收藏') + '</button>'
+    + '<button class="tts-btn" data-text="' + escapeHtml(phr) + '" title="朗读" aria-label="朗读">' + uiIcon('speaker') + '</button>'
+    + '<button class="fav-btn' + (fav ? ' on' : '') + '" data-fav="' + escapeHtml(phr) + '">' + (fav ? uiIcon('starFill') + '已收藏' : uiIcon('star') + '收藏') + '</button>'
     + '</div>';
   if (rec.p) html += '<div class="meaning"><div class="label">音标</div>' + escapeHtml(ipa(rec.p)) + '</div>';
   if (rec.g) html += '<div class="meaning"><div class="label">词性</div>' + escapeHtml(rec.g) + '</div>';
@@ -21919,7 +21919,7 @@ function renderPhrase(phr, rec, raw) {
     html += '<div class="meaning"><div class="label">例句</div>';
     exs.forEach(x => {
       html += '<div class="ex"><div class="ex-en"><span class="ex-en-txt">' + hlWord(phr, x.en) + '</span>'
-        + '<button class="tts-btn ex-tts" data-text="' + escapeHtml(x.en).replace(/"/g, '&quot;') + '" title="朗读英文例句">🔊</button></div>';
+        + '<button class="tts-btn ex-tts" data-text="' + escapeHtml(x.en).replace(/"/g, '&quot;') + '" title="朗读英文例句" aria-label="朗读英文例句">' + uiIcon('speaker') + '</button></div>';
       if (x.zh) html += '<div class="ex-zh">' + escapeHtml(x.zh) + '</div>';
       html += '</div>';
     });
@@ -21977,8 +21977,8 @@ async function renderParagraph(text) {
   const tokens = text.split(/([A-Za-z']+)/);
   const analyzed = new Map();  // word -> {r, note} 缓存，避免重复拆解
   let html = '<div class="para-head"><button class="tts-btn" data-text="' +
-    escapeHtml(text).replace(/"/g, '&quot;') + '" title="朗读整段">🔊 朗读整段</button>' +
-    '<button class="trans-btn" data-trans="' + escapeHtml(text).replace(/"/g, '&quot;') + '" title="本地 LLM 翻译整段">🌐 译整段</button>';
+    escapeHtml(text).replace(/"/g, '&quot;') + '" title="朗读整段" aria-label="朗读整段">' + uiIcon('speaker') + '朗读整段</button>' +
+    '<button class="trans-btn" data-trans="' + escapeHtml(text).replace(/"/g, '&quot;') + '" title="本地 LLM 翻译整段" aria-label="翻译整段">' + uiIcon('globe') + '译整段</button>';
   // 反向提示：这一整串恰好是词典收录的短语？给「作为短语查询」入口
   const phKey = normalizePhrase(text).replace(/[^a-z\s]/g, '').trim();
   // 按需词典：先把这一段的词一次取回来（几十个词只打一个请求），
@@ -25501,9 +25501,9 @@ document.addEventListener('click', async (e) => {
   if (!btn || btn.disabled || !btn.dataset.memo) return;
   const box = btn.parentElement.querySelector('.memo-box');
   if (!box) return;
-  const label = btn.textContent;
+  const labelHTML = btn.innerHTML;
   btn.disabled = true;
-  btn.textContent = '💡 生成中…';
+  btn.innerHTML = uiIcon('spark') + '生成中…';
   box.hidden = false;
   box.textContent = T('本地模型思考中（约 2-4 秒）…');
   try {
@@ -25520,7 +25520,7 @@ document.addEventListener('click', async (e) => {
     if ((resp.headers.get('content-type') || '').includes('json')) {
       const j = await resp.json().catch(() => ({}));
       box.innerHTML = '<span class="memo-err">生成失败：' + escapeHtml(j.err || '未知错误') + '</span>';
-      btn.textContent = label;
+      btn.innerHTML = labelHTML;
     } else {
       const reader = resp.body.getReader(), dec = new TextDecoder();
       let acc = '';
@@ -25537,15 +25537,15 @@ document.addEventListener('click', async (e) => {
           ? mdToHTML(acc)
           : memoTextHTML(acc, lang);   // 否则照旧切成可点词，英文助记的词能点开拆解
         saveMemo(btn.dataset.memo, lang, acc);
-        btn.textContent = '💡 重新生成';
+        btn.innerHTML = uiIcon('spark') + '重新生成';
       } else {
         box.innerHTML = '<span class="memo-err">模型没有返回内容</span>';
-        btn.textContent = label;
+        btn.innerHTML = labelHTML;
       }
     }
   } catch (err) {
     box.innerHTML = '<span class="memo-err">请求失败：' + escapeHtml(err.message || String(err)) + '</span>';
-    btn.textContent = label;
+    btn.innerHTML = labelHTML;
   }
   btn.disabled = false;
 });
